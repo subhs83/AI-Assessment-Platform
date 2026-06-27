@@ -1,0 +1,65 @@
+# ===========================
+# Python
+# ===========================
+
+venv/
+.venv/
+env/
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask instance
+instance/
+
+# Environment
+.env
+.env.*
+.flaskenv
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+
+# User uploads
+uploads/
+# ===========================
+# React
+# ===========================
+
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+
+# ===========================
+# IDE
+# ===========================
+
+.vscode/
+.idea/
+
+# ===========================
+# OS
+# ===========================
+
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Git
+# ===========================
+
+*.orig

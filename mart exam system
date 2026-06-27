@@ -1,0 +1,9 @@
+filter.lfs.clean=git-lfs clean -- %f
+filter.lfs.smudge=git-lfs smudge -- %f
+filter.lfs.process=git-lfs filter-process
+filter.lfs.required=true
+user.email=subhash.ece@gmail.com
+user.name=subhs83
+git config --global user.email subhash.ece@gmail.com
+git config --global --list
+git config --global user.name subhs83
