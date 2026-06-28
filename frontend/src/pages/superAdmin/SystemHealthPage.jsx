@@ -10,7 +10,7 @@ export default function SystemHealthPage() {
 
   useEffect(() => {
     fetchSystemHealth();
-  }, []);
+  }, [fetchSystemHealth]);
 
   const health = systemHealth || {};
 

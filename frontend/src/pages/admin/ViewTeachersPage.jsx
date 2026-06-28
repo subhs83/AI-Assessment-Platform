@@ -14,7 +14,6 @@ import {
   Mail,
   ShieldCheck,
   ShieldAlert,
-  Lock,
   LockKeyhole,
 } from "lucide-react";
 
@@ -42,7 +41,7 @@ export default function ViewTeachersPage() {
       schoolSlug
     );
 
-  }, [schoolSlug]);
+  }, [schoolSlug, fetchTeachers]);
 
 
   const handleToggle = async () => {

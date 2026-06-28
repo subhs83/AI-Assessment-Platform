@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { teacherApi } from "../../api/teacherApi";
@@ -43,7 +43,7 @@ export default function UploadQuestionsPage() {
   // -------------------------
   // FETCH EXAMS
   // -------------------------
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     try {
       
       const res = await teacherApi.getDashboard(schoolSlug);
@@ -61,11 +61,11 @@ export default function UploadQuestionsPage() {
         "error"
       );
     }
-  };
+  },[schoolSlug, showToast]);
 
   useEffect(() => {
     fetchExams();
-  }, []);
+  }, [fetchExams]);
 
   // -------------------------
   // UPLOAD

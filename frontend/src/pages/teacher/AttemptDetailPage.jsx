@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import API from "../../api/client";
 import SkeletonCard from "../../components/ui/SkeletonCard";
@@ -14,26 +14,27 @@ export default function AttemptDetailPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchReport = async () => {
-    try {
-      setLoading(true);
+  const fetchReport = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      const res = await API.get(
-        `/api/teacher/${schoolSlug}/attempts/${attemptId}`
-      );
+    const res = await API.get(
+      `/api/teacher/${schoolSlug}/attempts/${attemptId}`
+    );
 
-      setData(res.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setData(res.data.data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [schoolSlug, attemptId]);
 
   useEffect(() => {
-    fetchReport();
-  }, [attemptId]);
- console.log("data :",data)
+  fetchReport();
+}, [fetchReport]);
+
+
   const report = data?.report;
 
   const correctCount =

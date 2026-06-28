@@ -1,10 +1,4 @@
-import {
-  CheckCircle,
-  XCircle,
-  Circle,
-  Trophy,
-  BookOpen,
-} from "lucide-react";
+import { Trophy} from "lucide-react";
 import Counter from "../../common/Counter"
 
 export default function PerformanceSummary({ result }) {

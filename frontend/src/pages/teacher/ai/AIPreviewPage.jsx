@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { teacherRoutes } from "../../../routes/teacherRoutes";
 import API from "../../../api/client";
@@ -43,7 +43,7 @@ export default function AIPreviewPage() {
   // -------------------------
   // FETCH AI REQUEST
   // -------------------------
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -57,9 +57,9 @@ export default function AIPreviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  },[schoolSlug, requestId]);
 
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     try {
       const res = await teacherApi.getDashboard(schoolSlug);
       const exams = res.data?.data?.ai_exams || [];
@@ -70,7 +70,7 @@ export default function AIPreviewPage() {
     } catch (err) {
       console.log(err);
     }
-  };
+  },[schoolSlug]);
 
   const handleGenerateNewSet = () => {
     navigate(routes.ai.generate, {
@@ -88,7 +88,7 @@ export default function AIPreviewPage() {
   useEffect(() => {
     fetchRequest();
     fetchExams();
-  }, [requestId]);
+  }, [fetchRequest, fetchExams]);
 
   // -------------------------
   // SELECT LOGIC

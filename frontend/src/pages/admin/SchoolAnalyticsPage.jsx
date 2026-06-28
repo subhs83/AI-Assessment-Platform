@@ -28,7 +28,7 @@ export default function SchoolAnalyticsPage() {
 
   useEffect(() => {
     getSchoolAnalytics(schoolSlug);
-  }, [schoolSlug]);
+  }, [schoolSlug, getSchoolAnalytics]);
 
   if (schoolAnalyticsLoading) {
     return <SkeletonCard />;

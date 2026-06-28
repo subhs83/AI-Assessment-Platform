@@ -1,25 +1,23 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import {Trophy,Medal,Award,Users,TrendingUp,} from "lucide-react";
 import API from "../../api/client";
 import SkeletonCard from "../../components/ui/SkeletonCard";
 import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
-import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
 import { useAuthStore } from "../../store/authStore";
 
 
 export default function LeaderboardPage() {
   const { schoolSlug, examId } = useParams();
-  const routes = teacherRoutes(schoolSlug);
 
   const { user } = useAuthStore();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -36,11 +34,11 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [schoolSlug, examId, user.role]);
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [examId]);
+  }, [fetchLeaderboard ]);
 
   
   const leaderboard = data?.leaderboard || [];

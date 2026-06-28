@@ -54,7 +54,7 @@ export default function EditSchoolPage() {
 
     fetchSchool();
 
-  }, [schoolId]);
+  }, [schoolId, getSchoolById, showToast]);
 
   const handleChange = (e) => {
 

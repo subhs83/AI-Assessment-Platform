@@ -20,7 +20,7 @@ export default function ExamsPage() {
 
   useEffect(() => {
     fetchDashboard(schoolSlug);
-  }, [schoolSlug]);
+  }, [schoolSlug, fetchDashboard]);
 
   return (
     <div className="space-y-6">

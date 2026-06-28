@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import aiApi from "../../../api/aiApi";
 import PageHeader from "../../../components/ui/PageHeader";
@@ -26,9 +26,8 @@ export default function AIHistoryPage() {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -41,17 +40,16 @@ export default function AIHistoryPage() {
       });
 
       setData(res.data.data);
-      setTotal(res.data.pagination?.total || 0);
     } catch (err) {
       console.log(err);
     } finally {
       setLoading(false);
     }
-  };
+  },[schoolSlug,search, difficulty, status, page, limit]);
 
   useEffect(() => {
     fetchHistory();
-  }, [search, difficulty, status, page]);
+  }, [fetchHistory]);
 
 
   useEffect(() => {

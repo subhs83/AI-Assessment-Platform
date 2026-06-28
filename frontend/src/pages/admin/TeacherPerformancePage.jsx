@@ -29,7 +29,7 @@ export default function TeacherPerformancePage() {
       schoolSlug
     );
 
-  }, [schoolSlug]);
+  }, [schoolSlug, fetchTeacherPerformance]);
 
   if (teacherPerformanceLoading) {
     return <SkeletonCard />;

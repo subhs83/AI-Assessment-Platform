@@ -34,7 +34,7 @@ export default function ExamPerformancePage() {
   
   useEffect(() => {
     getExamPerformance(schoolSlug);
-  }, [schoolSlug]);
+  }, [schoolSlug, getExamPerformance]);
 
 const exams = examPerformance || [];
 

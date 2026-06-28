@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo} from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/client";
 import SkeletonCard from "../../components/ui/SkeletonCard";
@@ -19,7 +19,9 @@ export default function ResultsPage() {
   // -----------------------------
   // SAFE DERIVED DATA
   // -----------------------------
-  const results = data?.results ?? [];
+  const results = useMemo(() => {
+  return data?.results || [];
+}, [data]);
 
   const filteredResults = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -68,25 +70,27 @@ export default function ResultsPage() {
   // -----------------------------
   // API CALL
   // -----------------------------
-  const fetchResults = async () => {
-    try {
-      setLoading(true);
+  const fetchResults = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      const res = await API.get(
-        `/api/teacher/${schoolSlug}/exams/${examId}/results`
-      );
+    const res = await API.get(
+      `/api/teacher/${schoolSlug}/exams/${examId}/results`
+    );
 
-      setData(res.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setData(res.data.data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}, [schoolSlug, examId]);
 
-  useEffect(() => {
-    fetchResults();
-  }, [examId]);
+
+
+ useEffect(() => {
+  fetchResults();
+}, [fetchResults]);
 
 
 

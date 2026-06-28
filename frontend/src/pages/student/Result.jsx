@@ -208,7 +208,7 @@ useEffect(() => {
     ),
     canTakeNextAttempt: latestNumber < result.max_attempts,
   };
-}, [attempts, result?.max_attempts]);
+}, [attempts, result]);
     // =========================
     // LOADING
     // =========================

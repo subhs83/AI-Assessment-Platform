@@ -1,7 +1,6 @@
 import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Power, Trash2, CalendarPlus,RotateCcw  } from "lucide-react";
-import { superAdminApi } from "../../api/superAdminApi";
 
 import { useSuperAdminStore } from "../../store/superAdminStore";
 import { useToast } from "../../components/ui/Toast";
@@ -35,7 +34,7 @@ export default function SchoolsPage() {
 
   useEffect(() => {
     fetchSchools();
-  }, []);
+  }, [fetchSchools]);
 
   
   const handleSetExpiryDate = async () => {

@@ -7,7 +7,6 @@ import {
 export default function LoginLogsPage() {
 
   const {
-    loading,
     loginLogsData,
     loginStats,
     fetchLoginLogs
@@ -15,7 +14,7 @@ export default function LoginLogsPage() {
 
   useEffect(() => {
     fetchLoginLogs();
-  }, []);
+  }, [fetchLoginLogs]);
 
   const logs = loginLogsData || [];
   const stats = loginStats || {};

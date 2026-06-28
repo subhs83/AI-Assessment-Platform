@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/client";
 import SkeletonCard from "../../components/ui/SkeletonCard";
@@ -16,7 +16,9 @@ export default function StudentAttemptsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
-  const attempts = data?.attempts || [];
+  const attempts = useMemo(() => {
+  return data?.attempts || [];
+}, [data]);
 
   const filteredAttempts = useMemo(() => {
     if (!attempts.length) return [];
@@ -29,7 +31,7 @@ export default function StudentAttemptsPage() {
     });
   }, [attempts, filter]);
 
-  const fetchAttempts = async () => {
+  const fetchAttempts = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -43,11 +45,11 @@ export default function StudentAttemptsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  },[schoolSlug, examId, studentDbId]);
 
   useEffect(() => {
     fetchAttempts();
-  }, [examId, studentDbId]);
+  }, [fetchAttempts]);
 
   if (loading) return <SkeletonCard />;
   if (!data) return <EmptyState message="No attempts found" />;

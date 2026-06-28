@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
       schoolSlug
     );
 
-  }, [schoolSlug]);
+  }, [schoolSlug, fetchDashboard]);
 
   if (dashboardLoading) {
 

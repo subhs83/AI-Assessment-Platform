@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { useSuperAdminStore } from "../../store/superAdminStore";
@@ -17,34 +17,30 @@ export default function SchoolAdminsPage() {
   const [school, setSchool] = useState(null);
   const [admins, setAdmins] = useState([]);
 
-  useEffect(() => {
+  
+
+  const fetchData = useCallback(async () => {
+  try {
+    const data = await getSchoolAdmins(schoolId);
+
+    setSchool(data.school);
+    setAdmins(data.admins || []);
+  } catch (error) {
+    showToast(
+      error.response?.data?.error || "Failed to load admins",
+      "error"
+    );
+  }
+}, [schoolId, getSchoolAdmins, showToast]);
+
+
+useEffect(() => {
 
     fetchData();
 
-  }, [schoolId]);
+  }, [fetchData]);
 
 
-
-  const fetchData = async () => {
-
-    try {
-
-      const data = await getSchoolAdmins(schoolId);
-
-      setSchool(data.school);
-      setAdmins(data.admins || []);
-
-    } catch (error) {
-
-      showToast(
-        error.response?.data?.error ||
-        "Failed to load admins",
-        "error"
-      );
-
-    }
-
-  };
 
   const handleToggle = async (userId) => {
 

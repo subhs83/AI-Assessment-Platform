@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import API from "../../api/client";
 import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
@@ -12,7 +12,7 @@ export default function ReviewQuestionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -26,11 +26,11 @@ export default function ReviewQuestionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  },[schoolSlug, examId]);
 
   useEffect(() => {
     fetchQuestions();
-  }, [examId]);
+  }, [fetchQuestions]);
 
   return (
     <div className="space-y-6">

@@ -10,7 +10,7 @@ export default function PlatformStatsPage() {
 
   useEffect(() => {
     fetchPlatformStats();
-  }, []);
+  }, [fetchPlatformStats]);
 
   const stats = platformStats || {};
 

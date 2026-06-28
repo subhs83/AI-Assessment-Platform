@@ -15,7 +15,7 @@ export default function SuperAdminDashboardPage() {
 
   useEffect(() => {
     fetchDashboard();
-  }, []);
+  }, [fetchDashboard]);
 
   
 

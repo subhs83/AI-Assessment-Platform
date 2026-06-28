@@ -51,7 +51,7 @@ export default function AIAnalyticsPage() {
     fetchAITeachers();
     fetchAIRecent();
 
-  }, []);
+  }, [fetchAIDashboard, fetchAISourceStats, fetchAITrends, fetchAISchools, fetchAITeachers, fetchAIRecent]);
 
   const stats = aiDashboard || {};
   const sourceStats = aiSourceStats || {};

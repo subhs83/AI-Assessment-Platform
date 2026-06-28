@@ -204,8 +204,8 @@ export default function App() {
   const loadCurrentUser = useAuthStore((s) => s.loadCurrentUser);
 
       useEffect(() => {
-        loadCurrentUser();
-      }, []);
+    loadCurrentUser();
+  }, [loadCurrentUser]);
 
       return (
         <ToastProvider>
