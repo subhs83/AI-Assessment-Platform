@@ -144,7 +144,7 @@ export default function AIGeneratePage() {
         }
       );
       
-      const requestId = res.data.request_id;
+      const requestId = res.data.id;
       console.log("res.data :", res.data )
 
       navigate(
