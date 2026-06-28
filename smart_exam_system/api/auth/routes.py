@@ -105,25 +105,23 @@ def current_user_api():
 def change_password_api():
 
     data = request.get_json()
+
     new_password = data.get("new_password")
 
     error = validate_password_strength(new_password)
+
     if error:
         return jsonify({
             "success": False,
             "message": error
         }), 400
 
-    change_user_password(current_user, new_password)
-
-    # 🔥 IMPORTANT FIX
-    logout_user()
-    session.clear()
+    change_user_password(current_user, new_password )
 
     return jsonify({
         "success": True,
-        "message": "Password changed successfully. Please login again.",
-        "force_logout": True
+        "message": "Password changed successfully.",
+        "redirect_path": get_dashboard_path(current_user)
     })
 # ----------------------------------------
 # Logout
