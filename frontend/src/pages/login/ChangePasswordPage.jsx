@@ -51,14 +51,9 @@ export default function ChangePasswordPage() {
           new_password: newPassword
         });
 
-      // 🔥 IMPORTANT FIX: clear frontend auth state
-    localStorage.removeItem("user"); // if used
-    localStorage.removeItem("token"); // if used
-
-    // If using Zustand (likely in your app)
-    // useAuthStore.getState().logout();
-
-    navigate("/login"); // FORCE LOGIN AGAIN
+      navigate(
+        response.data.redirect_path
+      );
 
     } catch (err) {
 
