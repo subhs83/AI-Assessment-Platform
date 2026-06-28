@@ -1,8 +1,9 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 import pytesseract
 
-load_dotenv()   
+load_dotenv()
 
 class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -13,24 +14,34 @@ class Config:
 
     if not SECRET_KEY:
         SECRET_KEY = "dev-secret-key"
-    
-    SESSION_COOKIE_SAMESITE = "None"
-    SESSION_COOKIE_SECURE = True  # True only in HTTPS production
+
+    IS_PRODUCTION = os.getenv("FLASK_ENV") == "production"
+
+    # Session
     SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = IS_PRODUCTION
+    SESSION_COOKIE_SAMESITE = "None" if IS_PRODUCTION else "Lax"
+
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
 
     # CORS
     CORS_ORIGINS = os.getenv(
         "CORS_ORIGINS",
         "http://localhost:3000"
     ).split(",")
+
+
     
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
     
     
     TESSERACT_CMD = os.getenv("TESSERACT_CMD")
+    print("ENV:", TESSERACT_CMD)
 
     if TESSERACT_CMD:
         pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
+    print("PYTESSERACT:", pytesseract.pytesseract.tesseract_cmd)
 
     # =========================
     # DATABASE CONFIG

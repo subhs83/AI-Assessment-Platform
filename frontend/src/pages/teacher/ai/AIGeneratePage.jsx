@@ -94,7 +94,6 @@ export default function AIGeneratePage() {
   }, [extractedContent, sourceType]);
 
   const handleGenerate = async () => {
-    console.log("handleGenerate called");
     const hasTopic = topic.trim().length > 0;
     const hasFile = file !== null;
     const hasContent = extractedContent.trim().length > 0;
@@ -138,8 +137,6 @@ export default function AIGeneratePage() {
       formData.append("difficulty", difficulty);
       formData.append("question_count", count);
 
-      console.log("Before API");
-
       const res = await API.post(
         `/api/teacher/${schoolSlug}/ai/generate`,
         formData,
@@ -155,7 +152,7 @@ export default function AIGeneratePage() {
 
       const requestId = res.data.request_id;
 
-      console.log("requestId:", requestId);
+
      
 
       navigate(

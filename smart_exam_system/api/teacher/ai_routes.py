@@ -66,6 +66,7 @@ def ai_extract(school_slug):
 @teacher_required
 def get_ai_request(school_slug, request_id):
 
+
     ai_request = db.session.get(AIGenerationRequest, request_id)
     # print("SOURCE TYPE:", ai_request.source_type)
     # print("SOURCE TEXT:", ai_request.source_text)
