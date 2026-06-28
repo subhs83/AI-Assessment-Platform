@@ -96,3 +96,10 @@ def submit_demo_request():
         "success": True,
         "message": "Demo request submitted successfully"
     })
+
+@api_public_bp.route("/api/public/health", methods=["GET"])
+def health():
+    return jsonify({
+        "success": True,
+        "message": "API is running"
+    })

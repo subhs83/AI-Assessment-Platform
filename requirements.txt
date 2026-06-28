@@ -19,7 +19,6 @@ Flask-Login==0.6.3
 Flask-Migrate==4.1.0
 Flask-Session==0.8.0
 Flask-SQLAlchemy==3.1.1
-Flask-WTF==1.2.1
 google-ai-generativelanguage==0.6.15
 google-api-core==2.31.0
 google-api-python-client==2.197.0
@@ -45,7 +44,6 @@ Mako==1.3.10
 MarkupSafe==2.1.5
 msgspec==0.21.1
 numpy==2.4.6
-openai==2.42.0
 openpyxl==3.1.5
 packaging==26.0
 pandas==3.0.3
@@ -79,10 +77,8 @@ typing_extensions==4.15.0
 tzdata==2025.3
 uritemplate==4.2.0
 urllib3==2.2.3
-Wand==0.7.0
 websockets==16.0
 Werkzeug==3.0.6
 wheel==0.47.0
-WTForms==3.1.2
 xlsxwriter==3.2.9
 zipp==3.20.2

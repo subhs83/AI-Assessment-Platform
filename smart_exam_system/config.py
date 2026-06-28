@@ -6,9 +6,16 @@ load_dotenv()
 
 class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key")
+    SECRET_KEY = os.getenv("SECRET_KEY")
+
+    if os.getenv("FLASK_ENV") == "production" and not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY environment variable is required.")
+
+    if not SECRET_KEY:
+        SECRET_KEY = "dev-secret-key"
+    
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = False  # True only in HTTPS production
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "False") == "True"  # True only in HTTPS production
     SESSION_COOKIE_HTTPONLY = True
 
     # CORS

@@ -7,6 +7,7 @@ import {
   Trophy,
   CheckCircle2
 } from "lucide-react";
+import Counter from "../../common/Counter";
 
 export default function FeaturePreviewCard() {
   return (
@@ -101,7 +102,11 @@ export default function FeaturePreviewCard() {
 
                   <div>
                     <div className="text-2xl font-bold text-blue-600">
-                      96%
+                      <Counter
+                        end={"96"}
+                        suffix="%"
+                        enableScrollSpy
+                      />
                     </div>
 
                     <div className="text-xs text-gray-500">
@@ -111,7 +116,10 @@ export default function FeaturePreviewCard() {
 
                   <div>
                     <div className="text-2xl font-bold text-green-600">
-                      120
+                      <Counter
+                        end={"120"}
+                        enableScrollSpy
+                      />
                     </div>
 
                     <div className="text-xs text-gray-500">
@@ -149,17 +157,29 @@ export default function FeaturePreviewCard() {
 
                   <div className="flex justify-between">
                     <span>🥇 Rahul Sharma</span>
-                    <span className="font-bold">95%</span>
+                    <span className="font-bold"><Counter
+                        end={"95"}
+                        suffix="%"
+                        enableScrollSpy
+                      /></span>
                   </div>
 
                   <div className="flex justify-between">
                     <span>🥈 Priya Singh</span>
-                    <span className="font-bold">92%</span>
+                    <span className="font-bold"><Counter
+                        end={"92"}
+                        suffix="%"
+                        enableScrollSpy
+                      /></span>
                   </div>
 
                   <div className="flex justify-between">
                     <span>🥉 Aman Kumar</span>
-                    <span className="font-bold">90%</span>
+                    <span className="font-bold"><Counter
+                        end={"90"}
+                        suffix="%"
+                        enableScrollSpy
+                      /></span>
                   </div>
 
                 </div>

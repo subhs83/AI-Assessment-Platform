@@ -9,6 +9,7 @@ import {
 import Reveal from "../../common/Reveal";
 import StaggerContainer from "../../common/StaggerContainer"
 import StaggerItem from "../../common/StaggerItem"
+import Counter from "../../common/Counter";
 
 export default function AIQuestionSection() {
   const features = [
@@ -243,7 +244,11 @@ export default function AIQuestionSection() {
 
               <div className="text-3xl font-bold">
 
-                10,000+
+                <Counter
+                        end={"10000"}
+                        suffix="+"
+                        enableScrollSpy
+                      />
 
               </div>
 
@@ -259,7 +264,11 @@ export default function AIQuestionSection() {
 
               <div className="text-3xl font-bold">
 
-                95%
+                <Counter
+                        end={"95"}
+                        suffix="%"
+                        enableScrollSpy
+                      />
 
               </div>
 

@@ -10,6 +10,7 @@ import {
 import Reveal from "../../common/Reveal";
 import StaggerContainer from "../../common/StaggerContainer";
 import StaggerItem from "../../common/StaggerItem";
+import Counter from "../../common/Counter";
 
 export default function PlatformFeaturesSection() {
   const features = [
@@ -181,14 +182,26 @@ export default function PlatformFeaturesSection() {
           <div className="mt-10 flex flex-wrap justify-center gap-10">
 
             <div>
-              <div className="text-3xl font-bold">100+</div>
+              <div className="text-3xl font-bold">
+                <Counter
+                  end={"100"}
+                  suffix="+"
+                  enableScrollSpy
+                />
+                </div>
               <div className="text-indigo-100 mt-2">
                 Teachers Supported
               </div>
             </div>
 
             <div>
-              <div className="text-3xl font-bold">1000+</div>
+              <div className="text-3xl font-bold">
+                <Counter
+                  end={"1000"}
+                  suffix="+"
+                  enableScrollSpy
+                />
+                </div>
               <div className="text-indigo-100 mt-2">
                 Exams Conducted
               </div>

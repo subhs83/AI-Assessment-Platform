@@ -10,6 +10,7 @@ import {
 import Reveal from "../../common/Reveal";
 import StaggerContainer from "../../common/StaggerContainer";
 import StaggerItem from "../../common/StaggerItem";
+import Counter from "../../common/Counter";
 
 export default function AnalyticsSection() {
   const cards = [
@@ -107,7 +108,11 @@ export default function AnalyticsSection() {
                 </div>
 
                 <div className="mt-3 text-4xl font-bold">
-                  82%
+                  <Counter
+                    end={"82"}
+                    suffix="%"
+                    enableScrollSpy
+                  />
                 </div>
 
               </div>
@@ -119,7 +124,11 @@ export default function AnalyticsSection() {
                 </div>
 
                 <div className="mt-3 text-4xl font-bold">
-                  95%
+                  <Counter
+                    end={"95"}
+                    suffix="%"
+                    enableScrollSpy
+                  />
                 </div>
 
               </div>
@@ -143,7 +152,11 @@ export default function AnalyticsSection() {
                 </div>
 
                 <div className="mt-3 text-4xl font-bold">
-                  +18%
+                  +<Counter
+                    end={"18"}
+                    suffix="%"
+                    enableScrollSpy
+                  />
                 </div>
 
               </div>

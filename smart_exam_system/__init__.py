@@ -1,5 +1,5 @@
 import os
-from flask import Flask, app,request
+from flask import Flask
 from .config import Config
 from .extensions import login_manager, db, migrate
 from flask_session import Session
@@ -19,11 +19,7 @@ from .api.utils.init_data import create_default_super_admin
 def create_app():
     base_dir = os.path.dirname(os.path.dirname(__file__))
 
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(base_dir, "templates"),
-        static_folder=os.path.join(base_dir, "static")
-    )
+    app = Flask(__name__)
     # Config
     app.config.from_object(Config)
 
