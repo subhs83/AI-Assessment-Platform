@@ -16,8 +16,8 @@ from smart_exam_system.extensions import db
 @teacher_required
 def ai_generate(school_slug):
 
-    data = request.form.to_dict()   # topic, difficulty, question_count
-    file = request.files.get("file")  # PDF or image
+    data = request.form.to_dict()
+    file = request.files.get("file")
 
     school_id = current_user.school_id
     teacher_id = current_user.id
@@ -29,7 +29,10 @@ def ai_generate(school_slug):
         teacher_id=teacher_id
     )
 
-    return jsonify(result)
+    if not result.get("success"):
+        return jsonify(result), 500
+
+    return jsonify(result), 200
 
 
 @api_teacher_bp.route("/<school_slug>/ai/extract", methods=["POST"])

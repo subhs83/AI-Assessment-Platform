@@ -1,6 +1,8 @@
 import json
+import time
 from flask import current_app
 from google import genai
+from google.genai.errors import ServerError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -99,14 +101,33 @@ Rules:
 """
 
     try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=generation_prompt
-        )
+        max_retries = 3
 
-        return response.text
+        for attempt in range(max_retries):
+            try:
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=generation_prompt
+                )
+
+                return response.text
+
+            except ServerError:
+                if attempt == max_retries - 1:
+                    raise
+
+                wait_time = 2 ** attempt  # 1s, 2s, 4s
+
+                current_app.logger.warning(
+                    f"Gemini temporarily unavailable. "
+                    f"Retry {attempt + 1}/{max_retries} in {wait_time}s..."
+                )
+
+                time.sleep(wait_time)
 
     except Exception:
         current_app.logger.exception("Gemini generation failed")
 
-        raise Exception("AI generation failed.")
+        raise Exception(
+            "AI service is temporarily unavailable. Please try again in a moment."
+        )

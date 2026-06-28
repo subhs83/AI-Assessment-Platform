@@ -147,12 +147,15 @@ export default function AIGeneratePage() {
           },
         }
       );
-
+      
       console.log("Generate Response:", res.data);
 
       const requestId = res.data.request_id;
 
-
+      if (!res.data.success || !res.data.request_id) {
+          setError(res.data.message || "Failed to generate questions.");
+          return;
+        }
      
 
       navigate(
