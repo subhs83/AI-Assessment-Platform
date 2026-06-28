@@ -143,9 +143,9 @@ export default function AIGeneratePage() {
           },
         }
       );
-      
-      const requestId = res.data.id;
       console.log("res.data :", res.data )
+      const requestId = res.data.id;
+     
 
       navigate(
         `/school/${schoolSlug}/teacher/ai/preview/${requestId}`
