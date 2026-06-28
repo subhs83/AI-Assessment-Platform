@@ -62,7 +62,7 @@ def ai_extract(school_slug):
 
 
 @api_teacher_bp.route("/<school_slug>/ai/request/<int:request_id>", methods=["GET"])
-@login_required
+@login_required 
 @teacher_required
 def get_ai_request(school_slug, request_id):
 

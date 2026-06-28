@@ -145,6 +145,7 @@ export default function AIGeneratePage() {
       );
       
       const requestId = res.data.request_id;
+      console.log("res.data :", res.data )
 
       navigate(
         `/school/${schoolSlug}/teacher/ai/preview/${requestId}`
