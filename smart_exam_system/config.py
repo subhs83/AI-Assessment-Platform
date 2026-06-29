@@ -37,11 +37,11 @@ class Config:
     
     
     TESSERACT_CMD = os.getenv("TESSERACT_CMD")
-    print("ENV:", TESSERACT_CMD)
+    # print("ENV:", TESSERACT_CMD)
 
     if TESSERACT_CMD:
         pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
-    print("PYTESSERACT:", pytesseract.pytesseract.tesseract_cmd)
+    # print("PYTESSERACT:", pytesseract.pytesseract.tesseract_cmd)
 
     # =========================
     # DATABASE CONFIG

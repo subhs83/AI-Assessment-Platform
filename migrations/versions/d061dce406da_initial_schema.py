@@ -1,8 +1,8 @@
-"""Initial clean schema with student_id UUID default
+"""Initial schema
 
-Revision ID: 7437347fedcc
+Revision ID: d061dce406da
 Revises: 
-Create Date: 2026-06-05 01:30:00.453992
+Create Date: 2026-06-29 16:12:27.011532
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7437347fedcc'
+revision = 'd061dce406da'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -59,7 +59,7 @@ def upgrade():
     sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('logo', sa.String(length=255), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('expiry_date', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('slug')
@@ -67,6 +67,7 @@ def upgrade():
     op.create_table('exams',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
+    sa.Column('class_name', sa.String(length=50), nullable=True),
     sa.Column('duration_minutes', sa.Integer(), nullable=False),
     sa.Column('marks_per_question', sa.Integer(), nullable=True),
     sa.Column('negative_marks', sa.Float(), nullable=True),
@@ -76,16 +77,35 @@ def upgrade():
     sa.Column('quiz_code', sa.String(length=20), nullable=True),
     sa.Column('start_date', sa.DateTime(), nullable=False),
     sa.Column('end_date', sa.DateTime(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('published_at', sa.DateTime(), nullable=True),
     sa.Column('school_id', sa.Integer(), nullable=False),
+    sa.Column('show_result_review', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('quiz_code')
     )
+    op.create_table('students',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('student_uid', sa.String(length=64), nullable=True),
+    sa.Column('first_name', sa.String(length=100), nullable=True),
+    sa.Column('last_name', sa.String(length=100), nullable=True),
+    sa.Column('mobile', sa.String(length=20), nullable=True),
+    sa.Column('student_class', sa.String(length=50), nullable=True),
+    sa.Column('roll_number', sa.String(length=50), nullable=True),
+    sa.Column('school_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('students', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_students_mobile'), ['mobile'], unique=False)
+        batch_op.create_index(batch_op.f('ix_students_student_uid'), ['student_uid'], unique=True)
+
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('phone', sa.String(length=20), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('password', sa.String(length=255), nullable=False),
     sa.Column('role', sa.String(length=50), nullable=False),
@@ -95,11 +115,33 @@ def upgrade():
     sa.Column('failed_login_attempts', sa.Integer(), nullable=False),
     sa.Column('is_locked', sa.Boolean(), nullable=True),
     sa.Column('locked_until', sa.DateTime(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
+    op.create_table('ai_generation_requests',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('school_id', sa.Integer(), nullable=False),
+    sa.Column('teacher_id', sa.Integer(), nullable=False),
+    sa.Column('source_type', sa.String(length=20), nullable=False),
+    sa.Column('source_text', sa.Text(), nullable=True),
+    sa.Column('difficulty', sa.String(length=20), nullable=True),
+    sa.Column('question_count', sa.Integer(), nullable=True),
+    sa.Column('source_summary', sa.Text(), nullable=True),
+    sa.Column('generated_questions', sa.JSON(), nullable=True),
+    sa.Column('generation_metadata', sa.JSON(), nullable=True),
+    sa.Column('status', sa.String(length=20), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['teacher_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('ai_generation_requests', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_ai_generation_requests_school_id'), ['school_id'], unique=False)
+        batch_op.create_index(batch_op.f('ix_ai_generation_requests_teacher_id'), ['teacher_id'], unique=False)
+
     op.create_table('questions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('exam_id', sa.Integer(), nullable=False),
@@ -122,21 +164,15 @@ def upgrade():
     sa.Column('exam_id', sa.Integer(), nullable=True),
     sa.Column('score', sa.Float(), nullable=True),
     sa.Column('mobile', sa.String(length=20), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['exam_id'], ['exams.id'], ),
     sa.ForeignKeyConstraint(['student_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('student_attempts',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('student_id', sa.String(length=36), nullable=False),
     sa.Column('exam_id', sa.Integer(), nullable=False),
     sa.Column('school_id', sa.Integer(), nullable=False),
-    sa.Column('first_name', sa.String(length=100), nullable=True),
-    sa.Column('last_name', sa.String(length=100), nullable=True),
-    sa.Column('student_class', sa.String(length=50), nullable=True),
-    sa.Column('roll_number', sa.String(length=50), nullable=True),
-    sa.Column('mobile', sa.String(length=20), nullable=True),
     sa.Column('ip_address', sa.String(length=45), nullable=True),
     sa.Column('start_time', sa.DateTime(), nullable=False),
     sa.Column('end_time', sa.DateTime(), nullable=False),
@@ -151,13 +187,14 @@ def upgrade():
     sa.Column('violation_log', sa.Text(), nullable=True),
     sa.Column('auto_submitted_reason', sa.String(length=255), nullable=True),
     sa.Column('last_violation_time', sa.DateTime(), nullable=True),
+    sa.Column('student_db_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['exam_id'], ['exams.id'], ),
     sa.ForeignKeyConstraint(['school_id'], ['schools.id'], ),
+    sa.ForeignKeyConstraint(['student_db_id'], ['students.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('student_attempts', schema=None) as batch_op:
         batch_op.create_index('idx_exam_submitted_percentage', ['exam_id', 'is_submitted', 'percentage'], unique=False)
-        batch_op.create_index(batch_op.f('ix_student_attempts_student_id'), ['student_id'], unique=False)
 
     op.create_table('student_answers',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -177,13 +214,22 @@ def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('student_answers')
     with op.batch_alter_table('student_attempts', schema=None) as batch_op:
-        batch_op.drop_index(batch_op.f('ix_student_attempts_student_id'))
         batch_op.drop_index('idx_exam_submitted_percentage')
 
     op.drop_table('student_attempts')
     op.drop_table('results')
     op.drop_table('questions')
+    with op.batch_alter_table('ai_generation_requests', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_ai_generation_requests_teacher_id'))
+        batch_op.drop_index(batch_op.f('ix_ai_generation_requests_school_id'))
+
+    op.drop_table('ai_generation_requests')
     op.drop_table('users')
+    with op.batch_alter_table('students', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_students_student_uid'))
+        batch_op.drop_index(batch_op.f('ix_students_mobile'))
+
+    op.drop_table('students')
     op.drop_table('exams')
     op.drop_table('schools')
     op.drop_table('login_logs')
