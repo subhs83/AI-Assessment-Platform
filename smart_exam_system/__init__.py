@@ -54,8 +54,8 @@ def create_app():
     app.register_blueprint(api_superadmin_bp)
     app.register_blueprint(api_public_bp)
 
-    # with app.app_context():
-    #     create_default_super_admin()
+    with app.app_context():
+        create_default_super_admin()
 
     return app
 

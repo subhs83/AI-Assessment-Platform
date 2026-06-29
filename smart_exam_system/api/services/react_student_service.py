@@ -353,7 +353,7 @@ def resolve_attempt(attempt_id, student_db_id=None):
     return attempt
 
 
-def get_student_result(attempt_id, student_db_id=None):
+def get_student_result(attempt_id):
 
     try:
         attempt_id = int(attempt_id)
@@ -364,16 +364,12 @@ def get_student_result(attempt_id, student_db_id=None):
     if not attempt:
         return None
 
-    student = db.session.get(StudentModel, student_db_id)
+    # -----------------------------------------
+    # SOURCE OF TRUTH: Attempt -> StudentModel
+    # -----------------------------------------
+    student = db.session.get(StudentModel, attempt.student_db_id)
     if not student:
         return None
-
-    # --------------------------------------------------
-    # SECURITY CHECK (OK AS IS)
-    # --------------------------------------------------
-    if student_db_id is not None:
-        if attempt.student_db_id != student_db_id:
-            return None
 
     exam = attempt.exam
 
