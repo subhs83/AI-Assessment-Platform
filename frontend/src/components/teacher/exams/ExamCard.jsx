@@ -26,13 +26,15 @@ export default function ExamCard({
   const routes = teacherRoutes(schoolSlug);
   const { showToast } = useToast();
 
-  const handleShareQuiz = () =>
+  const handleShareQuiz = (exam) =>
   shareLink({
     title: exam.title,
     text: "Join this quiz using the link below:",
     url: `${window.location.origin}/school/${schoolSlug}/quiz/${exam.quiz_code}`,
     showToast,
+    successMessage: "Quiz link copied",
   });
+
 
   const statusClass = exam.is_expired
     ? "bg-red-100 text-red-700"
@@ -91,7 +93,7 @@ export default function ExamCard({
 
         {exam.quiz_code && !exam.is_expired && (
             <button
-              onClick={handleShareQuiz}
+              onClick={() => handleShareQuiz(exam)}
               className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
             >
               <Share2 size={14} />

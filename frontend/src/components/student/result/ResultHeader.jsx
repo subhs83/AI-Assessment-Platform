@@ -51,9 +51,9 @@ const ResultHeader = ({
           </div>
 
         </div>
-
+        <div className="flex items-start justify-between gap-4 md:block">
         {/* CENTER BADGES */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2">
 
           {/* Exam Status */}
           <span
@@ -114,6 +114,7 @@ const ResultHeader = ({
 
           </div>
 
+        </div>
         </div>
 
       </div>
