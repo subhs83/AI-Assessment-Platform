@@ -5,14 +5,15 @@ import { useExamActions } from "../../../hooks/useExamActions";
 import { teacherRoutes } from "../../../routes/teacherRoutes";
 import { useToast } from "../../ui/Toast"
 import ConfirmModal from "../../ui/ConfirmModal";
+import { shareLink } from "../../../utils/share";
 
 import {
   Play,
-  Link as LinkIcon,
   FileText,
   BarChart3,
   Trophy,
   Trash2,
+  Share2
 } from "lucide-react";
 
 export default function ExamCard({
@@ -24,6 +25,14 @@ export default function ExamCard({
   const [examToDelete, setExamToDelete] =  useState(null);
   const routes = teacherRoutes(schoolSlug);
   const { showToast } = useToast();
+
+  const handleShareQuiz = () =>
+  shareLink({
+    title: exam.title,
+    text: "Join this quiz using the link below:",
+    url: `${window.location.origin}/school/${schoolSlug}/quiz/${exam.quiz_code}`,
+    showToast,
+  });
 
   const statusClass = exam.is_expired
     ? "bg-red-100 text-red-700"
@@ -81,24 +90,14 @@ export default function ExamCard({
         )}
 
         {exam.quiz_code && !exam.is_expired && (
-          <button
-            onClick={async () => {
-              try {
-                const link = `${window.location.protocol}//${window.location.host}/school/${schoolSlug}/quiz/${exam.quiz_code}`;
-
-                await navigator.clipboard.writeText(link);
-
-                showToast("Quiz link copied", "success");
-              } catch (err) {
-                showToast("Failed to copy link", "error");
-              }
-            }}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
-          >
-             <LinkIcon size={14} />
-            Copy Link
-          </button>
-        )}
+            <button
+              onClick={handleShareQuiz}
+              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+            >
+              <Share2 size={14} />
+              Share Quiz
+            </button>
+          )}
 
 
         {exam.total_questions > 0 && !exam.is_expired && (
