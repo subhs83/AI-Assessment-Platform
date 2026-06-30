@@ -7,9 +7,10 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system dependencies including Tesseract
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     libtesseract-dev \
+    tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages
