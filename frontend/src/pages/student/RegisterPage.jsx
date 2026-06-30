@@ -78,12 +78,12 @@ const RegisterPage = () => {
       
       <BrandHeader schoolName="ABC School" />
 
-      <main className="flex-1 flex items-center justify-center px-4 py-4">
+      <main className="flex-1 px-4 py-6 sm:flex sm:items-center sm:justify-center pb-safe">
         
-        <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/90 p-5 shadow-xl backdrop-blur sm:p-6">
+        <div className="w-full max-w-md rounded-3xl border border-white/60 bg-slate-50 border-slate-200 p-6 shadow-xl backdrop-blur sm:p-6">
           
           {/* Header */}
-          <div className="text-center mb-5">
+          <div className="text-center mb-7">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
               Student Registration
             </h2>
@@ -93,7 +93,7 @@ const RegisterPage = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
 
             {/* Name */}
             <div className="grid grid-cols-2 gap-3">
@@ -155,12 +155,13 @@ const RegisterPage = () => {
             {/* Mobile */}
 
             <input
-              type="tel"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               name="mobile"
               value={form.mobile}
               onChange={handleChange}
               placeholder="Mobile Number"
-              inputMode="numeric"
               autoComplete="tel"
               maxLength={10}
               required
@@ -171,7 +172,7 @@ const RegisterPage = () => {
 
             <button
               type="submit"
-              className="mt-2 flex h-12 w-full items-center justify-center rounded-xl bg-indigo-600 font-semibold text-white transition-all duration-200 hover:bg-indigo-700 active:scale-[0.98]"
+              className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-indigo-600 font-semibold text-white transition-all duration-200 hover:bg-indigo-700 active:scale-[0.98]"
             >
               Start Quiz →
             </button>
