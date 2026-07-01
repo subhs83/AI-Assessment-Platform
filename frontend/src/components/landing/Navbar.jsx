@@ -49,7 +49,9 @@ className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
               : "bg-white/70 backdrop-blur-sm"
           }
         `}
-> <div className="max-w-7xl mx-auto px-6"> <div className="h-20 flex items-center justify-between">
+> <div className="max-w-7xl mx-auto px-6"> 
+  
+  <div className="h-20 flex items-center justify-between">
 
         {/* Logo */}
 
@@ -65,20 +67,19 @@ className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
 
           {/* Uncomment if desired */}
 
-          <div>
-            <div className="text-xl font-extrabold tracking-tight">
-            <span className="text-[#1E3A8A]">INDIA</span>
-            <span className="text-[#0F9D8A]">EDU</span>
-            <span className="text-[#F59E0B]">CORE</span>
+          <div className="text-xl font-extrabold tracking-tight">
+            <span className="text-blue-900">INDIA</span>
+            <span className="text-teal-700">EDU</span>
+            <span className="text-orange-700">CORE</span>
           </div>
 
-            <div className="text-xs text-gray-700">
+            <div className="text-xs text-gray-600">
               AI Powered School Assessments
             </div>
-          </div>
-
-         
+        
         </Link>
+
+        </div>
 
         {/* Desktop Navigation */}
 
@@ -183,7 +184,6 @@ className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
         </button>
 
       </div>
-    </div>
   </header>
 
   {/* Mobile Drawer */}

@@ -87,16 +87,18 @@ export default function LoginPage() {
               <img
                 src={logo}
                 alt="IndiaEduCore"
-                className="h-20 w-auto"
+                className="h-24 w-auto"
               />
 
               <div className="mt-2">
-                <div className="font-bold text-2xl text-blue-700">
-                  IndiaEduCore
+                <div className="text-xl font-extrabold tracking-tight">
+                  <span className="text-blue-900">INDIA</span>
+                  <span className="text-teal-700">EDU</span>
+                  <span className="text-orange-700">CORE</span>
                 </div>
 
-                <div className="text-sm text-gray-500">
-                  AI Assessment Platform
+                <div className="text-sm text-gray-600">
+                  AI Powered School Assessments
                 </div>
               </div>
             </Link>

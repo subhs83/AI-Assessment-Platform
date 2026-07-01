@@ -123,7 +123,7 @@ const HeroSection = ({
               </p>
 
               <p className="text-lg font-bold text-slate-900">
-                <Counter end={result.score} /> / {result.total_marks}
+                 {result.score} / {result.total_marks}
               </p>
 
             </div>
