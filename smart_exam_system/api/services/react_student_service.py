@@ -122,7 +122,7 @@ def clear_student_identity(response=None):
             expires=0
         )
 
-    return response
+    return response 
 
 
 def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
@@ -134,7 +134,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
 
 
     # ==================================================
-    # 🔥 DUPLICATE STUDENT CHECK (INSERT HERE)
+    # 🔥 DUPLICATE STUDENT CHECK (INSERT HERE) 
     # ==================================================
 
     existing_student = find_existing_student(
@@ -169,23 +169,44 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         roll_number=roll_number,
         mobile=mobile,
     )
-
-    student_db_id = student.id
-
+    set_student_identity(student.id)
     # --------------------------------------------------
     # 2. CHECK EXISTING ATTEMPTS (NEW LOGIC)
     # --------------------------------------------------
+    exam = db.session.get(ExamModel, exam_id)
+
+    return _create_attempt(
+        exam=exam,
+        student_db_id=student.id,
+        ip_address=ip_address,
+    )
+
+def _create_attempt(
+    exam,
+    student_db_id,
+    ip_address=None,
+):
+    """
+    Creates a brand new attempt for an existing student.
+    Handles:
+      - max attempts
+      - attempt numbering
+      - question randomization
+      - option randomization
+    """
+
     previous_attempts = AttemptModel.query.filter_by(
-        exam_id=exam_id,
+        exam_id=exam.id,
         student_db_id=student_db_id
     ).count()
 
-    exam = db.session.get(ExamModel, exam_id)
-
-    if exam.max_attempts_per_student and previous_attempts >= exam.max_attempts_per_student:
+    if (
+        exam.max_attempts_per_student
+        and previous_attempts >= exam.max_attempts_per_student
+    ):
         latest_attempt = (
             AttemptModel.query.filter_by(
-                exam_id=exam_id,
+                exam_id=exam.id,
                 student_db_id=student_db_id
             )
             .order_by(AttemptModel.id.desc())
@@ -201,10 +222,10 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
 
     attempt_number = previous_attempts + 1
 
-    # --------------------------------------------------
-    # 3. QUESTIONS
-    # --------------------------------------------------
-    questions = QuestionModel.query.filter_by(exam_id=exam_id).all()
+    questions = QuestionModel.query.filter_by(
+        exam_id=exam.id
+    ).all()
+
     if not questions:
         return {
             "success": False,
@@ -217,6 +238,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
     question_order = json.dumps(question_ids)
 
     option_order_map = {}
+
     for q in questions:
         options = ["A", "B", "C", "D"]
         random.shuffle(options)
@@ -224,39 +246,53 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
 
     option_order = json.dumps(option_order_map)
 
-    # --------------------------------------------------
-    # 4. CREATE ATTEMPT (HYBRID MODE)
-    # --------------------------------------------------
-    new_attempt = AttemptModel(
-    exam_id=exam_id,
-    school_id=school_id,
+    attempt = AttemptModel(
+        exam_id=exam.id,
+        school_id=exam.school_id,
+        student_db_id=student_db_id,
+        ip_address=ip_address,
+        start_time=datetime.utcnow(),
+        end_time=None,
+        attempt_number=attempt_number,
+        question_order=question_order,
+        option_order=option_order,
+    )
 
-    # ONLY REFERENCES (NO DUPLICATION)
-    student_db_id=student_db_id,
-
-    ip_address=ip_address,
-    start_time=datetime.utcnow(),
-    end_time=None,
-    attempt_number=attempt_number,
-
-    question_order=question_order,
-    option_order=option_order,
-)
-
-    db.session.add(new_attempt)
+    db.session.add(attempt)
     db.session.commit()
 
-    # --------------------------------------------------
-    # 5. RESPONSE
-    # --------------------------------------------------
     return {
         "success": True,
         "message": "Exam started successfully",
-        "attempt_id": new_attempt.id,
+        "attempt_id": attempt.id,
         "student_id": student_db_id,
         "attempt_number": attempt_number,
         "question_count": len(question_ids),
     }
+
+def try_new_set(
+    exam_id,
+    student_db_id,
+    ip_address=None,
+):
+    """
+    Creates a new attempt for an already identified student.
+    Used by the 'Try New Set' button.
+    """
+
+    exam = db.session.get(ExamModel, exam_id)
+
+    if not exam:
+        return {
+            "success": False,
+            "message": "Exam not found"
+        }, 404
+
+    return _create_attempt(
+        exam=exam,
+        student_db_id=student_db_id,
+        ip_address=ip_address,
+    )
 
 def get_attempt_state(exam_id, school_id):
     """
