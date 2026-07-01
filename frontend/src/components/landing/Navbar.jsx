@@ -66,12 +66,14 @@ className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
           {/* Uncomment if desired */}
 
           <div>
-            <div className="font-bold text-xl text-blue-700">
-              IndiaEduCore
-            </div>
+            <div className="text-xl font-extrabold tracking-tight">
+            <span className="text-[#1E3A8A]">INDIA</span>
+            <span className="text-[#0F9D8A]">EDU</span>
+            <span className="text-[#F59E0B]">CORE</span>
+          </div>
 
-            <div className="text-xs text-gray-500">
-              AI Assessment Platform
+            <div className="text-xs text-gray-700">
+              AI Powered School Assessments
             </div>
           </div>
 
