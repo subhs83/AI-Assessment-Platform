@@ -79,11 +79,11 @@ export default function Navbar({ onToggleSidebar }) {
                       {/* Uncomment if desired */}
             
                       <div className="hidden lg:block leading-tight">
-                       <div className="text-xl font-extrabold tracking-tight">
-                        <span className="text-blue-900">INDIA</span>
-                        <span className="text-teal-700">EDU</span>
-                        <span className="text-orange-700">CORE</span>
-                      </div>
+                        <div className="text-xl font-extrabold tracking-tight">
+                          <span className="text-slate-900">INDIA</span>
+                          <span className="text-teal-600">EDU</span>
+                          <span className="text-orange-700">CORE</span>
+                        </div>
             
                         <div className="text-xs text-gray-600">
                           AI Powered School Assessments
