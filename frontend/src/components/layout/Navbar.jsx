@@ -82,7 +82,7 @@ export default function Navbar({ onToggleSidebar }) {
                         <div className="text-xl font-extrabold tracking-tight">
                           <span className="text-slate-900">INDIA</span>
                           <span className="text-teal-600">EDU</span>
-                          <span className="text-orange-700">CORE</span>
+                          <span className="text-orange-600">CORE</span>
                         </div>
             
                         <div className="text-xs text-gray-600">
