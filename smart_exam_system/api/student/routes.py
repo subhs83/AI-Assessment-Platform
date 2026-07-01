@@ -19,7 +19,6 @@ from smart_exam_system.api.services.react_student_service import (
     get_exam_by_quiz_code,
     get_student_identity,
     get_submitted_attempts,
-    get_attempt_state,
     get_used_attempt_count,
     get_max_attempts,
     get_total_questions,
@@ -79,11 +78,10 @@ def get_attempt_state_api(school_slug, quiz_code):
 
         # 3. Get attempts
         attempts = get_submitted_attempts(exam.id, student_id)
-        attempt_state = get_attempt_state(exam, attempts)
 
-        latest_attempt = attempt_state.get("latest_attempt")
+        latest_attempt = attempts[0] if attempts else None
 
-        used_attempts = get_used_attempt_count(exam.id, student_id)
+        used_attempts = len(attempts)
         max_attempts = get_max_attempts(exam)
 
         # ----------------------------
@@ -142,7 +140,7 @@ def get_attempt_state_api(school_slug, quiz_code):
             "error": None
         })
 
-    except Exception:
+    except Exception as e:
         logger.exception("Failed to process request")
         return jsonify({
             "success": False,

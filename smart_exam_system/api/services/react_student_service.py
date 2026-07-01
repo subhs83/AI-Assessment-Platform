@@ -170,6 +170,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         mobile=mobile,
     )
     set_student_identity(student.id)
+    student_db_id = student.id
     # --------------------------------------------------
     # 2. CHECK EXISTING ATTEMPTS (NEW LOGIC)
     # --------------------------------------------------
@@ -294,69 +295,6 @@ def try_new_set(
         ip_address=ip_address,
     )
 
-def get_attempt_state(exam_id, school_id):
-    """
-    Returns current UI state:
-    - register
-    - resume
-    - result
-    - new_attempt
-    """
-
-    # --------------------------------------------------
-    # 1. NEW IDENTITY SOURCE
-    # --------------------------------------------------
-    student_db_id = get_student_identity()
-
-    if not student_db_id:
-        return {
-            "state": "register"
-        }
-
-    # --------------------------------------------------
-    # 2. GET STUDENT ATTEMPTS (NEW LOGIC)
-    # --------------------------------------------------
-    attempts = AttemptModel.query.filter_by(
-        exam_id=exam_id,
-        student_db_id=student_db_id
-    ).order_by(AttemptModel.id.asc()).all()
-
-    if not attempts:
-        return {
-            "state": "register"
-        }
-
-    latest_attempt = attempts[-1]
-
-    exam = db.session.get(ExamModel, exam_id)
-
-    # --------------------------------------------------
-    # 3. ACTIVE ATTEMPT CHECK
-    # --------------------------------------------------
-    if latest_attempt.end_time is None:
-        return {
-            "state": "resume",
-            "attempt_id": latest_attempt.id
-        }
-
-    # --------------------------------------------------
-    # 4. MAX ATTEMPTS CHECK
-    # --------------------------------------------------
-    attempt_count = len(attempts)
-
-    if exam.max_attempts_per_student and attempt_count >= exam.max_attempts_per_student:
-        return {
-            "state": "result",
-            "attempt_id": latest_attempt.id
-        }
-
-    # --------------------------------------------------
-    # 5. DEFAULT → NEW ATTEMPT ALLOWED
-    # --------------------------------------------------
-    return {
-        "state": "new_attempt",
-        "attempt_number": attempt_count + 1
-    }
 
 
 def resolve_attempt(attempt_id, student_db_id=None):
