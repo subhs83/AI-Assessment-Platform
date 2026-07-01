@@ -98,7 +98,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="text-sm text-gray-600 uppercase">
-                  AI Powered Assessment Plateform
+                  AI Powered Assessment Platform
                 </div>
               </div>
             </Link>

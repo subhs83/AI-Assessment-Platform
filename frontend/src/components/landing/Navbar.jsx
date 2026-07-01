@@ -72,7 +72,7 @@ return (
           </div>
 
           <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
-            AI Powered Assessment Plateform
+            AI Powered Assessment Platform
           </p>
 
         </div>
