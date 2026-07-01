@@ -194,11 +194,7 @@ def start_attempt(school_slug, quiz_code):
                 "error": "missing_body"
             }), 400
 
-        mobile = data.get("mobile")
-        roll_number = data.get("roll_number")
-        student_class = data.get("student_class")
-
-        if not mobile:
+        if not data.get("mobile"):
             return jsonify({
                 "success": False,
                 "message": "Mobile number is required",
@@ -206,54 +202,77 @@ def start_attempt(school_slug, quiz_code):
             }), 400
 
         # ==================================================
-        # 3. CALL SERVICE (NO STUDENT LOGIC HERE)
+        # 3. Start Student Attempt
         # ==================================================
         result = start_student_attempt(
             exam_id=exam.id,
             school_id=exam.school_id,
             form_data=data,
-            ip_address=request.remote_addr
+            ip_address=request.remote_addr,
         )
 
         # ==================================================
-        # 4. HANDLE RESPONSE TYPES
+        # 4. Service returned (data, status_code)
         # ==================================================
-
         if isinstance(result, tuple):
+
             result_data, status_code = result
-            return jsonify(result_data), status_code
 
+            response = jsonify(result_data)
+
+            if result_data.get("student_db_id"):
+                set_student_identity(
+                    result_data["student_db_id"],
+                    response,
+                )
+
+            return response, status_code
+
+        # ==================================================
+        # 5. Existing student → Redirect to Result
+        # ==================================================
+        if result.get("status") == "redirect_result":
+
+            response = jsonify({
+                "success": True,
+                "status": "redirect_result",
+                "attempt_id": result.get("attempt_id"),
+                "student_db_id": result.get("student_db_id"),
+            })
+
+            set_student_identity(
+                result["student_db_id"],
+                response,
+            )
+
+            return response, 200
+
+        # ==================================================
+        # 6. New Attempt Started
+        # ==================================================
         response = jsonify({
-        "success": True,
-        "status": "redirect_result",
-        "attempt_id": result.get("attempt_id"),
-        "student_db_id": result.get("student_db_id"),
-    })
+            "success": True,
+            "status": "started",
+            "data": {
+                "attempt_id": result.get("attempt_id"),
+                "student_db_id": result.get("student_db_id"),
+            }
+        })
 
-    set_student_identity(result.get("student_db_id"), response)
+        set_student_identity(
+            result["student_db_id"],
+            response,
+        )
 
-    return response, 200
-
-        response = jsonify({
-        "success": True,
-        "status": "started",
-        "data": {
-            "attempt_id": result.get("attempt_id"),
-            "student_db_id": result.get("student_db_id"),
-        }
-    })
-
-    set_student_identity(result.get("student_db_id"), response)
-
-    return response, 201
+        return response, 201
 
     except Exception:
         logger.exception("Failed to process request")
+
         return jsonify({
             "success": False,
             "state": "error",
             "message": "Server Error",
-
         }), 500
 
 @api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/question/<int:q_index>", methods=["GET"])
