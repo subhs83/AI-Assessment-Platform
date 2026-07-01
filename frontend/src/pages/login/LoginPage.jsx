@@ -97,7 +97,7 @@ export default function LoginPage() {
                   <span className="text-orange-700">CORE</span>
                 </div>
 
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 uppercase">
                   AI Powered School Assessments
                 </div>
               </div>
