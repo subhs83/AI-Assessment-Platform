@@ -60,7 +60,7 @@ return (
         <img
           src={logo}
           alt="INDIAEDUCORE"
-          className="h-18 w-auto object-contain"
+          className="h-16 w-auto object-contain"
         />
 
         <div className="hidden sm:block leading-tight">
