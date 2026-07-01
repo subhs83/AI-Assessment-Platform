@@ -17,15 +17,19 @@ export default function QuizInitPage() {
         );
 
         const data = res.data?.data;
+        console.log("STATE RESPONSE:", res.data);
+        console.log("STATE DATA:", data);
 
         if (!data) return;
 
         if (data.state === "register") {
+          console.log("Navigate -> Register");
           navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
           return;
         }
 
         if (data.state === "quiz") {
+         
           useExamStore.getState().reset();
           initSession({
             attempt_id: data.attempt_id,
@@ -33,13 +37,14 @@ export default function QuizInitPage() {
             schoolSlug,
             total_questions: data.total_questions,
           });
-
+          console.log("Navigate -> Quiz", data.attempt_id);
           navigate("/exam");
           return;
         }
 
         if (data.state === "result") {
-          navigate(`/result/${data.attempt_id}`);
+          console.log("Navigate -> Result", data.attempt_id);
+          navigate(`/school/${schoolSlug}/result/${data.attempt_id}`);
           return;
         }
 
