@@ -86,7 +86,7 @@ export default function Navbar({ onToggleSidebar }) {
                         </div>
             
                         <div className="text-xs text-gray-600">
-                          AI Powered School Assessments
+                          AI Powered Assessment Plateform
                         </div>
                       </div>
             
