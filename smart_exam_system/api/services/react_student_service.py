@@ -1,4 +1,4 @@
-from flask import session,request
+from flask import session,request,current_app
 from uuid import uuid4
 from sqlalchemy import func
 from smart_exam_system.extensions import db
@@ -89,8 +89,21 @@ def find_or_create_student(
         mobile,
     )
 
-def set_student_identity(student_db_id):
+
+
+def set_student_identity(student_db_id, response):
     session["student_db_id"] = student_db_id
+
+    response.set_cookie(
+        "student_db_id",
+        str(student_db_id),
+        max_age=60 * 60 * 24 * 365,   # 1 year
+        httponly=True,
+        samesite="Lax",
+        secure=not current_app.debug,
+    )
+
+    return response
 
 
 def get_student_identity():
@@ -99,30 +112,22 @@ def get_student_identity():
     if not student_db_id:
         student_db_id = request.cookies.get("student_db_id")
 
-    if not student_db_id:
-        return None
-
-    try:
-        student_db_id = int(student_db_id)
-    except:
-        return None
-
-    session["student_db_id"] = student_db_id
+        if student_db_id:
+            try:
+                student_db_id = int(student_db_id)
+                session["student_db_id"] = student_db_id
+            except ValueError:
+                return None
 
     return student_db_id
 
 
-def clear_student_identity(response=None):
+def clear_student_identity(response):
     session.pop("student_db_id", None)
 
-    if response:
-        response.set_cookie(
-            "student_db_id",
-            "",
-            expires=0
-        )
+    response.delete_cookie("student_db_id")
 
-    return response 
+    return response
 
 
 def start_student_attempt(exam_id, school_id, form_data, ip_address=None):

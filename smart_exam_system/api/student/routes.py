@@ -18,6 +18,7 @@ from smart_exam_system.api.services.react_student_service import (
     get_student_result,
     get_exam_by_quiz_code,
     get_student_identity,
+    set_student_identity,
     get_submitted_attempts,
     get_used_attempt_count,
     get_max_attempts,
@@ -222,22 +223,29 @@ def start_attempt(school_slug, quiz_code):
             result_data, status_code = result
             return jsonify(result_data), status_code
 
-        if result.get("status") == "redirect_result":
-            return jsonify({
-                "success": True,
-                "status": "redirect_result",
-                "attempt_id": result.get("attempt_id"),
-                "student_db_id": result.get("student_db_id")
-            }), 200
+        response = jsonify({
+        "success": True,
+        "status": "redirect_result",
+        "attempt_id": result.get("attempt_id"),
+        "student_db_id": result.get("student_db_id"),
+    })
 
-        return jsonify({
-            "success": True,
-            "status": "started",
-            "data": {
-                "attempt_id": result.get("attempt_id"),
-                "student_db_id": result.get("student_db_id")
-            }
-        }), 201
+    set_student_identity(result.get("student_db_id"), response)
+
+    return response, 200
+
+        response = jsonify({
+        "success": True,
+        "status": "started",
+        "data": {
+            "attempt_id": result.get("attempt_id"),
+            "student_db_id": result.get("student_db_id"),
+        }
+    })
+
+    set_student_identity(result.get("student_db_id"), response)
+
+    return response, 201
 
     except Exception:
         logger.exception("Failed to process request")
