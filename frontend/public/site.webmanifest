@@ -1,7 +1,7 @@
 {
   "name": "INDIAEDUCORE",
   "short_name": "INDIAEDUCORE",
-  "description": "AI Powered School Assessments",
+  "description": "AI Powered Assessment Platform",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
