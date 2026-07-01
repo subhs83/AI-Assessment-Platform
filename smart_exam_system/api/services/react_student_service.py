@@ -14,8 +14,22 @@ from smart_exam_system.models import (
 import  uuid, json, random
 
 
-def normalize_text(value):
-    return " ".join((value or "").split())
+def normalize_text(value, field=None):
+    if value is None:
+        return ""
+
+    value = str(value).strip()
+
+    if field == "name":
+        return value.title()
+
+    if field == "class":
+        return value.upper()
+
+    if field == "mobile":
+        return "".join(ch for ch in value if ch.isdigit())
+
+    return value
 
 def find_student(
     school_id,
