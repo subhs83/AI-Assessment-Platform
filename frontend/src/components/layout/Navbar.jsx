@@ -73,7 +73,7 @@ export default function Navbar({ onToggleSidebar }) {
                       <img
                         src={logo}
                         alt="IndiaEduCore"
-                        className="h-20 w-auto object-contain"
+                        className="h-14 w-auto object-contain"
                       />
             
                       {/* Uncomment if desired */}

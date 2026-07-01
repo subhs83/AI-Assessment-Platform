@@ -62,15 +62,15 @@ className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
           <img
             src={logo}
             alt="IndiaEduCore"
-            className="h-20 w-auto object-contain"
+            className="h-18 w-auto object-contain"
           />
 
           {/* Uncomment if desired */}
 
           <div className="text-xl font-extrabold tracking-tight">
             <span className="text-blue-900">INDIA</span>
-            <span className="text-teal-700">EDU</span>
-            <span className="text-orange-700">CORE</span>
+            <span className="text-teal-600">EDU</span>
+            <span className="text-orange-600">CORE</span>
           </div>
 
             <div className="text-xs text-gray-600">

@@ -87,7 +87,7 @@ export default function LoginPage() {
               <img
                 src={logo}
                 alt="IndiaEduCore"
-                className="h-24 w-auto"
+                className="h-20 w-auto"
               />
 
               <div className="mt-2">
