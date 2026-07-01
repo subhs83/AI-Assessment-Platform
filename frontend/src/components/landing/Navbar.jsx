@@ -42,149 +42,136 @@ const navLinkClass = ({ isActive }) =>
 return (
 <>
 <header
-className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300
-          ${
-            scrolled
-              ? "bg-white/90 backdrop-blur-md border-b shadow-sm"
-              : "bg-white/70 backdrop-blur-sm"
-          }
-        `}
-> <div className="max-w-7xl mx-auto px-6"> 
-  
-  <div className="h-20 flex items-center justify-between">
+  className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    scrolled
+      ? "bg-white/90 backdrop-blur-md border-b shadow-sm"
+      : "bg-white/70 backdrop-blur-sm"
+  }`}
+>
+  <div className="max-w-7xl mx-auto px-6">
 
-        {/* Logo */}
+    <div className="h-20 flex items-center justify-between">
 
-        <Link
-          to="/"
-          className="flex items-center gap-3"
-        >
-          <img
-            src={logo}
-            alt="IndiaEduCore"
-            className="h-18 w-auto object-contain"
-          />
+      {/* ================= Logo ================= */}
+      <Link
+        to="/"
+        className="flex items-center gap-3 flex-shrink-0"
+      >
+        <img
+          src={logo}
+          alt="INDIAEDUCORE"
+          className="h-14 w-auto object-contain"
+        />
 
-          {/* Uncomment if desired */}
+        <div className="hidden sm:block leading-tight">
 
-          <div className="text-xl font-extrabold tracking-tight">
+          <div className="text-2xl font-extrabold tracking-tight whitespace-nowrap">
             <span className="text-blue-900">INDIA</span>
             <span className="text-teal-600">EDU</span>
             <span className="text-orange-600">CORE</span>
           </div>
 
-            <div className="text-xs text-gray-600">
-              AI Powered School Assessments
-            </div>
-        
+          <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+            AI Powered School Assessments
+          </p>
+
+        </div>
+      </Link>
+
+      {/* ================= Desktop Navigation ================= */}
+      <nav
+        className="hidden lg:flex items-center gap-2"
+        onMouseLeave={() => setHovered(null)}
+      >
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            onMouseEnter={() => setHovered(link.name)}
+            className={({ isActive }) =>
+              `relative px-4 py-2 rounded-full font-medium transition-colors ${
+                isActive
+                  ? "text-blue-700"
+                  : hovered === link.name
+                  ? "text-gray-700"
+                  : "text-gray-700"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {(hovered === link.name || isActive) && (
+                  <motion.div
+                    layoutId="navbar-pill"
+                    className="absolute inset-0 rounded-full bg-blue-50 border-2 border-blue-700"
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                    }}
+                  />
+                )}
+
+                <span className="relative z-10">
+                  {link.name}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* ================= Desktop CTA ================= */}
+      <div className="hidden lg:flex items-center gap-3">
+
+        <Link
+          to="/login"
+          className="
+            px-5 py-2.5
+            rounded-xl
+            border border-slate-200
+            bg-gradient-to-r
+            from-slate-100
+            to-blue-50
+            text-slate-700
+            font-medium
+            hover:shadow-md
+            transition-all
+          "
+        >
+          Login
         </Link>
 
-        </div>
-
-        {/* Desktop Navigation */}
-
-        <nav
-          className="hidden lg:flex items-center gap-2"
-          onMouseLeave={() => setHovered(null)}
+        <Link
+          to="/demo"
+          className="
+            px-5 py-2.5
+            rounded-xl
+            bg-blue-600
+            text-white
+            font-medium
+            shadow-sm
+            hover:bg-blue-700
+            transition
+          "
         >
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              onMouseEnter={() => setHovered(link.name)}
-              className={({ isActive }) =>
-                `relative px-4 py-2 rounded-full font-medium transition-colors ${
-                  isActive
-                    ? "text-blue-700"
-                    : hovered === link.name
-                    ? "text-gray-700"
-                    : "text-gray-700"
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {(hovered === link.name || isActive) && (
-                    <motion.div
-                        layoutId="navbar-pill"
-                        className="
-                          absolute
-                          inset-0
-                          rounded-full
-                          bg-blue-50
-                          border-2
-                          border-blue-700
-                        "
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 30,
-                        }}
-                      />
-                  )}
-
-                  <span className="relative z-10">
-                    {link.name}
-                  </span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Desktop CTA */}
-
-        <div className="hidden lg:flex items-center gap-3">
-
-          <Link
-              to="/login"
-              className="
-                  px-5
-                  py-2.5
-                  rounded-xl
-                  bg-gradient-to-r
-                  from-slate-100
-                  to-blue-50
-                  text-gray-700
-                  font-medium
-                  border
-                  border-gray-200
-                  hover:shadow-md
-                  transition-all
-                  duration-300
-                  "
-            >
-              Login
-            </Link>
-
-          <Link
-            to="/demo"
-            className="
-              px-5 py-2.5
-              rounded-xl
-              bg-blue-600
-              text-white
-              hover:bg-blue-700
-              font-medium
-              shadow-sm
-              transition
-            "
-          >
-            Book Free Demo
-          </Link>
-        </div>
-
-        {/* Mobile Menu Button */}
-
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="lg:hidden"
-        >
-          <Menu size={28} />
-        </button>
+          Book Free Demo
+        </Link>
 
       </div>
-  </header>
+
+      {/* ================= Mobile Menu ================= */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden rounded-lg p-2 hover:bg-slate-100 transition"
+      >
+        <Menu size={28} />
+      </button>
+
+    </div>
+
+  </div>
+</header>
 
   {/* Mobile Drawer */}
 
