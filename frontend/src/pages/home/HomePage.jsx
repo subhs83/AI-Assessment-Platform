@@ -36,7 +36,7 @@ export default function HomePage() {
           structuredData={organizationSchema}
         />
       <SEO
-       title="IndiaEduCore—AI Powered Assessment Platform"
+       title="IndiaEduCore-AI Powered Assessment Platform"
         description="Generate questions from PDFs, images, topics and text. Conduct exams, analyze performance and simplify assessment workflows."
         keywords="AI assessment platform, AI question generator, school exam software, online exams, IndiaEduCore"
         url="/"
