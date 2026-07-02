@@ -188,8 +188,6 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         roll_number=roll_number,
         mobile=mobile,
     )
-    set_student_identity(student.id)
-    student_db_id = student.id
     # --------------------------------------------------
     # 2. CHECK EXISTING ATTEMPTS (NEW LOGIC)
     # --------------------------------------------------
