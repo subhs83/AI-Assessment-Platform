@@ -235,7 +235,7 @@ def _create_attempt(
             "success": False,
             "message": "Max attempts reached",
             "attempt_id": latest_attempt.id if latest_attempt else None,
-            "student_id": student_db_id,
+            "student_db_id": student_db_id,
         }, 403
 
     attempt_number = previous_attempts + 1
@@ -283,7 +283,7 @@ def _create_attempt(
         "success": True,
         "message": "Exam started successfully",
         "attempt_id": attempt.id,
-        "student_id": student_db_id,
+        "student_db_id": student_db_id,
         "attempt_number": attempt_number,
         "question_count": len(question_ids),
     }
