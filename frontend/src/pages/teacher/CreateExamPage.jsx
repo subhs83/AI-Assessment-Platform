@@ -35,7 +35,7 @@ export default function CreateExamPage() {
   marks: 1,
   negative: 0,
   max_attempts: 1,
-  exam_mode: "open",
+  registration_mode: "open",
   show_result_review: true,
   start_date: "",
   end_date: "",
@@ -198,9 +198,9 @@ export default function CreateExamPage() {
 
                 <input
                   type="radio"
-                  name="exam_mode"
+                  name="registration_mode"
                   value="open"
-                  checked={form.exam_mode === "open"}
+                  checked={form.registration_mode === "open"}
                   onChange={handleChange}
                   className="mt-1"
                 />
@@ -221,9 +221,9 @@ export default function CreateExamPage() {
 
                 <input
                   type="radio"
-                  name="exam_mode"
+                  name="registration_mode"
                   value="verified"
-                  checked={form.exam_mode === "verified"}
+                  checked={form.registration_mode === "verified"}
                   onChange={handleChange}
                   className="mt-1"
                 />

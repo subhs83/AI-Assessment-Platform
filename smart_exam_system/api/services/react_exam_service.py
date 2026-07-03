@@ -276,7 +276,7 @@ def create_exam(
     max_attempts,
     start_date,
     end_date,
-    exam_mode="open",
+    registration_mode="open",
     show_result_review=True
     ):
     try:
@@ -292,7 +292,7 @@ def create_exam(
         if max_attempts <= 0:
             return False, "Max attempts must be at least 1."
         
-        if exam_mode not in ("open", "verified"):
+        if registration_mode not in ("open", "verified"):
             return False, "Invalid exam mode."
 
         exam = ExamModel(
@@ -302,7 +302,7 @@ def create_exam(
             marks_per_question=marks,
             negative_marks=negative,
             max_attempts_per_student=max_attempts,
-            exam_mode=exam_mode,      # ✅ NEW
+            registration_mode=registration_mode,      # ✅ NEW
             school_id=school_id,
             teacher_id=teacher_id,
             start_date=start_date,
@@ -343,13 +343,13 @@ def extract_exam_form_data(form_data):
         form_data.get("end_date")
     )
 
-    exam_mode = (
-        form_data.get("exam_mode") or "open"
+    registration_mode = (
+        form_data.get("registration_mode") or "open"
     ).strip().lower()
 
-    if exam_mode not in ("open", "verified"):
+    if registration_mode not in ("open", "verified"):
         raise ValueError(
-            "Invalid exam mode."
+            "Invalid registration mode."
         )
 
     if not start_date or not end_date:
@@ -387,7 +387,7 @@ def extract_exam_form_data(form_data):
         ),
 
         # ✅ NEW
-        "exam_mode": exam_mode,
+        "registration_mode": registration_mode,
 
         "max_attempts": int(
             form_data.get("max_attempts") or 1
