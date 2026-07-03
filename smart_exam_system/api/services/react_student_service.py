@@ -191,7 +191,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
     # --------------------------------------------------
     # 2. FIND / CREATE STUDENT
     # --------------------------------------------------
-    if exam.exam_mode == "verified":
+    if exam.registration_mode == "verified":
 
         student = find_student(
             school_id=school_id,
