@@ -24,6 +24,10 @@ class ExamModel(db.Model):
 
     quiz_code = db.Column(db.String(20), unique=True, nullable=True)
 
+     # ✅ NEW Exam Mode
+
+    registration_mode = db.Column( db.String(20), nullable=False,  default="open")
+
     # ✅ NEW SCHEDULING FIELDS
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)

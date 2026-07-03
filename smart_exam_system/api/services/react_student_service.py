@@ -178,21 +178,51 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
                 "student_db_id": existing_student.id
             }, 200
     # --------------------------------------------------
-    # 1. STUDENT (NEW SOURCE OF TRUTH)
-    # --------------------------------------------------
-    student = find_or_create_student(
-        school_id=school_id,
-        first_name=first_name,
-        last_name=last_name,
-        student_class=student_class,
-        roll_number=roll_number,
-        mobile=mobile,
-    )
-    # --------------------------------------------------
-    # 2. CHECK EXISTING ATTEMPTS (NEW LOGIC)
+    # 1. LOAD EXAM
     # --------------------------------------------------
     exam = db.session.get(ExamModel, exam_id)
 
+    if not exam:
+        return {
+            "success": False,
+            "message": "Exam not found."
+        }, 404
+
+    # --------------------------------------------------
+    # 2. FIND / CREATE STUDENT
+    # --------------------------------------------------
+    if exam.exam_mode == "verified":
+
+        student = find_student(
+            school_id=school_id,
+            first_name=first_name,
+            last_name=last_name,
+            student_class=student_class,
+            roll_number=roll_number,
+        )
+
+        if not student:
+            return {
+                "success": False,
+                "message": (
+                    "Student details not found. "
+                    "Please contact your teacher."
+                )
+            }, 403
+
+    else:
+        student = find_or_create_student(
+            school_id=school_id,
+            first_name=first_name,
+            last_name=last_name,
+            student_class=student_class,
+            roll_number=roll_number,
+            mobile=mobile,
+        )
+
+    # --------------------------------------------------
+    # 3. CREATE ATTEMPT
+    # --------------------------------------------------
     return _create_attempt(
         exam=exam,
         student_db_id=student.id,

@@ -1,11 +1,12 @@
 import {
   Home,
-  PlusCircle,
   FileText,
-  Upload,
-  LogOut,
+  PlusCircle,
   Bot,
+  Upload,
   History,
+  Users,
+  LogOut,
 } from "lucide-react";
 
 export const getTeacherMenu = (schoolSlug) => [
@@ -17,8 +18,13 @@ export const getTeacherMenu = (schoolSlug) => [
   },
 
   // =========================
-  // EXAM SETUP
+  // ASSESSMENT
   // =========================
+  {
+    type: "section",
+    label: "Assessment",
+  },
+
   {
     label: "Create Exam",
     icon: PlusCircle,
@@ -26,12 +32,19 @@ export const getTeacherMenu = (schoolSlug) => [
     end: true,
   },
 
+  {
+    label: "Manage Exams",
+    icon: FileText,
+    path: `/school/${schoolSlug}/teacher/exams`,
+    end: true,
+  },
+
   // =========================
-  // QUESTION CREATION
+  // QUESTION BANK
   // =========================
   {
     type: "section",
-    label: "Question Creation",
+    label: "Question Bank",
   },
 
   {
@@ -56,15 +69,23 @@ export const getTeacherMenu = (schoolSlug) => [
   },
 
   // =========================
-  // EXAM MANAGEMENT
+  // STUDENTS
   // =========================
   {
-    label: "Manage Exams",
-    icon: FileText,
-    path: `/school/${schoolSlug}/teacher/exams`,
+    type: "section",
+    label: "Students",
+  },
+
+  {
+    label: "Students",
+    icon: Users,
+    path: `/school/${schoolSlug}/teacher/students`,
     end: true,
   },
 
+  // =========================
+  // ACCOUNT
+  // =========================
   {
     type: "divider",
   },

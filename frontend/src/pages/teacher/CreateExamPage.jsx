@@ -35,6 +35,7 @@ export default function CreateExamPage() {
   marks: 1,
   negative: 0,
   max_attempts: 1,
+  exam_mode: "open",
   show_result_review: true,
   start_date: "",
   end_date: "",
@@ -146,6 +147,8 @@ export default function CreateExamPage() {
               />
             </div>
 
+
+
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
                 <Percent size={14} />
@@ -180,6 +183,83 @@ export default function CreateExamPage() {
                 className="w-full border rounded-lg px-3 py-2"
               />
             </div>
+            
+            {/* ================= EXAM MODE ================= */}
+
+          <div className="border rounded-lg p-5">
+
+            <h3 className="text-sm font-semibold mb-4">
+              Registration Mode
+            </h3>
+
+            <div className="space-y-3">
+
+              <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500">
+
+                <input
+                  type="radio"
+                  name="exam_mode"
+                  value="open"
+                  checked={form.exam_mode === "open"}
+                  onChange={handleChange}
+                  className="mt-1"
+                />
+
+                <div>
+                  <p className="font-medium">
+                    Open Registration
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    Any student can register and take this quiz.
+                  </p>
+                </div>
+
+              </label>
+
+              <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500">
+
+                <input
+                  type="radio"
+                  name="exam_mode"
+                  value="verified"
+                  checked={form.exam_mode === "verified"}
+                  onChange={handleChange}
+                  className="mt-1"
+                />
+
+                <div>
+                  <p className="font-medium">
+                    Verified Students Only
+                  </p>
+
+                  <p className="text-sm text-gray-500">
+                    Only students already added by the school can take this quiz.
+                  </p>
+                </div>
+
+              </label>
+
+            </div>
+
+          </div>
+
+            {/* ================= TOGGLE ================= */}
+          <label className="flex items-center gap-3 text-sm">
+
+            <input
+              type="checkbox"
+              name="show_result_review"
+              checked={form.show_result_review}
+              onChange={handleChange}
+              className="w-4 h-4"
+            />
+
+            <span className="text-sm">
+              Allow Detailed Result Review
+            </span>
+
+          </label>
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
@@ -199,6 +279,8 @@ export default function CreateExamPage() {
             </div>
 
           </div>
+
+          
 
           {/* ================= DATES ================= */}
           <div className="grid md:grid-cols-2 gap-4">
@@ -237,22 +319,7 @@ export default function CreateExamPage() {
 
           </div>
 
-          {/* ================= TOGGLE ================= */}
-          <label className="flex items-center gap-3 text-sm">
-
-            <input
-              type="checkbox"
-              name="show_result_review"
-              checked={form.show_result_review}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-
-            <span className="text-sm">
-              Allow Detailed Result Review
-            </span>
-
-          </label>
+          
 
           {/* ================= ACTIONS ================= */}
           <div className="flex justify-end gap-3 pt-4 border-t">

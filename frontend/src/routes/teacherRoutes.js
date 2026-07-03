@@ -35,4 +35,10 @@ export const teacherRoutes = (schoolSlug) => ({
   
   attemptDetail: (attemptId) =>
     `/school/${schoolSlug}/teacher/attempts/${attemptId}`,
+
+
+students: {
+    list: `/school/${schoolSlug}/teacher/students`,
+  },
+
 });

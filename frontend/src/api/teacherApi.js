@@ -33,6 +33,14 @@ export const teacherApi = {
 
   getQuestions: (schoolSlug, examId) =>
     API.get(`/api/teacher/${schoolSlug}/exams/${examId}/questions`),
+  
+  downloadQuestionTemplate: (schoolSlug) =>
+  API.get(
+    `/api/teacher/${schoolSlug}/questions/template`,
+    {
+      responseType: "blob",
+    }
+  ),
 
   // -------------------------
   // Results
@@ -59,6 +67,61 @@ export const teacherApi = {
   // -------------------------
   getAttemptDetail: (schoolSlug, attemptId) =>
     API.get(`/api/teacher/${schoolSlug}/attempts/${attemptId}`),
+
+
+  // -------------------------
+  // Students
+  // -------------------------
+
+
+  getStudents: (schoolSlug) =>
+    API.get(`/api/teacher/${schoolSlug}/students`),
+
+  
+createStudent: (schoolSlug, payload) => {
+  console.log("API CALL TRIGGERED", schoolSlug, payload);
+
+  return API.post(
+    `/api/teacher/${schoolSlug}/students`,
+    payload
+  );
+},
+
+updateStudent: (  schoolSlug,  studentUid,  payload) => {
+  return API.put(
+    `/api/teacher/${schoolSlug}/students/${studentUid}`,
+    payload
+  );
+},
+
+deleteStudent: (schoolSlug, studentUid) => {
+
+  return API.delete(
+    `/api/teacher/${schoolSlug}/students/${studentUid}`
+  );
+
+},
+
+  downloadStudentTemplate: (schoolSlug) =>
+  API.get(
+    `/api/teacher/${schoolSlug}/students/template`,
+    {
+      responseType: "blob",
+    }
+  ),
+
+  importStudents: (schoolSlug, formData) =>
+  API.post(
+    `/api/teacher/${schoolSlug}/students/import`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  ),
+
+  
 
 }
 

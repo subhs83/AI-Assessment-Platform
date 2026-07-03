@@ -35,6 +35,8 @@ import LeaderboardPage from "./pages/teacher/LeaderboardPage";
 import AIPreviewPage from "./pages/teacher/ai/AIPreviewPage";
 import AIGeneratePage from "./pages/teacher/ai/AIGeneratePage";
 import AIHistoryPage from "./pages/teacher/ai/AIHistoryPage";
+import StudentsPage from "./pages/teacher/StudentsPage";
+
 
 
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
@@ -129,6 +131,9 @@ function AppContent() {
             <Route path="ai/generate" element={<AIGeneratePage />} />
 
             <Route path="ai/history" element={<AIHistoryPage />}/>
+
+            <Route  path="students"  element={<StudentsPage />}/>
+          
 
             
           </Route>

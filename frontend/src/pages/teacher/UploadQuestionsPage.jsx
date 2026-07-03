@@ -3,13 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { teacherApi } from "../../api/teacherApi";
 import { teacherRoutes } from "../../routes/teacherRoutes";
-import API from "../../api/client";
-
+import { useTeacherStore } from "../../store/teacherStore";
 import PageHeader from "../../components/ui/PageHeader";
 import Button from "../../components/ui/Button";
 import { useToast } from "../../components/ui/Toast";
 import  LoadingOverlay  from "../../components/common/LoadingOverlay";
-
+import { downloadFile } from "../../utils/downloadFile";
 
 import {
   UploadCloud,
@@ -40,6 +39,10 @@ export default function UploadQuestionsPage() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  const downloadQuestionTemplate =  useTeacherStore((s) => s.downloadQuestionTemplate);
+
+
+
   // -------------------------
   // FETCH EXAMS
   // -------------------------
@@ -68,8 +71,34 @@ export default function UploadQuestionsPage() {
   }, [fetchExams]);
 
   // -------------------------
-  // UPLOAD
+  // Download & UPLOAD
   // -------------------------
+
+  const handleDownloadTemplate = async () => {
+
+  try {
+
+    const blob =
+      await downloadQuestionTemplate(
+        schoolSlug
+      );
+
+    downloadFile(
+      blob,
+      "sample_question_template.xlsx"
+    );
+
+  } catch {
+
+    showToast(
+      "Failed to download template",
+      "error"
+    );
+
+  }
+
+};
+
   const handleUpload = async () => {
     if (!selectedExam) {
       showToast(
@@ -129,7 +158,7 @@ export default function UploadQuestionsPage() {
   <LoadingOverlay message="Uploading Questions..." />
 )}
     
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
 
       {/* HEADER */}
       <PageHeader
@@ -183,21 +212,13 @@ export default function UploadQuestionsPage() {
             </p>
           </div>
 
-          <a
-            href={`${API.defaults.baseURL}/static/downloads/sampleQuiz.xlsx`}
-            className="
-              inline-flex items-center justify-center gap-2
-              px-4 py-2 rounded-lg
-              bg-blue-600 text-white
-              hover:bg-blue-700
-              transition
-              font-medium
-              whitespace-nowrap
-            "
+         <Button
+            onClick={handleDownloadTemplate}
+            className="flex items-center gap-2"
           >
             <Download size={18} />
             Download Sample File
-          </a>
+          </Button>
 
         </div>
 

@@ -1,4 +1,4 @@
-from flask import jsonify,request
+from flask import jsonify,request,send_file
 from flask_login import login_required, current_user
 from smart_exam_system.api.teacher import api_teacher_bp
 from smart_exam_system.api.utils.decorators import teacher_required,exam_owner_required
@@ -9,7 +9,9 @@ from smart_exam_system.api.services.react_exam_service import (
     get_teacher_exams, 
     publish_exam, 
     delete_exam,
-    extract_exam_form_data
+    extract_exam_form_data,
+    get_question_template
+    
     )
 from smart_exam_system.api.services.react_question_service import upload_questions, get_exam_questions
 from smart_exam_system.api.services.react_result_service import(
@@ -144,7 +146,37 @@ def create_exam_api(school_slug):
         )
 
 
+@api_teacher_bp.route("/<school_slug>/questions/template", methods=["GET"])
+@login_required
+@teacher_required
+def download_question_template_api(school_slug):
 
+    school = SchoolModel.query.filter_by(
+        slug=school_slug
+    ).first()
+
+    if not school:
+        return api_response(
+            success=False,
+            message="School not found",
+            status=404
+        )
+
+    if school.id != current_user.school_id:
+        return api_response(
+            success=False,
+            message="Unauthorized school access",
+            status=403
+        )
+
+    file_path = get_question_template()
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name="sample_question_template.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 
 @api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/questions/upload", methods=["POST"])

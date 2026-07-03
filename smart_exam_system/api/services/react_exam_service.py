@@ -2,6 +2,8 @@ import random
 import string
 from smart_exam_system.extensions import db
 from sqlalchemy import func
+from pathlib import Path
+from werkzeug.exceptions import NotFound
 from smart_exam_system.models import (
 ExamModel,  
 QuestionModel,
@@ -274,6 +276,7 @@ def create_exam(
     max_attempts,
     start_date,
     end_date,
+    exam_mode="open",
     show_result_review=True
     ):
     try:
@@ -288,6 +291,10 @@ def create_exam(
 
         if max_attempts <= 0:
             return False, "Max attempts must be at least 1."
+        
+        if exam_mode not in ("open", "verified"):
+            return False, "Invalid exam mode."
+
         exam = ExamModel(
             title=title,
             class_name=class_name,
@@ -295,6 +302,7 @@ def create_exam(
             marks_per_question=marks,
             negative_marks=negative,
             max_attempts_per_student=max_attempts,
+            exam_mode=exam_mode,      # ✅ NEW
             school_id=school_id,
             teacher_id=teacher_id,
             start_date=start_date,
@@ -335,6 +343,14 @@ def extract_exam_form_data(form_data):
         form_data.get("end_date")
     )
 
+    exam_mode = (
+        form_data.get("exam_mode") or "open"
+    ).strip().lower()
+
+    if exam_mode not in ("open", "verified"):
+        raise ValueError(
+            "Invalid exam mode."
+        )
 
     if not start_date or not end_date:
         raise ValueError(
@@ -369,6 +385,9 @@ def extract_exam_form_data(form_data):
         "negative": float(
             form_data.get("negative") or 0
         ),
+
+        # ✅ NEW
+        "exam_mode": exam_mode,
 
         "max_attempts": int(
             form_data.get("max_attempts") or 1
@@ -474,4 +493,22 @@ def delete_exam(exam_id):
         db.session.rollback()
         logger.exception("Failed to delete question")
         return False, "Failed to delete question."
+    
+
+
+
+def get_question_template():
+
+    file_path = (
+        Path(__file__).resolve().parents[2]
+        / "static"
+        / "downloads"
+        / "sample_question_template.xlsx"
+    )
+
+
+    if not file_path.exists():
+        raise NotFound("Question template not found.")
+
+    return file_path
 
