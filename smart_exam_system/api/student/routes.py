@@ -151,10 +151,7 @@ def get_attempt_state_api(school_slug, quiz_code):
         }), 500
 
 
-@api_student_bp.route(
-    "/reset-student",
-    methods=["POST"]
-)
+@api_student_bp.route("/reset-student",  methods=["POST"])
 def reset_student():
     response = jsonify({
         "success": True
@@ -828,14 +825,8 @@ def get_palette_state(school_slug, attempt_id):
         }), 500
     
 
-@api_student_bp.route(
-    "/<school_slug>/attempt/<int:attempt_id>/next",
-    methods=["POST"]
-)
-def create_next_attempt(
-    school_slug,
-    attempt_id
-):
+@api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/next", methods=["POST"])
+def create_next_attempt( school_slug, attempt_id):
     try:
 
         result = start_next_attempt(

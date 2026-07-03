@@ -28,10 +28,6 @@ def create_admin():
 # CLI Reset Password Commands
 # -------------------------------
 
-
-
-
-
 @app.cli.command("reset-super-admin")
 @click.option("--email", prompt=True)
 @click.option("--password", prompt=True)
@@ -57,3 +53,82 @@ def reset_super_admin(email, password):
         db.session.commit()
 
         click.echo("✅ Super admin password reset successfully.")
+
+
+@app.cli.command("reset-db")
+def reset_db():
+    """Drop and recreate all tables"""
+    with app.app_context():
+        click.echo("⚠️ Dropping all tables...")
+
+        db.drop_all()
+        db.create_all()
+
+        click.echo("✅ Database reset complete")
+
+
+
+@app.cli.command("seed-db")
+def seed_db():
+    """Insert initial development data"""
+
+    with app.app_context():
+        click.echo("🌱 Seeding database...")
+
+        from smart_exam_system.models.school import SchoolModel
+        from smart_exam_system.models.user import UserModel
+
+        # Create default school
+        school = SchoolModel(
+            name="Demo School",
+            slug="demo-school"
+        )
+        db.session.add(school)
+        db.session.commit()
+
+        # Create admin user
+        admin = UserModel(
+            email="admin@demo.com",
+            role="teacher",
+            school_id=school.id,
+            password=generate_password_hash("admin123")
+        )
+        db.session.add(admin)
+        db.session.commit()
+
+        click.echo("✅ Seed complete")
+
+
+
+@app.cli.command("reset-seed")
+def reset_seed():
+    """Full reset + seed"""
+
+    with app.app_context():
+        click.echo("🔁 Resetting database...")
+
+        db.drop_all()
+        db.create_all()
+
+        click.echo("🌱 Seeding database...")
+
+        from smart_exam_system.models.school import SchoolModel
+        from smart_exam_system.models.user import UserModel
+
+        school = SchoolModel(
+            name="Demo School",
+            slug="demo-school"
+        )
+        db.session.add(school)
+        db.session.commit()
+
+        admin = UserModel(
+            email="admin@demo.com",
+            role="teacher",
+            school_id=school.id,
+            password=generate_password_hash("admin123")
+        )
+        db.session.add(admin)
+        db.session.commit()
+
+        click.echo("🚀 Reset + Seed complete")

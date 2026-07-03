@@ -11,7 +11,7 @@ from smart_exam_system.models import (
     StudentModel,   
     SchoolModel,
 )
-import  uuid, json, random
+import  json, random
 
 
 def normalize_text(value, field=None):
