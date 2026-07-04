@@ -17,40 +17,71 @@ export default function QuizInitPage() {
         );
 
         const data = res.data?.data;
+
         console.log("STATE RESPONSE:", res.data);
         console.log("STATE DATA:", data);
 
-        if (!data) return;
-
-        if (data.state === "register") {
-          console.log("Navigate -> Register");
+        if (!data) {
           navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
           return;
         }
 
+        // --------------------------------------------------
+        // Registration Required
+        // --------------------------------------------------
+        if (data.state === "register") {
+          navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
+          return;
+        }
+
+        // --------------------------------------------------
+        // Continue Existing Attempt
+        // --------------------------------------------------
         if (data.state === "quiz") {
-         
+          // Safety check
+          if (!data.attempt_id) {
+            console.warn(
+              "Quiz state received without attempt_id. Redirecting to registration."
+            );
+
+            navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
+            return;
+          }
+
           useExamStore.getState().reset();
+
           initSession({
             attempt_id: data.attempt_id,
             exam_id: data.exam_id,
             schoolSlug,
             total_questions: data.total_questions,
           });
-          console.log("Navigate -> Quiz", data.attempt_id);
-          navigate("/exam");
+
+          navigate(
+            `/school/${schoolSlug}/attempt/${data.attempt_id}/0`
+          );
+
           return;
         }
 
+        // --------------------------------------------------
+        // Show Result
+        // --------------------------------------------------
         if (data.state === "result") {
-          console.log("Navigate -> Result", data.attempt_id);
-          navigate(`/school/${schoolSlug}/result/${data.attempt_id}`);
+          navigate(
+            `/school/${schoolSlug}/result/${data.attempt_id}`
+          );
+
           return;
         }
+
+        // Unknown state
+        navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
+
+      } catch (err) {
+        console.error("STATE ERROR:", err);
 
         navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
-      } catch (err) {
-        console.log("STATE ERROR:", err);
       }
     };
 

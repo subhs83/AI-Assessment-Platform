@@ -4,7 +4,7 @@ from pathlib import Path
 from werkzeug.exceptions import NotFound
 from uuid import uuid4
 from openpyxl import load_workbook
-from smart_exam_system.api.services.react_student_service import create_student
+from smart_exam_system.api.services.react_student_service import create_student, normalize_text
 
 
 def validate_student_fields(
@@ -153,11 +153,11 @@ def import_students(school_id, excel_file):
         start=2,
     ):
 
-        first_name = str(row[0]).strip() if row[0] else ""
-        last_name = str(row[1]).strip() if row[1] else ""
-        student_class = str(row[2]).strip() if row[2] else ""
-        roll_number = str(row[3]).strip() if row[3] else ""
-        mobile = str(row[4]).strip() if row[4] else None
+        first_name = normalize_text(row[0], field="name")
+        last_name = normalize_text(row[1], field="name")
+        student_class = normalize_text(row[2], field="class")
+        roll_number = normalize_text(row[3], field="roll_number")
+        mobile = normalize_text(row[4], field="mobile")
 
         errors = validate_student_fields(
             first_name=first_name,

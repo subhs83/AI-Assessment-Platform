@@ -86,45 +86,26 @@ def get_attempt_state_api(school_slug, quiz_code):
         max_attempts = get_max_attempts(exam)
 
         # ----------------------------
-        # CASE 2: No attempt yet → QUIZ
+        # CASE 2: No attempt yet → REGISTER
         # ----------------------------
         if not latest_attempt:
             return jsonify({
                 "success": True,
-                "message": "Ready to start quiz",
+                "message": "Ready to register",
                 "data": {
-                    "state": "quiz",
+                    "state": "register",
                     "exam_id": exam.id,
                     "quiz_code": quiz_code,
                     "school_slug": school_slug,
                     "used_attempts": used_attempts,
                     "max_attempts": max_attempts,
-                    "attempt_id": None
                 },
                 "error": None
             })
 
+        
         # ----------------------------
-        # CASE 3: Not submitted → CONTINUE QUIZ
-        # ----------------------------
-        if not latest_attempt.is_submitted:
-            return jsonify({
-                "success": True,
-                "message": "Continue attempt",
-                "data": {
-                    "state": "quiz",
-                    "exam_id": exam.id,
-                    "quiz_code": quiz_code,
-                    "school_slug": school_slug,
-                    "attempt_id": latest_attempt.id,
-                    "used_attempts": used_attempts,
-                    "max_attempts": max_attempts
-                },
-                "error": None
-            })
-
-        # ----------------------------
-        # CASE 4: Submitted → RESULT
+        # CASE 3: Submitted → RESULT
         # ----------------------------
         return jsonify({
             "success": True,

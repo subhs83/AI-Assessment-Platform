@@ -15,19 +15,31 @@ import  json, random
 
 
 def normalize_text(value, field=None):
+    """
+    Normalize user input for consistent storage and comparison.
+    """
+
     if value is None:
         return ""
 
     value = str(value).strip()
 
     if field == "name":
-        return value.title()
+        # Rahul kumar -> Rahul Kumar
+        return " ".join(word.capitalize() for word in value.split())
 
     if field == "class":
+        # 8a -> 8A
+        # class 8 -> CLASS 8
         return value.upper()
 
     if field == "mobile":
+        # +91-98765 43210 -> 919876543210
         return "".join(ch for ch in value if ch.isdigit())
+
+    if field == "roll_number":
+        # Remove surrounding spaces only
+        return value
 
     return value
 
@@ -145,11 +157,11 @@ def clear_student_identity(response):
 
 
 def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
-    first_name = normalize_text(form_data.get("first_name"))
-    last_name = normalize_text(form_data.get("last_name"))
-    student_class = normalize_text(form_data.get("student_class"))
-    roll_number = normalize_text(form_data.get("roll_number"))
-    mobile = normalize_text(form_data.get("mobile"))
+    first_name = normalize_text(form_data.get("first_name"), field="name")
+    last_name = normalize_text(form_data.get("last_name"), field="name")
+    student_class = normalize_text(form_data.get("student_class"), field="class")
+    roll_number = normalize_text(form_data.get("roll_number"), field="roll_number")
+    mobile = normalize_text(form_data.get("mobile"), field="mobile")
 
 
     # ==================================================
@@ -158,8 +170,6 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
 
     existing_student = find_existing_student(
         school_id,
-        first_name,
-        last_name,
         student_class,
         roll_number
     )
@@ -804,14 +814,15 @@ def record_violation(attempt_id, reason):
     }
 
 
-def find_existing_student(school_id, first_name, last_name, student_class, roll_number):
-
+def find_existing_student(
+    school_id,
+    student_class,
+    roll_number,
+):
     return StudentModel.query.filter_by(
         school_id=school_id,
-        first_name=first_name,
-        last_name=last_name,
-        student_class=student_class,
-        roll_number=roll_number
+        student_class=student_class.strip(),
+        roll_number=roll_number.strip(),
     ).first()
 
 

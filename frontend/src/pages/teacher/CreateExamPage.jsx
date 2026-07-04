@@ -5,13 +5,14 @@ import { teacherRoutes } from "../../routes/teacherRoutes";
 import {
   Calendar,
   Clock,
-  Percent,
   Repeat,
-  X,
   ArrowLeft,
   Save,
   FileText,
-  GraduationCap
+  UserCheck,
+  Award,
+  MinusCircle,
+  User
 } from "lucide-react";
 
  
@@ -86,13 +87,75 @@ export default function CreateExamPage() {
           description="Configure exam settings before publishing"
         />
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-2">
+
+          {/* ================= EXAM MODE ================= */}
+
+          <div className="border rounded-lg p-4">
+
+          <h3 className="flex items-center gap-2 text-sm font-semibold mb-4">
+            <UserCheck size={16} />
+              Registration Mode
+            
+          </h3>
+
+          <div className="flex flex-col md:flex-row gap-4">
+
+            <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500 flex-1">
+
+              <input
+                type="radio"
+                name="registration_mode"
+                value="open"
+                checked={form.registration_mode === "open"}
+                onChange={handleChange}
+                className="mt-1"
+              />
+
+              <div>
+                <p className="font-medium">
+                  Open Registration
+                </p>
+
+                <p className="text-sm text-gray-500">
+                  Any student can register and take this quiz.
+                </p>
+              </div>
+
+            </label>
+
+            <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500 flex-1">
+
+              <input
+                type="radio"
+                name="registration_mode"
+                value="verified"
+                checked={form.registration_mode === "verified"}
+                onChange={handleChange}
+                className="mt-1"
+              />
+
+              <div>
+                <p className="font-medium">
+                  Verified Students Only
+                </p>
+
+                <p className="text-sm text-gray-500">
+                  Only students already added by the school can take this quiz.
+                </p>
+              </div>
+
+            </label>
+
+          </div>
+
+        </div>
          <div className="grid md:grid-cols-2 gap-4">
 
           {/* ================= TITLE ================= */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-2">
-             <FileText size={14} />
+             <FileText size={16} />
                 Exam Title
             </label>
 
@@ -109,7 +172,7 @@ export default function CreateExamPage() {
           {/* ================= CLASS ================= */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium mb-2">
-              <GraduationCap size={14} />
+              <User size={16} />
               Class
             </label>
 
@@ -121,10 +184,6 @@ export default function CreateExamPage() {
               required
               className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
             />
-
-            <p className="mt-1 text-xs text-gray-500">
-              Helps organize analytics and reports.
-            </p>
           </div>
           </div>
           {/* ================= GRID SETTINGS ================= */}
@@ -132,7 +191,7 @@ export default function CreateExamPage() {
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Clock size={14} />
+                <Clock size={16} />
                 Duration (minutes)
               </label>
 
@@ -151,7 +210,7 @@ export default function CreateExamPage() {
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Percent size={14} />
+                <Award size={16} />
                 Marks Per Question
               </label>
 
@@ -169,7 +228,7 @@ export default function CreateExamPage() {
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <X size={14} />
+                <MinusCircle size={16} />
                 Negative Marks
               </label>
 
@@ -183,87 +242,10 @@ export default function CreateExamPage() {
                 className="w-full border rounded-lg px-3 py-2"
               />
             </div>
-            
-            {/* ================= EXAM MODE ================= */}
-
-          <div className="border rounded-lg p-5">
-
-            <h3 className="text-sm font-semibold mb-4">
-              Registration Mode
-            </h3>
-
-            <div className="space-y-3">
-
-              <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500">
-
-                <input
-                  type="radio"
-                  name="registration_mode"
-                  value="open"
-                  checked={form.registration_mode === "open"}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-
-                <div>
-                  <p className="font-medium">
-                    Open Registration
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    Any student can register and take this quiz.
-                  </p>
-                </div>
-
-              </label>
-
-              <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500">
-
-                <input
-                  type="radio"
-                  name="registration_mode"
-                  value="verified"
-                  checked={form.registration_mode === "verified"}
-                  onChange={handleChange}
-                  className="mt-1"
-                />
-
-                <div>
-                  <p className="font-medium">
-                    Verified Students Only
-                  </p>
-
-                  <p className="text-sm text-gray-500">
-                    Only students already added by the school can take this quiz.
-                  </p>
-                </div>
-
-              </label>
-
-            </div>
-
-          </div>
-
-            {/* ================= TOGGLE ================= */}
-          <label className="flex items-center gap-3 text-sm">
-
-            <input
-              type="checkbox"
-              name="show_result_review"
-              checked={form.show_result_review}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-
-            <span className="text-sm">
-              Allow Detailed Result Review
-            </span>
-
-          </label>
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Repeat size={14} />
+                <Repeat size={16} />
                 Max Attempts
               </label>
 
@@ -277,17 +259,14 @@ export default function CreateExamPage() {
                 className="w-full border rounded-lg px-3 py-2"
               />
             </div>
-
-          </div>
-
-          
-
+            </div>
+            
           {/* ================= DATES ================= */}
           <div className="grid md:grid-cols-2 gap-4">
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Calendar size={14} />
+                <Calendar size={16} />
                 Start Date
               </label>
 
@@ -303,7 +282,7 @@ export default function CreateExamPage() {
 
             <div>
               <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Calendar size={14} />
+                <Calendar size={16} />
                 End Date
               </label>
 
@@ -317,6 +296,25 @@ export default function CreateExamPage() {
               />
             </div>
 
+          </div>
+
+           {/* ================= TOGGLE ================= */}
+        <div className="border rounded-lg p-3">
+          <label className="flex items-center gap-3 text-sm">
+
+            <input
+              type="checkbox"
+              name="show_result_review"
+              checked={form.show_result_review}
+              onChange={handleChange}
+              className="w-4 h-4"
+            />
+
+            <span className="text-sm">
+              Allow Detailed Result Review
+            </span>
+
+          </label>
           </div>
 
           

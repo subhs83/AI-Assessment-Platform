@@ -15,7 +15,7 @@ from smart_exam_system.api.services.student_management_service import (
      import_students,
 )
 
-from smart_exam_system.api.services.react_student_service import create_student
+from smart_exam_system.api.services.react_student_service import create_student, normalize_text
 
 import logging
 
@@ -179,11 +179,11 @@ def create_student_api(school_slug):
 
     data = request.get_json() or {}
 
-    first_name = (data.get("first_name") or "").strip()
-    last_name = (data.get("last_name") or "").strip()
-    student_class = (data.get("student_class") or "").strip()
-    roll_number = (data.get("roll_number") or "").strip()
-    mobile = (data.get("mobile") or "").strip()
+    first_name = normalize_text(data.get("first_name") , field="name")
+    last_name = normalize_text(data.get("last_name") , field="name")
+    student_class = normalize_text(data.get("student_class") , field="class")
+    roll_number = normalize_text(data.get("roll_number") , field="roll_number")
+    mobile = normalize_text(data.get("mobile") , field="mobile")
 
     if not first_name:
         return api_response(
@@ -291,11 +291,11 @@ def update_student_api(school_slug, student_uid):
 
     data = request.get_json() or {}
 
-    first_name = (data.get("first_name") or "").strip()
-    last_name = (data.get("last_name") or "").strip()
-    student_class = (data.get("student_class") or "").strip()
-    roll_number = (data.get("roll_number") or "").strip()
-    mobile = (data.get("mobile") or "").strip()
+    first_name = normalize_text(data.get("first_name"), field="name")
+    last_name = normalize_text(data.get("last_name") , field="name")
+    student_class = normalize_text(data.get("student_class"), field="class")
+    roll_number = normalize_text(data.get("roll_number"), field="roll_number")
+    mobile = normalize_text(data.get("mobile"), field="mobile")
 
     if not first_name:
         return api_response(
