@@ -5,6 +5,7 @@ from werkzeug.exceptions import NotFound
 from uuid import uuid4
 from openpyxl import load_workbook
 from smart_exam_system.api.services.react_student_service import create_student, normalize_text
+from smart_exam_system.models.student import StudentRegistrationType
 
 
 def validate_student_fields(
@@ -79,6 +80,7 @@ def get_students(school_id):
             "student_class": student.student_class,
             "roll_number": student.roll_number,
             "mobile": student.mobile,
+            "student_registration_type": student.student_registration_type,
         }
         for student in students
     ]
@@ -196,6 +198,7 @@ def import_students(school_id, excel_file):
             student_class=student_class,
             roll_number=roll_number,
             mobile=mobile,
+            student_registration_type=StudentRegistrationType.VERIFIED,
         )
 
         created += 1
@@ -210,3 +213,29 @@ def import_students(school_id, excel_file):
             "invalid_rows": invalid_rows,
         },
     )
+
+
+
+
+def is_registration_allowed(exam, student):
+    """
+    Single source of truth for registration rules.
+    Used by:
+        - state
+        - start
+        - future submit/result flows
+    """
+
+    # OPEN MODE → always allowed
+    if exam.registration_mode == "open":
+        return True
+
+    # VERIFIED MODE → student must exist
+    if exam.registration_mode == "verified":
+        if not student:
+            return False
+
+        return True
+
+    # SAFETY DEFAULT (future modes)
+    return False

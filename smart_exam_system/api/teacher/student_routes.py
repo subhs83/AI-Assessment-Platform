@@ -19,6 +19,8 @@ from smart_exam_system.api.services.react_student_service import create_student,
 
 import logging
 
+from smart_exam_system.models.student import StudentRegistrationType
+
 logger = logging.getLogger(__name__)
 
 
@@ -228,6 +230,7 @@ def create_student_api(school_slug):
             student_class=student_class,
             roll_number=roll_number,
             mobile=mobile or None,
+            student_registration_type=StudentRegistrationType.VERIFIED,
         )
 
         db.session.commit()

@@ -3,6 +3,7 @@ from flask import jsonify, request, session
 from datetime import datetime, timedelta
 from smart_exam_system.api.student import api_student_bp
 from smart_exam_system.extensions import db
+from smart_exam_system.api.services.quiz_session_service import build_quiz_session
 from smart_exam_system.models import (
     ExamModel,
     QuestionModel,
@@ -43,7 +44,9 @@ logger = logging.getLogger(__name__)
 @api_student_bp.route("/<school_slug>/quiz/<quiz_code>/state", methods=["GET"])
 def get_attempt_state_api(school_slug, quiz_code):
     try:
-        # 1. Resolve exam by school + quiz
+        # --------------------------------------------------
+        # 1. Resolve Exam
+        # --------------------------------------------------
         exam = get_exam_by_quiz_code(quiz_code)
 
         if not exam or exam.school.slug != school_slug:
@@ -51,86 +54,51 @@ def get_attempt_state_api(school_slug, quiz_code):
                 "success": False,
                 "message": "Invalid quiz or school",
                 "data": None,
-                "error": "invalid_exam"
+                "error": "invalid_exam",
             }), 404
 
-        # 2. Get student identity (session/cookie)
-        student_id = get_student_identity()
-        if student_id:
-            session["student_db_id"] = student_id
-            session.modified = True   # 🔥 REQUIRED
-        # ----------------------------
-        # CASE 1: No student yet → REGISTER
-        # ----------------------------
-        if not student_id:
-            return jsonify({
-                "success": True,
-                "message": "Student not registered",
-                "data": {
-                    "state": "register",
-                    "exam_id": exam.id,
-                    "quiz_code": quiz_code,
-                    "school_slug": school_slug,
-                    "used_attempts": 0,
-                    "max_attempts": exam.max_attempts_per_student or 1
-                },
-                "error": None
-            })
+        # --------------------------------------------------
+        # 2. Build Quiz Session
+        # --------------------------------------------------
+        session = build_quiz_session(exam)
 
-        # 3. Get attempts
-        attempts = get_submitted_attempts(exam.id, student_id)
+        # --------------------------------------------------
+        # 3. Response
+        # --------------------------------------------------
+        data = {
+            "state": session["state"],
+            "exam_id": exam.id,
+            "quiz_code": quiz_code,
+            "school_slug": school_slug,
+            "used_attempts": session["used_attempts"],
+            "max_attempts": session["max_attempts"],
+        }
 
-        latest_attempt = attempts[0] if attempts else None
+        if session["latest_attempt"]:
+            data["attempt_id"] = session["latest_attempt"].id
 
-        used_attempts = len(attempts)
-        max_attempts = get_max_attempts(exam)
+        message = (
+            "Show result"
+            if session["state"] == "result"
+            else "Ready to register"
+        )
 
-        # ----------------------------
-        # CASE 2: No attempt yet → REGISTER
-        # ----------------------------
-        if not latest_attempt:
-            return jsonify({
-                "success": True,
-                "message": "Ready to register",
-                "data": {
-                    "state": "register",
-                    "exam_id": exam.id,
-                    "quiz_code": quiz_code,
-                    "school_slug": school_slug,
-                    "used_attempts": used_attempts,
-                    "max_attempts": max_attempts,
-                },
-                "error": None
-            })
-
-        
-        # ----------------------------
-        # CASE 3: Submitted → RESULT
-        # ----------------------------
         return jsonify({
             "success": True,
-            "message": "Show result",
-            "data": {
-                "state": "result",
-                "exam_id": exam.id,
-                "quiz_code": quiz_code,
-                "school_slug": school_slug,
-                "attempt_id": latest_attempt.id,
-                "used_attempts": used_attempts,
-                "max_attempts": max_attempts
-            },
-            "error": None
+            "message": message,
+            "data": data,
+            "error": None,
         })
 
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to process request")
+
         return jsonify({
             "success": False,
             "message": "Server error",
             "data": None,
-            "error": str(e)
+            "error": "server_error",
         }), 500
-
 
 @api_student_bp.route("/reset-student",  methods=["POST"])
 def reset_student():
@@ -148,11 +116,11 @@ def reset_student():
 def start_attempt(school_slug, quiz_code):
 
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
 
-        # ==================================================
+        # --------------------------------------------------
         # 1. Resolve exam
-        # ==================================================
+        # --------------------------------------------------
         exam = get_exam_by_quiz_code(quiz_code)
 
         if not exam or exam.school.slug != school_slug:
@@ -162,9 +130,9 @@ def start_attempt(school_slug, quiz_code):
                 "error": "invalid_exam"
             }), 404
 
-        # ==================================================
-        # 2. Validate payload
-        # ==================================================
+        # --------------------------------------------------
+        # 2. Validate input
+        # --------------------------------------------------
         if not data:
             return jsonify({
                 "success": False,
@@ -179,9 +147,9 @@ def start_attempt(school_slug, quiz_code):
                 "error": "missing_mobile"
             }), 400
 
-        # ==================================================
-        # 3. Start Student Attempt
-        # ==================================================
+        # --------------------------------------------------
+        # 3. Start attempt (service)
+        # --------------------------------------------------
         result = start_student_attempt(
             exam_id=exam.id,
             school_id=exam.school_id,
@@ -189,13 +157,12 @@ def start_attempt(school_slug, quiz_code):
             ip_address=request.remote_addr,
         )
 
-        # ==================================================
-        # 4. Service returned (data, status_code)
-        # ==================================================
+        # --------------------------------------------------
+        # 4. Handle service response
+        # --------------------------------------------------
         if isinstance(result, tuple):
 
             result_data, status_code = result
-
             response = jsonify(result_data)
 
             if result_data.get("student_db_id"):
@@ -206,9 +173,9 @@ def start_attempt(school_slug, quiz_code):
 
             return response, status_code
 
-        # ==================================================
-        # 5. Existing student → Redirect to Result
-        # ==================================================
+        # --------------------------------------------------
+        # 5. Redirect case
+        # --------------------------------------------------
         if result.get("status") == "redirect_result":
 
             response = jsonify({
@@ -225,9 +192,9 @@ def start_attempt(school_slug, quiz_code):
 
             return response, 200
 
-        # ==================================================
-        # 6. New Attempt Started
-        # ==================================================
+        # --------------------------------------------------
+        # 6. Success
+        # --------------------------------------------------
         response = jsonify({
             "success": True,
             "status": "started",
@@ -252,6 +219,8 @@ def start_attempt(school_slug, quiz_code):
             "state": "error",
             "message": "Server Error",
         }), 500
+    
+    
 
 @api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/question/<int:q_index>", methods=["GET"])
 def get_question(school_slug, attempt_id, q_index):

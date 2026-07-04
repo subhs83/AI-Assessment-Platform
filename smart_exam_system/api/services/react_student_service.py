@@ -13,6 +13,8 @@ from smart_exam_system.models import (
 )
 import  json, random
 
+from smart_exam_system.models.student import StudentRegistrationType
+
 
 def normalize_text(value, field=None):
     """
@@ -49,18 +51,22 @@ def find_student(
     last_name,
     student_class,
     roll_number,
+    student_registration_type=None,
 ):
-    return (
-        StudentModel.query
-        .filter_by(
-            school_id=school_id,
-            first_name=first_name.strip(),
-            last_name=last_name.strip(),
-            student_class=student_class.strip(),
-            roll_number=roll_number.strip(),
-        )
-        .first()
+    query = StudentModel.query.filter_by(
+        school_id=school_id,
+        first_name=first_name.strip(),
+        last_name=last_name.strip(),
+        student_class=student_class.strip(),
+        roll_number=roll_number.strip(),
     )
+
+    if student_registration_type:
+        query = query.filter_by(
+            student_registration_type=student_registration_type,
+        )
+
+    return query.first()
 
 
 def create_student(
@@ -70,6 +76,7 @@ def create_student(
     student_class,
     roll_number,
     mobile=None,
+    student_registration_type=StudentRegistrationType.OPEN,
 ):
     student = StudentModel(
         student_uid=str(uuid4()),
@@ -79,6 +86,7 @@ def create_student(
         student_class=student_class.strip(),
         roll_number=roll_number.strip(),
         mobile=mobile,
+        student_registration_type=student_registration_type,
     )
 
     db.session.add(student)
@@ -107,14 +115,14 @@ def find_or_create_student(
         return student
 
     return create_student(
-        school_id,
-        first_name,
-        last_name,
-        student_class,
-        roll_number,
-        mobile,
+        school_id=school_id,
+        first_name=first_name,
+        last_name=last_name,
+        student_class=student_class,
+        roll_number=roll_number,
+        mobile=mobile,
+        student_registration_type=StudentRegistrationType.OPEN,
     )
-
 
 
 def set_student_identity(student_db_id, response):
@@ -157,38 +165,13 @@ def clear_student_identity(response):
 
 
 def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
-    first_name = normalize_text(form_data.get("first_name"), field="name")
-    last_name = normalize_text(form_data.get("last_name"), field="name")
-    student_class = normalize_text(form_data.get("student_class"), field="class")
-    roll_number = normalize_text(form_data.get("roll_number"), field="roll_number")
-    mobile = normalize_text(form_data.get("mobile"), field="mobile")
-
-
-    # ==================================================
-    # 🔥 DUPLICATE STUDENT CHECK (INSERT HERE) 
-    # ==================================================
-
-    existing_student = find_existing_student(
-        school_id,
-        student_class,
-        roll_number
-    )
-
-    if existing_student:
-
-        last_attempt = get_latest_result_attempt(
-            existing_student.id,
-            exam_id
-        )
-
-        if last_attempt:
-            return {
-                "status": "redirect_result",
-                "attempt_id": last_attempt.id,
-                "student_db_id": existing_student.id
-            }, 200
     # --------------------------------------------------
-    # 1. LOAD EXAM
+    # 1. Normalize input
+    # --------------------------------------------------
+    student_data = _normalize_student_data(form_data)
+
+    # --------------------------------------------------
+    # 2. Load exam
     # --------------------------------------------------
     exam = db.session.get(ExamModel, exam_id)
 
@@ -199,45 +182,104 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         }, 404
 
     # --------------------------------------------------
-    # 2. FIND / CREATE STUDENT
+    # 3. Check existing completed attempt
     # --------------------------------------------------
-    if exam.registration_mode == "verified":
+    existing_attempt = _find_existing_attempt(
+        exam.id,
+        school_id,
+        student_data
+    )
 
-        student = find_student(
-            school_id=school_id,
-            first_name=first_name,
-            last_name=last_name,
-            student_class=student_class,
-            roll_number=roll_number,
-        )
-
-        if not student:
-            return {
-                "success": False,
-                "message": (
-                    "Student details not found. "
-                    "Please contact your teacher."
-                )
-            }, 403
-
-    else:
-        student = find_or_create_student(
-            school_id=school_id,
-            first_name=first_name,
-            last_name=last_name,
-            student_class=student_class,
-            roll_number=roll_number,
-            mobile=mobile,
-        )
+    if existing_attempt:
+        return {
+            "status": "redirect_result",
+            "attempt_id": existing_attempt.id,
+            "student_db_id": existing_attempt.student_db_id,
+        }, 200
 
     # --------------------------------------------------
-    # 3. CREATE ATTEMPT
+    # 4. Resolve student
+    # --------------------------------------------------
+    student_result = _resolve_student(
+        exam,
+        school_id,
+        student_data
+    )
+
+    if not student_result["success"]:
+        return {
+            "success": False,
+            "message": student_result["message"]
+        }, 403
+
+    student = student_result["student"]
+
+    # --------------------------------------------------
+    # 5. Create attempt
     # --------------------------------------------------
     return _create_attempt(
         exam=exam,
         student_db_id=student.id,
         ip_address=ip_address,
     )
+def _normalize_student_data(form_data):
+    return {
+        "first_name": normalize_text(form_data.get("first_name"), field="name"),
+        "last_name": normalize_text(form_data.get("last_name"), field="name"),
+        "student_class": normalize_text(form_data.get("student_class"), field="class"),
+        "roll_number": normalize_text(form_data.get("roll_number"), field="roll_number"),
+        "mobile": normalize_text(form_data.get("mobile"), field="mobile"),
+    }
+
+def _find_existing_attempt(exam_id, school_id, student_data):
+    student = find_existing_student(
+        school_id,
+        student_data["student_class"],
+        student_data["roll_number"],
+    )
+
+    if not student:
+        return None
+
+    return get_latest_result_attempt(
+        student.id,
+        exam_id
+    )
+
+def _resolve_student(exam, school_id, student_data):
+
+    student = None
+
+    if exam.registration_mode == "verified":
+
+        student = find_student(
+            school_id=school_id,
+            first_name=student_data["first_name"],
+            last_name=student_data["last_name"],
+            student_class=student_data["student_class"],
+            roll_number=student_data["roll_number"],
+        )
+
+        if not student:
+            return {
+                "success": False,
+                "message": "Student details not found. Please contact your teacher."
+            }
+
+    else:
+        student = find_or_create_student(
+            school_id=school_id,
+            first_name=student_data["first_name"],
+            last_name=student_data["last_name"],
+            student_class=student_data["student_class"],
+            roll_number=student_data["roll_number"],
+            mobile=student_data["mobile"],
+        )
+
+    return {
+        "success": True,
+        "student": student
+    }
 
 def _create_attempt(
     exam,
