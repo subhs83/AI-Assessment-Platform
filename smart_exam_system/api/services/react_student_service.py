@@ -15,6 +15,10 @@ import  json, random
 
 from smart_exam_system.models.student import StudentRegistrationType
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def normalize_text(value, field=None):
     """
@@ -222,6 +226,8 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         student_db_id=student.id,
         ip_address=ip_address,
     )
+
+    
 def _normalize_student_data(form_data):
     return {
         "first_name": normalize_text(form_data.get("first_name"), field="name"),
@@ -249,7 +255,11 @@ def _find_existing_attempt(exam_id, school_id, student_data):
 def _resolve_student(exam, school_id, student_data):
 
     student = None
-
+    logger.info(f"Registration mode: {exam.registration_mode}")
+    if exam.registration_mode == "verified":
+        logger.info("VERIFIED FLOW")
+    else:
+        logger.info("OPEN FLOW")
     if exam.registration_mode == "verified":
 
         student = find_student(
