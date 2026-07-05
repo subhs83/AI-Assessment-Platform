@@ -493,30 +493,194 @@ def save_answer(school_slug, attempt_id):
             "message": "Server error",
             "data": None,
         }), 500
-    
-@api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/result", methods=["GET"])
-def get_result(school_slug, attempt_id):
-    try:
-        show_review = request.args.get("review", "false").lower() == "true"
+        
+        
+@api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/submit", methods=["POST"],)
+def submit_attempt(school_slug, attempt_id):
 
-        result = get_student_result(attempt_id)
+    try:
+
+        # ==================================================
+        # 1. Resolve Student Identity
+        # ==================================================
+        student_db_id = get_student_identity()
+
+        if not student_db_id:
+            return jsonify({
+                "success": False,
+                "message": "Student not authenticated",
+                "data": None,
+                "error": "student_not_authenticated",
+            }), 401
+
+        # ==================================================
+        # 2. Resolve Attempt (Ownership Protected)
+        # ==================================================
+        attempt = resolve_attempt(
+            attempt_id=attempt_id,
+            student_db_id=student_db_id,
+        )
+
+        if not attempt:
+            return jsonify({
+                "success": False,
+                "message": "Attempt not found",
+                "data": None,
+                "error": "invalid_attempt",
+            }), 404
+
+        # ==================================================
+        # 3. Validate School
+        # ==================================================
+        if attempt.exam.school.slug != school_slug:
+            return jsonify({
+                "success": False,
+                "message": "Invalid quiz or school",
+                "data": None,
+                "error": "invalid_attempt",
+            }), 404
+
+        # ==================================================
+        # 4. Already Submitted
+        # ==================================================
+        if attempt.is_submitted:
+            return jsonify({
+                "success": False,
+                "message": "Attempt already submitted",
+                "data": None,
+                "error": "already_submitted",
+            }), 400
+
+        # ==================================================
+        # 5. Auto Submit (Time Expired)
+        # ==================================================
+        if is_attempt_expired(attempt):
+
+            auto_submit_attempt(
+                attempt,
+                submit_reason="time_expired",
+            )
+
+            return jsonify({
+                "success": True,
+                "message": "Exam time expired",
+                "data": {
+                    "attempt_id": attempt.id,
+                    "status": "submitted",
+                },
+                "error": None,
+            }), 200
+
+        # ==================================================
+        # 6. Manual Submit
+        # ==================================================
+        attempt = finalize_attempt(
+            attempt,
+            submit_reason="manual",
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Exam submitted successfully",
+            "data": {
+                "attempt_id": attempt.id,
+                "score": attempt.score,
+                "percentage": attempt.percentage,
+                "status": "submitted",
+            },
+            "error": None,
+        }), 200
+
+    except Exception:
+
+        logger.exception("Failed to submit attempt")
+
+        return jsonify({
+            "success": False,
+            "message": "Server error",
+            "data": None,
+            "error": "server_error",
+        }), 500
+    
+
+@api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/result", methods=["GET"],)
+def get_result(school_slug, attempt_id):
+
+    try:
+
+        # ==================================================
+        # 1. Resolve Student Identity
+        # ==================================================
+        student_db_id = get_student_identity()
+
+        if not student_db_id:
+            return jsonify({
+                "success": False,
+                "message": "Student not authenticated",
+                "data": None,
+                "error": "student_not_authenticated",
+            }), 401
+
+        # ==================================================
+        # 2. Resolve Attempt (Ownership Protected)
+        # ==================================================
+        attempt = resolve_attempt(
+            attempt_id=attempt_id,
+            student_db_id=student_db_id,
+        )
+
+        if not attempt:
+            return jsonify({
+                "success": False,
+                "message": "Attempt not found",
+                "data": None,
+                "error": "invalid_attempt",
+            }), 404
+
+        # ==================================================
+        # 3. Validate School
+        # ==================================================
+        if attempt.exam.school.slug != school_slug:
+            return jsonify({
+                "success": False,
+                "message": "Invalid quiz or school",
+                "data": None,
+                "error": "invalid_attempt",
+            }), 404
+
+        # ==================================================
+        # 4. Review Flag
+        # ==================================================
+        show_review = (
+            request.args.get("review", "false").lower() == "true"
+        )
+
+        # ==================================================
+        # 5. Build Result
+        # ==================================================
+        result = get_student_result(attempt.id)
 
         if not result:
             return jsonify({
                 "success": False,
                 "message": "Attempt not found",
                 "data": None,
-                "error": "invalid_attempt"
+                "error": "invalid_attempt",
             }), 404
 
         review_data = None
 
         if (
             show_review
-            and result.get("review_enabled")
+            and result["review_enabled"]
         ):
-            review_data = get_attempt_detailed_report(attempt_id)
+            review_data = get_attempt_detailed_report(
+                attempt.id
+            )
 
+        # ==================================================
+        # 6. Response
+        # ==================================================
         return jsonify({
             "success": True,
             "message": "Result fetched successfully",
@@ -525,7 +689,9 @@ def get_result(school_slug, attempt_id):
 
                 "score": result["score"],
                 "total_marks": result["total_marks"],
-                "percentage": round(result["percentage"], 2),
+                "percentage": round(
+                    result["percentage"], 2
+                ),
 
                 "total_questions": result["total_questions"],
                 "correct": result["correct_answers"],
@@ -542,102 +708,34 @@ def get_result(school_slug, attempt_id):
 
                 "attempt_number": result["attempt_number"],
                 "max_attempts": result["max_attempts"],
-                "can_take_next_attempt": result["can_take_next_attempt"],
+                "can_take_next_attempt": (
+                    result["can_take_next_attempt"]
+                ),
 
                 "quiz_code": result["quiz_code"],
 
-                # NEW
                 "review_enabled": result["review_enabled"],
-
-                # REVIEW DATA
-                "review": review_data
+                "review": review_data,
             },
-            "error": None
-        })
+            "error": None,
+        }), 200
 
     except Exception:
-        logger.exception("Failed to process request")
-        return jsonify({
-            "success": False,
-            "message": "Server error",
-            "data": None,
-        }), 500
 
-        
-@api_student_bp.route(
-    "/<school_slug>/attempt/<int:attempt_id>/submit",
-    methods=["POST"]
-)
-def submit_attempt(school_slug, attempt_id):
-    try:
-        attempt = resolve_attempt(attempt_id)
-
-        if not attempt:
-            return jsonify({
-                "success": False,
-                "message": "Attempt not found",
-                "data": None,
-                "error": "invalid_attempt"
-            }), 404
-
-        if attempt.is_submitted:
-            return jsonify({
-                "success": False,
-                "message": "Attempt already submitted",
-                "data": None,
-                "error": "already_submitted"
-            }), 400
-
-        # NEW: expiry check
-        if is_attempt_expired(attempt):
-
-            auto_submit_attempt(
-                attempt,
-                "time_expired"
-            )
-
-            return jsonify({
-                "success": True,
-                "message": "Exam time expired",
-                "data": {
-                    "attempt_id": attempt.id,
-                    "status": "submitted"
-                },
-                "error": None
-            })
-
-
-        # Manual submit
-        attempt = finalize_attempt(
-            attempt,
-            submit_reason="manual"
+        logger.exception(
+            "Failed to fetch result"
         )
 
         return jsonify({
-            "success": True,
-            "message": "Exam submitted successfully",
-            "data": {
-                "attempt_id": attempt.id,
-                "score": attempt.score,
-                "percentage": attempt.percentage,
-                "status": "submitted"
-            },
-            "error": None
-        })
-
-    except Exception:
-        logger.exception("Failed to process request")
-        return jsonify({
             "success": False,
             "message": "Server error",
             "data": None,
+            "error": "server_error",
         }), 500
     
 
-@api_student_bp.route(
-    "/<school_slug>/attempt/<int:attempt_id>/violation",
-    methods=["POST"]
-)
+
+@api_student_bp.route( "/<school_slug>/attempt/<int:attempt_id>/violation", methods=["POST"])
 def report_violation(school_slug, attempt_id):
     try:
 
@@ -714,10 +812,7 @@ def report_violation(school_slug, attempt_id):
 
 
 
-@api_student_bp.route(
-    "/<school_slug>/attempt/<int:attempt_id>/palette",
-    methods=["GET"]
-)
+@api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/palette", methods=["GET"])
 def get_palette_state(school_slug, attempt_id):
     try:
         attempt = resolve_attempt(attempt_id)
@@ -775,84 +870,235 @@ def get_palette_state(school_slug, attempt_id):
         }), 500
     
 
-@api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/next", methods=["POST"])
-def create_next_attempt( school_slug, attempt_id):
+
+@api_student_bp.route( "/<school_slug>/attempt/<int:attempt_id>/next", methods=["POST"],)
+def create_next_attempt(school_slug, attempt_id):
+
     try:
 
-        result = start_next_attempt(
-            attempt_id
+        # ==================================================
+        # 1. Resolve Student Identity
+        # ==================================================
+        student_db_id = get_student_identity()
+
+        if not student_db_id:
+            return jsonify({
+                "success": False,
+                "message": "Student not authenticated",
+                "data": None,
+                "error": "student_not_authenticated",
+            }), 401
+
+        # ==================================================
+        # 2. Resolve Attempt (Ownership Protected)
+        # ==================================================
+        attempt = resolve_attempt(
+            attempt_id=attempt_id,
+            student_db_id=student_db_id,
         )
+
+        if not attempt:
+            return jsonify({
+                "success": False,
+                "message": "Attempt not found",
+                "data": None,
+                "error": "invalid_attempt",
+            }), 404
+
+        # ==================================================
+        # 3. Validate School
+        # ==================================================
+        if attempt.exam.school.slug != school_slug:
+            return jsonify({
+                "success": False,
+                "message": "Invalid quiz or school",
+                "data": None,
+                "error": "invalid_attempt",
+            }), 404
+
+        # ==================================================
+        # 4. Create Next Attempt
+        # ==================================================
+        result = start_next_attempt(attempt.id)
 
         if isinstance(result, tuple):
             result_data, status_code = result
-            return jsonify(
-                result_data
-            ), status_code
+            return jsonify(result_data), status_code
 
         return jsonify({
             "success": True,
+            "message": "Next attempt created successfully",
             "data": {
-                "attempt_id": result["attempt_id"]
-            }
+                "attempt_id": result["attempt_id"],
+            },
+            "error": None,
         }), 201
 
     except Exception:
-        logger.exception("Failed to process request")
+
+        logger.exception("Failed to create next attempt")
+
         return jsonify({
             "success": False,
             "message": "Server error",
+            "data": None,
+            "error": "server_error",
+        }), 500
+    
+
+
+
+@api_student_bp.route("/<school_slug>/quiz/<quiz_code>/attempts", methods=["GET"],)
+def get_attempts(school_slug, quiz_code):
+
+    try:
+
+        # ==================================================
+        # 1. Resolve Student Identity
+        # ==================================================
+        student_db_id = get_student_identity()
+
+        if not student_db_id:
+            return jsonify({
+                "success": False,
+                "message": "Student not authenticated",
+                "data": None,
+                "error": "student_not_authenticated",
+            }), 401
+
+        # ==================================================
+        # 2. Resolve Exam
+        # ==================================================
+        exam = get_exam_by_quiz_code(quiz_code)
+
+        if not exam or exam.school.slug != school_slug:
+            return jsonify({
+                "success": False,
+                "message": "Invalid quiz or school",
+                "data": None,
+                "error": "invalid_exam",
+            }), 404
+
+        # ==================================================
+        # 3. Fetch Student Attempts
+        # ==================================================
+        attempts = (
+            AttemptModel.query
+            .filter_by(
+                exam_id=exam.id,
+                student_db_id=student_db_id,
+            )
+            .order_by(
+                AttemptModel.attempt_number.asc()
+            )
+            .all()
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Attempts fetched successfully",
+            "data": [
+                {
+                    "attempt_id": attempt.id,
+                    "attempt_number": attempt.attempt_number,
+                }
+                for attempt in attempts
+            ],
+            "error": None,
+        }), 200
+
+    except Exception:
+
+        logger.exception("Failed to fetch attempts")
+
+        return jsonify({
+            "success": False,
+            "message": "Server error",
+            "data": None,
+            "error": "server_error",
         }), 500
 
 
-@api_student_bp.route("/<school_slug>/quiz/<quiz_code>/attempts", methods=["GET"])
-def get_attempts(school_slug, quiz_code):
 
-    exam = get_exam_by_quiz_code(quiz_code)
 
-    if not exam:
-        return jsonify({
-            "success": False,
-            "message": "Exam not found"
-        }), 404
+# @api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/next", methods=["POST"])
+# def create_next_attempt( school_slug, attempt_id):
+#     try:
 
-    # ==================================================
-    # 🔥 STEP 1: USE DB AS SOURCE OF TRUTH
-    # ==================================================
+#         result = start_next_attempt(
+#             attempt_id
+#         )
 
-    # Get latest attempt FIRST (safe fallback)
-    latest_attempt = AttemptModel.query.filter_by(
-        exam_id=exam.id
-    ).order_by(AttemptModel.id.desc()).first()
+#         if isinstance(result, tuple):
+#             result_data, status_code = result
+#             return jsonify(
+#                 result_data
+#             ), status_code
 
-    if not latest_attempt:
-        return jsonify({
-            "success": True,
-            "data": []
-        })
+#         return jsonify({
+#             "success": True,
+#             "data": {
+#                 "attempt_id": result["attempt_id"]
+#             }
+#         }), 201
 
-    student_id = latest_attempt.student_db_id
+#     except Exception:
+#         logger.exception("Failed to process request")
+#         return jsonify({
+#             "success": False,
+#             "message": "Server error",
+#         }), 500
 
-    if not student_id:
-        return jsonify({
-            "success": True,
-            "data": []
-        })
 
-    # ==================================================
-    # STEP 2: FETCH ONLY THIS STUDENT'S ATTEMPTS
-    # ==================================================
-    attempts = AttemptModel.query.filter(
-        AttemptModel.exam_id == exam.id,
-        AttemptModel.student_db_id == student_id
-    ).order_by(AttemptModel.attempt_number.asc()).all()
+# @api_student_bp.route("/<school_slug>/quiz/<quiz_code>/attempts", methods=["GET"])
+# def get_attempts(school_slug, quiz_code):
 
-    return jsonify({
-        "success": True,
-        "data": [
-            {
-                "attempt_id": a.id,
-                "attempt_number": a.attempt_number
-            }
-            for a in attempts
-        ]
-    })
+#     exam = get_exam_by_quiz_code(quiz_code)
+
+#     if not exam:
+#         return jsonify({
+#             "success": False,
+#             "message": "Exam not found"
+#         }), 404
+
+#     # ==================================================
+#     # 🔥 STEP 1: USE DB AS SOURCE OF TRUTH
+#     # ==================================================
+
+#     # Get latest attempt FIRST (safe fallback)
+#     latest_attempt = AttemptModel.query.filter_by(
+#         exam_id=exam.id
+#     ).order_by(AttemptModel.id.desc()).first()
+
+#     if not latest_attempt:
+#         return jsonify({
+#             "success": True,
+#             "data": []
+#         })
+
+#     student_id = latest_attempt.student_db_id
+
+#     if not student_id:
+#         return jsonify({
+#             "success": True,
+#             "data": []
+#         })
+
+#     # ==================================================
+#     # STEP 2: FETCH ONLY THIS STUDENT'S ATTEMPTS
+#     # ==================================================
+#     attempts = AttemptModel.query.filter(
+#         AttemptModel.exam_id == exam.id,
+#         AttemptModel.student_db_id == student_id
+#     ).order_by(AttemptModel.attempt_number.asc()).all()
+
+#     return jsonify({
+#         "success": True,
+#         "data": [
+#             {
+#                 "attempt_id": a.id,
+#                 "attempt_number": a.attempt_number
+#             }
+#             for a in attempts
+#         ]
+#     })

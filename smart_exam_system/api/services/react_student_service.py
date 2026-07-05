@@ -204,12 +204,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
     # --------------------------------------------------
     # 4. Resolve student
     # --------------------------------------------------
-    print("Registration mode:", exam.registration_mode)
 
-    if exam.registration_mode == "verified":
-        print("VERIFIED FLOW")
-    else:
-        print("OPEN FLOW")
     student_result = _resolve_student(
         exam,
         school_id,
@@ -261,12 +256,6 @@ def _find_existing_attempt(exam_id, school_id, student_data):
 def _resolve_student(exam, school_id, student_data):
 
     student = None
-    print("Registration mode:", exam.registration_mode)
-
-    if exam.registration_mode == "VERIFIED":
-        print("VERIFIED FLOW")
-    else:
-        print("OPEN FLOW")
         
     if exam.registration_mode == "verified":
 
