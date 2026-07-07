@@ -213,7 +213,7 @@ export default function AIGeneratePage() {
       )) || (extracting && (
         <LoadingOverlay message="Extracting Content..." />
       ))}
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       
       {/* HEADER */}
         <PageHeader

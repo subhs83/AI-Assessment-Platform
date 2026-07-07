@@ -10,7 +10,20 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     libtesseract-dev \
+    poppler-utils \
     tesseract-ocr-eng \
+    tesseract-ocr-hin \
+    tesseract-ocr-san \
+    tesseract-ocr-mar \
+    tesseract-ocr-ben \
+    tesseract-ocr-guj \
+    tesseract-ocr-kan \
+    tesseract-ocr-mal \
+    tesseract-ocr-ori \
+    tesseract-ocr-pan \
+    tesseract-ocr-tam \
+    tesseract-ocr-tel \
+    tesseract-ocr-urd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages

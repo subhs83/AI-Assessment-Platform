@@ -22,10 +22,16 @@ def extract_pdf_text( file, language,):
 
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
 
+        kwargs = {
+            "dpi": Config.PDF_RENDER_DPI,
+        }
+
+        if Config.POPPLER_PATH:
+            kwargs["poppler_path"] = Config.POPPLER_PATH
+
         images = convert_from_bytes(
             pdf_bytes,
-            dpi=Config.PDF_RENDER_DPI,
-            poppler_path=Config.POPPLER_PATH,
+            **kwargs,
         )
 
         for page, image in zip(pdf.pages, images):
