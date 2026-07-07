@@ -37,11 +37,45 @@ class Config:
     
     
     TESSERACT_CMD = os.getenv("TESSERACT_CMD")
-    # print("ENV:", TESSERACT_CMD)
+    POPPLER_PATH = os.getenv("POPPLER_PATH")
+
+    OCR_LANGUAGE_MAP = {
+                "english": "eng",
+                "hindi": "eng+hin",
+                "sanskrit": "eng+san",
+                "marathi": "eng+mar",
+                "bengali": "eng+ben",
+                "gujarati": "eng+guj",
+                "kannada": "eng+kan",
+                "malayalam": "eng+mal",
+                "odia": "eng+ori",
+                "punjabi": "eng+pan",
+                "tamil": "eng+tam",
+                "telugu": "eng+tel",
+                "urdu": "eng+urd",
+            }
+    OCR_LANGUAGE_OPTIONS = [
+        {
+            "value": key,
+            "label": key.replace("_", " ").title(),
+        }
+        for key in OCR_LANGUAGE_MAP.keys()
+    ]
+    DEFAULT_OCR_LANGUAGE = "english"
+    PDF_TEXT_THRESHOLD = 30
+    OCR_IMAGE_MAX_SIZE = (2000, 2000)
+    OCR_CONTRAST = 2.0
+    OCR_SCALE_FACTOR = 2
+    PDF_RENDER_DPI = 300
+    OCR_THRESHOLD = 140
+    OCR_SHARPEN = True
 
     if TESSERACT_CMD:
         pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
     # print("PYTESSERACT:", pytesseract.pytesseract.tesseract_cmd)
+
+
+    
 
     # =========================
     # DATABASE CONFIG

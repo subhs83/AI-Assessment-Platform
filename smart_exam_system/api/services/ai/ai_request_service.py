@@ -12,6 +12,7 @@ def create_ai_request(
     difficulty,
     question_count,
     generated_questions,
+    document_language,
     metadata=None,
 ):
     request_obj = AIGenerationRequest(
@@ -22,6 +23,7 @@ def create_ai_request(
         difficulty=difficulty,
         question_count=question_count,
         generated_questions=generated_questions,
+        document_language=document_language,
         generation_metadata=metadata or {},
         status="completed",
     )

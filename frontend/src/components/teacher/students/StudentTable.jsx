@@ -27,6 +27,10 @@ export default function StudentTable({
             </th>
 
             <th className="text-left p-3 font-medium">
+              Section
+            </th>
+
+            <th className="text-left p-3 font-medium">
               Mobile
             </th>
 
@@ -56,7 +60,11 @@ export default function StudentTable({
               </td>
 
               <td className="p-3">
-                {student.student_class}
+                {student.student_class || "-"}
+              </td>
+
+              <td className="p-3">
+                {student.student_section || "-"}
               </td>
 
               <td className="p-3">

@@ -1,14 +1,14 @@
 
 from smart_exam_system.extensions import db
 from smart_exam_system.models.user import UserModel
+from datetime import datetime
+from sqlalchemy.orm import backref
 
 class ExamModel(db.Model):
     __tablename__ = "exams"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
-     # ✅ NEW SCHEDULING FIELDS
-    class_name = db.Column(db.String(50), nullable=True)
     
     duration_minutes = db.Column(db.Integer, nullable=False)
 
@@ -43,8 +43,98 @@ class ExamModel(db.Model):
     # ✅ Relationship
     school = db.relationship("SchoolModel", backref="exams")
 
+    # questions = db.relationship(
+    #     "QuestionModel",
+    #     backref="exam",
+    #     cascade="all, delete-orphan",
+    #     passive_deletes=True,
+    # )
+
+    # targets = db.relationship(
+    #     "ExamTargetModel",
+    #     backref="exam",
+    #     cascade="all, delete-orphan",
+    #     passive_deletes=True,
+    # )
+
     def __repr__(self):
         return f"<Exam {self.title}>"
+
+
+
+
+
+class ExamTargetModel(db.Model):
+    __tablename__ = "exam_targets"
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+    )
+
+    exam_id = db.Column(
+        db.Integer,
+        db.ForeignKey("exams.id"),
+        nullable=False,
+        index=True,
+    )
+
+    school_class_id = db.Column(
+        db.Integer,
+        db.ForeignKey("school_classes.id"),
+        nullable=False,
+        index=True,
+    )
+
+    school_section_id = db.Column(
+        db.Integer,
+        db.ForeignKey("school_sections.id"),
+        nullable=True,
+        index=True,
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    exam = db.relationship(
+        "ExamModel",
+        backref=backref(
+            "targets",
+            cascade="all, delete-orphan",
+            lazy="select",
+        ),
+    )
+
+    school_class = db.relationship(
+        "SchoolClassModel"
+    )
+
+    school_section = db.relationship(
+        "SchoolSectionModel"
+    )
+#     exam_id = db.Column(
+#     db.Integer,
+#     db.ForeignKey(
+#         "exams.id",
+#         ondelete="CASCADE",
+#     ),
+#     nullable=False,
+#     index=True,
+# )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "exam_id",
+            "school_class_id",
+            "school_section_id",
+            name="uq_exam_target",
+        ),
+    )
+
+    
 
 
 # ================= NEW SYSTEM =================

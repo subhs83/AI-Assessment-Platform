@@ -35,7 +35,9 @@ import LeaderboardPage from "./pages/teacher/LeaderboardPage";
 import AIPreviewPage from "./pages/teacher/ai/AIPreviewPage";
 import AIGeneratePage from "./pages/teacher/ai/AIGeneratePage";
 import AIHistoryPage from "./pages/teacher/ai/AIHistoryPage";
-import StudentsPage from "./pages/teacher/StudentsPage";
+import StudentsPage from "./pages/teacher/StudentsPage";  
+import AcademicStructurePage from "./pages/teacher/AcademicStructurePage";
+import SectionsPage from "./pages/teacher/SectionsPage";
 
 
 
@@ -133,8 +135,10 @@ function AppContent() {
             <Route path="ai/history" element={<AIHistoryPage />}/>
 
             <Route  path="students"  element={<StudentsPage />}/>
-          
 
+            <Route  path="academic-structure"  element={<AcademicStructurePage />}/>
+
+            <Route  path="academic-structure/classes/:classId/sections"  element={<SectionsPage />}/>
             
           </Route>
  

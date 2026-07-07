@@ -9,7 +9,8 @@ from smart_exam_system.models import (
     StudentAnswerModel,
     AttemptModel,
     StudentModel,   
-    SchoolModel,
+    SchoolClassModel,
+    SchoolSectionModel
 )
 import  json, random
 
@@ -25,8 +26,8 @@ def normalize_text(value, field=None):
     Normalize user input for consistent storage and comparison.
     """
 
-    if value is None:
-        return ""
+    if value in (None, ""):
+        return None
 
     value = str(value).strip()
 
@@ -49,25 +50,86 @@ def normalize_text(value, field=None):
 
     return value
 
+def normalize_int(value):
+    if value in (None, ""):
+        return None
+
+    return int(value)
+
+
+def get_academic_structure(school_id):
+
+    classes = (
+        SchoolClassModel.query
+        .filter_by(
+            school_id=school_id,
+            is_active=True,
+        )
+        .order_by(SchoolClassModel.display_order.asc())
+        .all()
+    )
+
+    sections = (
+        SchoolSectionModel.query
+        .filter_by(
+            school_id=school_id,
+            is_active=True,
+        )
+        .order_by(
+            SchoolSectionModel.school_class_id.asc(),
+            SchoolSectionModel.display_order.asc(),
+        )
+        .all()
+    )
+
+    sections_by_class = {}
+
+    for section in sections:
+
+        sections_by_class.setdefault(
+            section.school_class_id,
+            [],
+        ).append({
+            "id": section.id,
+            "name": section.name,
+        })
+
+    return [
+        {
+            "id": school_class.id,
+            "name": school_class.name,
+            "sections": sections_by_class.get(
+                school_class.id,
+                [],
+            ),
+        }
+        for school_class in classes
+    ]
+
+
+
+
 def find_student(
     school_id,
     first_name,
     last_name,
-    student_class,
+    school_class_id,
+    school_section_id,
     roll_number,
     student_registration_type=None,
 ):
     query = StudentModel.query.filter_by(
         school_id=school_id,
-        first_name=first_name.strip(),
-        last_name=last_name.strip(),
-        student_class=student_class.strip(),
-        roll_number=roll_number.strip(),
+        first_name=first_name,
+        last_name=last_name,
+        school_class_id=school_class_id,
+        school_section_id=school_section_id,
+        roll_number=roll_number,
     )
 
     if student_registration_type:
         query = query.filter_by(
-            student_registration_type=student_registration_type,
+            student_registration_type=student_registration_type
         )
 
     return query.first()
@@ -77,17 +139,19 @@ def create_student(
     school_id,
     first_name,
     last_name,
-    student_class,
+    school_class_id,
+    school_section_id,
     roll_number,
-    mobile=None,
+    mobile,
     student_registration_type=StudentRegistrationType.OPEN,
 ):
     student = StudentModel(
         student_uid=str(uuid4()),
         school_id=school_id,
         first_name=first_name.strip(),
-        last_name=last_name.strip(),
-        student_class=student_class.strip(),
+        last_name=last_name.strip() if last_name else "",
+        school_class_id=school_class_id,
+        school_section_id=school_section_id,  
         roll_number=roll_number.strip(),
         mobile=mobile,
         student_registration_type=student_registration_type,
@@ -103,16 +167,18 @@ def find_or_create_student(
     school_id,
     first_name,
     last_name,
-    student_class,
+    school_class_id,
+    school_section_id,
     roll_number,
     mobile=None,
 ):
     student = find_student(
-        school_id,
-        first_name,
-        last_name,
-        student_class,
-        roll_number,
+        school_id=school_id,
+        first_name=first_name,
+        last_name=last_name,
+        school_class_id=school_class_id,
+        school_section_id=school_section_id,
+        roll_number=roll_number,
     )
 
     if student:
@@ -122,7 +188,8 @@ def find_or_create_student(
         school_id=school_id,
         first_name=first_name,
         last_name=last_name,
-        student_class=student_class,
+        school_class_id=school_class_id,
+        school_section_id=school_section_id,
         roll_number=roll_number,
         mobile=mobile,
         student_registration_type=StudentRegistrationType.OPEN,
@@ -186,12 +253,42 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         }, 404
 
     # --------------------------------------------------
-    # 3. Check existing completed attempt
+    # 3. Resolve student
+    # --------------------------------------------------
+    student_result = _resolve_student(
+        exam=exam,
+        school_id=school_id,
+        student_data=student_data,
+    )
+
+    if not student_result["success"]:
+        return {
+            "success": False,
+            "message": student_result["message"],
+        }, 403
+
+    student = student_result["student"]
+
+    # --------------------------------------------------
+    # 4. Academic Authorization
+    # --------------------------------------------------
+    success, message = can_student_access_exam(
+        exam=exam,
+        student=student,
+    )
+
+    if not success:
+        return {
+            "success": False,
+            "message": message,
+        }, 403
+
+    # --------------------------------------------------
+    # 5. Check existing completed attempt
     # --------------------------------------------------
     existing_attempt = _find_existing_attempt(
         exam.id,
-        school_id,
-        student_data
+        student,
     )
 
     if existing_attempt:
@@ -202,25 +299,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         }, 200
 
     # --------------------------------------------------
-    # 4. Resolve student
-    # --------------------------------------------------
-
-    student_result = _resolve_student(
-        exam,
-        school_id,
-        student_data
-    )
-
-    if not student_result["success"]:
-        return {
-            "success": False,
-            "message": student_result["message"]
-        }, 403
-
-    student = student_result["student"]
-
-    # --------------------------------------------------
-    # 5. Create attempt
+    # 6. Create attempt
     # --------------------------------------------------
     return _create_attempt(
         exam=exam,
@@ -233,37 +312,63 @@ def _normalize_student_data(form_data):
     return {
         "first_name": normalize_text(form_data.get("first_name"), field="name"),
         "last_name": normalize_text(form_data.get("last_name"), field="name"),
-        "student_class": normalize_text(form_data.get("student_class"), field="class"),
+
+        "school_class_id": normalize_int(form_data.get("school_class_id")),
+        "school_section_id": normalize_int(form_data.get("school_section_id")),
+
         "roll_number": normalize_text(form_data.get("roll_number"), field="roll_number"),
         "mobile": normalize_text(form_data.get("mobile"), field="mobile"),
     }
 
-def _find_existing_attempt(exam_id, school_id, student_data):
-    student = find_existing_student(
-        school_id,
-        student_data["student_class"],
-        student_data["roll_number"],
-    )
 
-    if not student:
-        return None
-
+def _find_existing_attempt(exam_id, student):
     return get_latest_result_attempt(
         student.id,
-        exam_id
+        exam_id,
     )
+
+def can_student_access_exam(exam, student):
+    """
+    Check whether the student is authorized to access the exam.
+
+    Rules:
+    - Whole class target -> any section in that class is allowed.
+    - Section target -> only that section is allowed.
+    """
+
+    targets = exam.targets or []
+
+    if not targets:
+        return False, "This exam is not available."
+
+    for target in targets:
+
+        # Target belongs to another class
+        if target.school_class_id != student.school_class_id:
+            continue
+
+        # Whole class target
+        if target.school_section_id is None:
+            return True, None
+
+        # Section-specific target
+        if target.school_section_id == student.school_section_id:
+            return True, None
+
+    return False, "You are not authorized to take this exam."
 
 def _resolve_student(exam, school_id, student_data):
 
     student = None
-        
+
     if exam.registration_mode == "verified":
 
         student = find_student(
             school_id=school_id,
             first_name=student_data["first_name"],
             last_name=student_data["last_name"],
-            student_class=student_data["student_class"],
+            school_class_id=student_data["school_class_id"],
+            school_section_id=student_data["school_section_id"],
             roll_number=student_data["roll_number"],
         )
 
@@ -278,7 +383,8 @@ def _resolve_student(exam, school_id, student_data):
             school_id=school_id,
             first_name=student_data["first_name"],
             last_name=student_data["last_name"],
-            student_class=student_data["student_class"],
+            school_class_id=student_data["school_class_id"],
+            school_section_id=student_data["school_section_id"],
             roll_number=student_data["roll_number"],
             mobile=student_data["mobile"],
         )
@@ -862,17 +968,6 @@ def record_violation(attempt_id, reason):
         "auto_submitted": attempt.is_submitted
     }
 
-
-def find_existing_student(
-    school_id,
-    student_class,
-    roll_number,
-):
-    return StudentModel.query.filter_by(
-        school_id=school_id,
-        student_class=student_class.strip(),
-        roll_number=roll_number.strip(),
-    ).first()
 
 
 def get_latest_result_attempt(student_db_id, exam_id):

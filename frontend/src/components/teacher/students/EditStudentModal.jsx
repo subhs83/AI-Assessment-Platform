@@ -9,7 +9,8 @@ import { useToast } from "../../ui/Toast";
 const INITIAL_VALUES = {
   first_name: "",
   last_name: "",
-  student_class: "",
+  school_class_id: "",
+  school_section_id: "",
   roll_number: "",
   mobile: "",
 };
@@ -21,83 +22,110 @@ export default function EditStudentModal({
   student,
   refresh,
 }) {
-
   const { showToast } = useToast();
 
-  const updateStudent = useTeacherStore(
-    (s) => s.updateStudent
-  );
+  const {
+    updateStudent,
+    schoolClasses,
+    sections,
+    fetchSchoolClasses,
+    fetchSections,
+  } = useTeacherStore();
 
   const [values, setValues] = useState(INITIAL_VALUES);
-
   const [errors, setErrors] = useState({});
-
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!open || !student) return;
 
-    if (student && open) {
-      setValues({
-        first_name: student.first_name || "",
-        last_name: student.last_name || "",
-        student_class: student.student_class || "",
-        roll_number: student.roll_number || "",
-        mobile: student.mobile || "",
-      });
+    fetchSchoolClasses(schoolSlug);
 
-      setErrors({});
-    }
+    setValues({
+      first_name: student.first_name || "",
+      last_name: student.last_name || "",
+      school_class_id: student.school_class_id || "",
+      school_section_id: student.school_section_id || "",
+      roll_number: student.roll_number || "",
+      mobile: student.mobile || "",
+    });
 
-  }, [student, open]);
+    setErrors({});
+  }, [
+    open,
+    student,
+    schoolSlug,
+    fetchSchoolClasses,
+  ]);
+
+  useEffect(() => {
+    if (!values.school_class_id) return;
+
+    fetchSections(
+      schoolSlug,
+      values.school_class_id
+    );
+  }, [
+    values.school_class_id,
+    schoolSlug,
+    fetchSections,
+  ]);
 
   const validate = () => {
-
     const newErrors = {};
 
     if (!values.first_name.trim()) {
-      newErrors.first_name = "First Name is required.";
+      newErrors.first_name =
+        "First Name is required.";
     }
 
-    if (!values.student_class.trim()) {
-      newErrors.student_class = "Class is required.";
+    if (!values.school_class_id) {
+      newErrors.school_class_id =
+        "Class is required.";
+    }
+
+    if (!values.school_section_id) {
+      newErrors.school_section_id =
+        "Section is required.";
     }
 
     if (!values.roll_number.trim()) {
-      newErrors.roll_number = "Roll Number is required.";
+      newErrors.roll_number =
+        "Roll Number is required.";
     }
 
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
-
   };
 
   const resetForm = () => {
-
     setValues(INITIAL_VALUES);
-
     setErrors({});
-
   };
 
   const handleClose = () => {
-
     if (loading) return;
 
     resetForm();
-
     onClose();
+  };
 
+  const handleValuesChange = (newValues) => {
+    if (
+      newValues.school_class_id !==
+      values.school_class_id
+    ) {
+      newValues.school_section_id = "";
+    }
+
+    setValues(newValues);
   };
 
   const handleSave = async () => {
-
-    if (!validate()) {
-      return;
-    }
+    if (!validate()) return;
 
     try {
-
       setLoading(true);
 
       const response = await updateStudent(
@@ -117,10 +145,17 @@ export default function EditStudentModal({
 
     } catch (err) {
 
+      const apiErrors =
+        err.response?.data?.errors;
+
+      if (apiErrors) {
+        setErrors(apiErrors);
+      }
+
       showToast(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to update student.",
+          err.message ||
+          "Failed to update student.",
         "error"
       );
 
@@ -129,20 +164,16 @@ export default function EditStudentModal({
       setLoading(false);
 
     }
-
   };
 
   const clearError = (field) => {
-
     setErrors((prev) => ({
       ...prev,
       [field]: "",
     }));
-
   };
 
   return (
-
     <FormModal
       open={open}
       title="Edit Student"
@@ -152,16 +183,14 @@ export default function EditStudentModal({
       onSave={handleSave}
       onClose={handleClose}
     >
-
       <StudentForm
         values={values}
         errors={errors}
-        onChange={setValues}
+        onChange={handleValuesChange}
         clearError={clearError}
+        schoolClasses={schoolClasses}
+        sections={sections}
       />
-
     </FormModal>
-
   );
-
 }

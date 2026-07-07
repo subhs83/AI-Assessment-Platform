@@ -49,6 +49,30 @@ class StudentModel(db.Model):
         nullable=False,
     )
 
+    school_class_id = db.Column(
+        db.Integer,
+        db.ForeignKey("school_classes.id"),
+        nullable=True,
+        index=True,
+    )
+
+    school_section_id = db.Column(
+        db.Integer,
+        db.ForeignKey("school_sections.id"),
+        nullable=True,
+        index=True,
+    )
+
+    school_class = db.relationship(
+        "SchoolClassModel",
+        foreign_keys=[school_class_id],
+    )
+
+    school_section = db.relationship(
+        "SchoolSectionModel",
+        foreign_keys=[school_section_id],
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
@@ -58,9 +82,10 @@ class StudentModel(db.Model):
     __table_args__ = (
         db.UniqueConstraint(
             "school_id",
-            "student_class",
+            "school_class_id",
+            "school_section_id",
             "roll_number",
-            name="uq_student_school_class_roll",
+            name="uq_student_school_class_section_roll",
         ),
     )
 

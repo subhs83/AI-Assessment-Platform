@@ -9,7 +9,10 @@ ExamModel,
 QuestionModel,
 AttemptModel,
 UserModel, 
-SchoolModel
+ExamTargetModel,
+)
+from smart_exam_system.api.services.exam_target_service import (
+    create_exam_targets,
 )
  
 from smart_exam_system.api.utils.helpers import apply_exam_status
@@ -269,7 +272,7 @@ def create_exam(
     teacher_id,
     school_id,
     title,
-    class_name,
+    targets,
     duration_minutes,
     marks,
     negative,
@@ -297,7 +300,6 @@ def create_exam(
 
         exam = ExamModel(
             title=title,
-            class_name=class_name,
             duration_minutes= duration_minutes,
             marks_per_question=marks,
             negative_marks=negative,
@@ -311,6 +313,13 @@ def create_exam(
         )
 
         db.session.add(exam)
+        db.session.flush()
+
+        create_exam_targets(
+            exam_id=exam.id,
+            targets=targets,
+        )
+
         db.session.commit()
 
         return True, "Exam created successfully (Draft mode)"
@@ -330,6 +339,14 @@ def parse_exam_datetime(datetime_string):
 
 
 def extract_exam_form_data(form_data):
+
+
+    title = (form_data.get("title") or "").strip()
+
+    if not title:
+        raise ValueError(
+            "Exam title is required."
+        )
 
     show_result_review = str(
         form_data.get("show_result_review", "true")
@@ -362,17 +379,18 @@ def extract_exam_form_data(form_data):
             "End date must be after start date."
         )
     
-    if len(form_data.get("class_name", "")) > 50:
+    targets = form_data.get("targets") or []
+
+    if not isinstance(targets, list):
         raise ValueError(
-            "Class name cannot exceed 50 characters."
+            "Invalid academic target."
         )
+    
 
     return {
-        "title": form_data.get("title"),
+        "title": title,
 
-        "class_name": (
-            form_data.get("class_name") or ""
-        ).strip(),
+        "targets": targets,
 
         "duration_minutes": int(
             form_data.get("duration_minutes") or 0
@@ -467,33 +485,62 @@ def publish_exam(exam_id, school_id, teacher_id=None):
 
 def delete_exam(exam_id):
 
-    attempt_count = db.session.query(func.count(AttemptModel.id))\
-        .filter(AttemptModel.exam_id == exam_id)\
+    attempt_count = (
+        db.session.query(func.count(AttemptModel.id))
+        .filter(
+            AttemptModel.exam_id == exam_id
+        )
         .scalar()
+    )
 
     if attempt_count > 0:
-        return False, "Cannot delete exam with student attempts."
+        return (
+            False,
+            "Cannot delete exam with student attempts."
+        )
 
-    # delete questions
     try:
 
+        # Delete questions
         QuestionModel.query.filter_by(
             exam_id=exam_id
-        ).delete(synchronize_session=False)
+        ).delete(
+            synchronize_session=False
+        )
 
+        # Delete exam targets
+        ExamTargetModel.query.filter_by(
+            exam_id=exam_id
+        ).delete(
+            synchronize_session=False
+        )
+
+        # Delete exam
         ExamModel.query.filter_by(
             id=exam_id
-        ).delete(synchronize_session=False)
+        ).delete(
+            synchronize_session=False
+        )
 
         db.session.commit()
 
-        return True, "Exam deleted successfully."
+        return (
+            True,
+            "Exam deleted successfully."
+        )
 
     except Exception:
+
         db.session.rollback()
-        logger.exception("Failed to delete question")
-        return False, "Failed to delete question."
-    
+
+        logger.exception(
+            "Failed to delete exam"
+        )
+
+        return (
+            False,
+            "Failed to delete exam."
+        )
 
 
 

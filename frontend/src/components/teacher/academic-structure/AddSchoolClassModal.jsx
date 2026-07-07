@@ -1,0 +1,142 @@
+import { useState } from "react";
+
+import FormModal from "../../ui/FormModal";
+import SchoolClassForm from "./SchoolClassForm";
+
+import { useTeacherStore } from "../../../store/teacherStore";
+import { useToast } from "../../ui/Toast";
+
+const INITIAL_VALUES = {
+  name: "",
+  display_order: "",
+};
+
+export default function AddSchoolClassModal({
+  open,
+  onClose,
+  schoolSlug,
+  refresh,
+}) {
+
+  const { showToast } = useToast();
+
+  const createSchoolClass = useTeacherStore(
+    (s) => s.createSchoolClass
+  );
+
+  const [values, setValues] = useState(INITIAL_VALUES);
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const validate = () => {
+
+    const newErrors = {};
+
+    if (!values.name.trim()) {
+      newErrors.name = "Class name is required.";
+    }
+
+    if (values.display_order === "") {
+      newErrors.display_order = "Display order is required.";
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+
+  };
+
+  const resetForm = () => {
+
+    setValues(INITIAL_VALUES);
+
+    setErrors({});
+
+  };
+
+  const handleClose = () => {
+
+    if (loading) return;
+
+    resetForm();
+
+    onClose();
+
+  };
+
+  const handleSave = async () => {
+
+    if (!validate()) return;
+
+    try {
+
+      setLoading(true);
+
+      const response = await createSchoolClass(
+        schoolSlug,
+        values
+      );
+
+      showToast(
+        response.message,
+        "success"
+      );
+
+      refresh();
+
+      handleClose();
+
+    } catch (err) {
+
+      const apiErrors = err.response?.data?.errors;
+
+      if (apiErrors) {
+        setErrors(apiErrors);
+      }
+
+      showToast(
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to add class.",
+        "error"
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  const clearError = (field) => {
+    setErrors((prev) => ({
+      ...prev,
+      [field]: "",
+    }));
+  };
+
+  return (
+
+    <FormModal
+      open={open}
+      title="Add Class"
+      description="Add a class to your school."
+      saveText="Save Class"
+      loading={loading}
+      onSave={handleSave}
+      onClose={handleClose}
+    >
+
+      <SchoolClassForm
+        values={values}
+        errors={errors}
+        onChange={setValues}
+        clearError={clearError}
+      />
+
+    </FormModal>
+
+  );
+
+}

@@ -27,6 +27,9 @@ getHistory: (schoolSlug, params = {}) =>
       params,
     }),
 
+    getOcrLanguages: (schoolSlug) =>
+  API.get(`/api/teacher/${schoolSlug}/ai/options`),
+
 };
 
 export default aiApi

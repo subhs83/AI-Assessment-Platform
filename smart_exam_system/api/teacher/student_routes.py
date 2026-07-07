@@ -14,6 +14,15 @@ from smart_exam_system.api.services.student_management_service import (
      get_student_template,
      import_students,
 )
+from smart_exam_system.api.services.school_class_service import (
+    get_school_class,
+    
+
+)
+
+from smart_exam_system.api.services.school_section_service import (
+    get_section,
+)
 
 from smart_exam_system.api.services.react_student_service import create_student, normalize_text
 
@@ -181,36 +190,79 @@ def create_student_api(school_slug):
 
     data = request.get_json() or {}
 
-    first_name = normalize_text(data.get("first_name") , field="name")
-    last_name = normalize_text(data.get("last_name") , field="name")
-    student_class = normalize_text(data.get("student_class") , field="class")
-    roll_number = normalize_text(data.get("roll_number") , field="roll_number")
-    mobile = normalize_text(data.get("mobile") , field="mobile")
+    first_name = normalize_text(
+        data.get("first_name"),
+        field="name",
+    )
+
+    last_name = normalize_text(
+        data.get("last_name"),
+        field="name",
+    )
+
+    school_class_id = data.get("school_class_id")
+    school_section_id = data.get("school_section_id")
+
+    roll_number = normalize_text(
+        data.get("roll_number"),
+        field="roll_number",
+    )
+
+    mobile = normalize_text(
+        data.get("mobile"),
+        field="mobile",
+    )
+
+    errors = {}
 
     if not first_name:
-        return api_response(
-            success=False,
-            message="First Name is required.",
-            status=400,
-        )
+        errors["first_name"] = "First Name is required."
 
-    if not student_class:
-        return api_response(
-            success=False,
-            message="Class is required.",
-            status=400,
-        )
+    if not school_class_id:
+        errors["school_class_id"] = "Class is required."
+
+    if not school_section_id:
+        errors["school_section_id"] = "Section is required."
 
     if not roll_number:
+        errors["roll_number"] = "Roll Number is required."
+
+    if errors:
         return api_response(
             success=False,
-            message="Roll Number is required.",
+            message="Validation failed.",
+            errors=errors,
             status=400,
+        )
+
+    school_class = get_school_class(
+        school_class_id=school_class_id,
+        school_id=school.id,
+    )
+
+    if not school_class:
+        return api_response(
+            success=False,
+            message="Class not found.",
+            status=404,
+        )
+
+    section = get_section(
+        section_id=school_section_id,
+        school_class_id=school_class.id,
+    )
+
+    if not section:
+        return api_response(
+            success=False,
+            message="Section not found.",
+            status=404,
         )
 
     existing_student = StudentModel.query.filter_by(
         school_id=school.id,
-        student_class=student_class,
+        school_class_id=school_class.id,
+        school_section_id=section.id,
         roll_number=roll_number,
     ).first()
 
@@ -227,7 +279,12 @@ def create_student_api(school_slug):
             school_id=school.id,
             first_name=first_name,
             last_name=last_name,
-            student_class=student_class,
+            school_class_id=school_class.id,
+            school_section_id=section.id,
+
+            # Temporary legacy field
+            student_class=school_class.name,
+
             roll_number=roll_number,
             mobile=mobile or None,
             student_registration_type=StudentRegistrationType.VERIFIED,
@@ -257,7 +314,7 @@ def create_student_api(school_slug):
 
 
 
-@api_teacher_bp.route( "/<school_slug>/students/<student_uid>",  methods=["PUT"],)
+@api_teacher_bp.route("/<school_slug>/students/<student_uid>", methods=["PUT"],)
 @login_required
 @teacher_required
 def update_student_api(school_slug, student_uid):
@@ -294,38 +351,81 @@ def update_student_api(school_slug, student_uid):
 
     data = request.get_json() or {}
 
-    first_name = normalize_text(data.get("first_name"), field="name")
-    last_name = normalize_text(data.get("last_name") , field="name")
-    student_class = normalize_text(data.get("student_class"), field="class")
-    roll_number = normalize_text(data.get("roll_number"), field="roll_number")
-    mobile = normalize_text(data.get("mobile"), field="mobile")
+    first_name = normalize_text(
+        data.get("first_name"),
+        field="name",
+    )
+
+    last_name = normalize_text(
+        data.get("last_name"),
+        field="name",
+    )
+
+    school_class_id = data.get("school_class_id")
+    school_section_id = data.get("school_section_id")
+
+    roll_number = normalize_text(
+        data.get("roll_number"),
+        field="roll_number",
+    )
+
+    mobile = normalize_text(
+        data.get("mobile"),
+        field="mobile",
+    )
+
+    errors = {}
 
     if not first_name:
-        return api_response(
-            success=False,
-            message="First Name is required.",
-            status=400,
-        )
+        errors["first_name"] = "First Name is required."
 
-    if not student_class:
-        return api_response(
-            success=False,
-            message="Class is required.",
-            status=400,
-        )
+    if not school_class_id:
+        errors["school_class_id"] = "Class is required."
+
+    if not school_section_id:
+        errors["school_section_id"] = "Section is required."
 
     if not roll_number:
+        errors["roll_number"] = "Roll Number is required."
+
+    if errors:
         return api_response(
             success=False,
-            message="Roll Number is required.",
+            message="Validation failed.",
+            errors=errors,
             status=400,
+        )
+
+    school_class = get_school_class(
+        school_class_id=school_class_id,
+        school_id=school.id,
+    )
+
+    if not school_class:
+        return api_response(
+            success=False,
+            message="Class not found.",
+            status=404,
+        )
+
+    section = get_section(
+        section_id=school_section_id,
+        school_class_id=school_class.id,
+    )
+
+    if not section:
+        return api_response(
+            success=False,
+            message="Section not found.",
+            status=404,
         )
 
     existing_student = (
         StudentModel.query
         .filter(
             StudentModel.school_id == school.id,
-            StudentModel.student_class == student_class,
+            StudentModel.school_class_id == school_class.id,
+            StudentModel.school_section_id == section.id,
             StudentModel.roll_number == roll_number,
             StudentModel.id != student.id,
         )
@@ -343,7 +443,12 @@ def update_student_api(school_slug, student_uid):
 
         student.first_name = first_name
         student.last_name = last_name
-        student.student_class = student_class
+        student.school_class_id = school_class.id
+        student.school_section_id = section.id
+
+        # Temporary legacy field
+        student.student_class = school_class.name
+
         student.roll_number = roll_number
         student.mobile = mobile or None
 

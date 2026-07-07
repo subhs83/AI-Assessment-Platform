@@ -45,6 +45,12 @@ class AIGenerationRequest(db.Model):
         default=10
     )
 
+    document_language = db.Column(
+        db.String(30),
+        nullable=False,
+        default="english",
+    )
+
     source_summary = db.Column(db.Text, nullable=True)
 
     generated_questions = db.Column(
@@ -54,6 +60,7 @@ class AIGenerationRequest(db.Model):
     generation_metadata = db.Column(
         db.JSON
     )
+    
 
     status = db.Column(
         db.String(20),

@@ -1,4 +1,9 @@
+from smart_exam_system.config import Config
 def extract_input(data, file=None):
+
+    selected_language = data.get( "language",Config.DEFAULT_OCR_LANGUAGE,)
+  
+
     """
     Supports:
     1. topic (text)
@@ -18,9 +23,9 @@ def extract_input(data, file=None):
 
     # CASE 2: PDF
     if file and file.filename.endswith(".pdf"):
-        from .file_handlers.pdf_handler import extract_pdf_text
+        from smart_exam_system.api.utils.ocr.pdf_ocr import extract_pdf_text
 
-        text = extract_pdf_text(file)
+        text = extract_pdf_text(file, language=selected_language,)
 
         return {
             "success": True,
@@ -32,9 +37,9 @@ def extract_input(data, file=None):
 
     # CASE 3: Image
     if file and file.filename.lower().endswith((".png", ".jpg", ".jpeg")):
-        from .file_handlers.image_handler import extract_image_text
+        from smart_exam_system.api.utils.ocr.image_ocr import extract_image_text
 
-        text = extract_image_text(file)
+        text = extract_image_text(file, language=selected_language,)
 
         return {
             "success": True,

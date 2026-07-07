@@ -7,6 +7,7 @@ import {
   History,
   Users,
   LogOut,
+  GraduationCap,
 } from "lucide-react";
 
 export const getTeacherMenu = (schoolSlug) => [
@@ -72,16 +73,23 @@ export const getTeacherMenu = (schoolSlug) => [
   // STUDENTS
   // =========================
   {
-    type: "section",
-    label: "Students",
-  },
+  type: "section",
+  label: "School Management",
+},
 
-  {
-    label: "Students",
-    icon: Users,
-    path: `/school/${schoolSlug}/teacher/students`,
-    end: true,
-  },
+{
+  label: "Academic Structure",
+  icon: GraduationCap,
+  path: `/school/${schoolSlug}/teacher/academic-structure`,
+  end: true,
+},
+
+{
+  label: "Students",
+  icon: Users,
+  path: `/school/${schoolSlug}/teacher/students`,
+  end: true,
+},
 
   // =========================
   // ACCOUNT

@@ -1,10 +1,13 @@
 import Input from "../../ui/Input";
+import Select from "../../ui/Select";
 
 export default function StudentForm({
   values,
   errors = {},
   onChange,
   clearError,
+  schoolClasses,
+  sections,
 }) {
   const handleChange = (field, value) => {
 
@@ -47,16 +50,46 @@ export default function StudentForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        <Input
+        <Select
           label="Class"
           required
-          placeholder="e.g. 10A"
-          value={values.student_class}
-          error={errors.student_class}
+          value={values.school_class_id}
+          error={errors.school_class_id}
+          placeholder="Select Class"
+          options={schoolClasses.map((schoolClass) => ({
+            value: schoolClass.id,
+            label: schoolClass.name,
+          }))}
           onChange={(e) =>
-            handleChange("student_class", e.target.value)
+            handleChange(
+              "school_class_id",
+              Number(e.target.value)
+            )
           }
         />
+
+        <Select
+          label="Section"
+          required
+          value={values.school_section_id}
+          error={errors.school_section_id}
+          placeholder="Select Section"
+          disabled={!values.school_class_id}
+          options={sections.map((section) => ({
+            value: section.id,
+            label: section.name,
+          }))}
+          onChange={(e) =>
+            handleChange(
+              "school_section_id",
+              Number(e.target.value)
+            )
+          }
+        />
+
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         <Input
           label="Roll Number"
@@ -69,17 +102,17 @@ export default function StudentForm({
           }
         />
 
-      </div>
+        <Input
+          label="Mobile"
+          placeholder="9876543210"
+          value={values.mobile}
+          error={errors.mobile}
+          onChange={(e) =>
+            handleChange("mobile", e.target.value)
+          }
+        />
 
-      <Input
-        label="Mobile"
-        placeholder="9876543210"
-        value={values.mobile}
-        error={errors.mobile}
-        onChange={(e) =>
-          handleChange("mobile", e.target.value)
-        }
-      />
+      </div>
 
     </div>
   );

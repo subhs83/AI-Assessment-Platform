@@ -41,4 +41,8 @@ students: {
     list: `/school/${schoolSlug}/teacher/students`,
   },
 
+schoolClasses: {
+    list: `/school/${schoolSlug}/teacher/school-classes`,
+  },
+
 });

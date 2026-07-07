@@ -5,10 +5,10 @@ from smart_exam_system.api.student import api_student_bp
 from smart_exam_system.extensions import db
 from smart_exam_system.api.services.quiz_session_service import build_quiz_session
 from smart_exam_system.models import (
-    ExamModel,
     QuestionModel,
     StudentAnswerModel,
-    AttemptModel
+    AttemptModel,
+    SchoolModel
 )
 from smart_exam_system.api.services.react_student_service import (
     start_student_attempt,
@@ -20,19 +20,15 @@ from smart_exam_system.api.services.react_student_service import (
     get_exam_by_quiz_code,
     get_student_identity,
     set_student_identity,
-    get_submitted_attempts,
-    get_used_attempt_count,
-    get_max_attempts,
-    get_total_questions,
-    get_student_score,    
     is_attempt_expired,
     auto_submit_attempt,    
     finalize_attempt,   
     record_violation,
     start_next_attempt,
     clear_student_identity,
-    get_attempt_detailed_report,    
-    find_or_create_student
+    get_attempt_detailed_report,
+    get_academic_structure
+
 
 )
 import json
@@ -1021,84 +1017,27 @@ def get_attempts(school_slug, quiz_code):
 
 
 
-# @api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/next", methods=["POST"])
-# def create_next_attempt( school_slug, attempt_id):
-#     try:
+@api_student_bp.route("/<school_slug>/academic-structure", methods=["GET"],)
+def get_academic_structure_api(school_slug):
 
-#         result = start_next_attempt(
-#             attempt_id
-#         )
+    school = SchoolModel.query.filter_by(
+        slug=school_slug,
+    ).first()
 
-#         if isinstance(result, tuple):
-#             result_data, status_code = result
-#             return jsonify(
-#                 result_data
-#             ), status_code
+    if not school:
+        return jsonify({
+            "success": False,
+            "message": "School not found.",
+        }), 404
 
-#         return jsonify({
-#             "success": True,
-#             "data": {
-#                 "attempt_id": result["attempt_id"]
-#             }
-#         }), 201
+    classes = get_academic_structure(
+        school.id,
+    )
 
-#     except Exception:
-#         logger.exception("Failed to process request")
-#         return jsonify({
-#             "success": False,
-#             "message": "Server error",
-#         }), 500
-
-
-# @api_student_bp.route("/<school_slug>/quiz/<quiz_code>/attempts", methods=["GET"])
-# def get_attempts(school_slug, quiz_code):
-
-#     exam = get_exam_by_quiz_code(quiz_code)
-
-#     if not exam:
-#         return jsonify({
-#             "success": False,
-#             "message": "Exam not found"
-#         }), 404
-
-#     # ==================================================
-#     # 🔥 STEP 1: USE DB AS SOURCE OF TRUTH
-#     # ==================================================
-
-#     # Get latest attempt FIRST (safe fallback)
-#     latest_attempt = AttemptModel.query.filter_by(
-#         exam_id=exam.id
-#     ).order_by(AttemptModel.id.desc()).first()
-
-#     if not latest_attempt:
-#         return jsonify({
-#             "success": True,
-#             "data": []
-#         })
-
-#     student_id = latest_attempt.student_db_id
-
-#     if not student_id:
-#         return jsonify({
-#             "success": True,
-#             "data": []
-#         })
-
-#     # ==================================================
-#     # STEP 2: FETCH ONLY THIS STUDENT'S ATTEMPTS
-#     # ==================================================
-#     attempts = AttemptModel.query.filter(
-#         AttemptModel.exam_id == exam.id,
-#         AttemptModel.student_db_id == student_id
-#     ).order_by(AttemptModel.attempt_number.asc()).all()
-
-#     return jsonify({
-#         "success": True,
-#         "data": [
-#             {
-#                 "attempt_id": a.id,
-#                 "attempt_number": a.attempt_number
-#             }
-#             for a in attempts
-#         ]
-#     })
+    return jsonify({
+        "success": True,
+        "message": "Academic structure fetched successfully.",
+        "data": {
+            "classes": classes,
+        },
+    })

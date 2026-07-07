@@ -1,15 +1,31 @@
 import { useRef, useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import API from "../../../api/client";
+import { useTeacherStore } from "../../../store/teacherStore";
 import BackButton from "../../../components/ui/BackButton";
 import PageHeader from "../../../components/ui/PageHeader";
 import  LoadingOverlay  from "../../../components/common/LoadingOverlay";
+import {
+    Sparkles,
+    PenSquare,
+    FileText,
+    Languages,
+    Upload,
+    BrainCircuit,
+    Settings2,
+    CheckCircle2,
+    Hash,
+    Gauge,
+    FileDigit,
+  } from "lucide-react";
 
 export default function AIGeneratePage() {
   const { schoolSlug } = useParams();
   const extractRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { ocrLanguages, fetchOcrLanguages} = useTeacherStore();
 
   const fromHistory = location.state?.fromHistory || false;
   const previousSourceType = location.state?.source_type || "";
@@ -23,6 +39,9 @@ export default function AIGeneratePage() {
   const [count, setCount] = useState(location.state?.question_count || 3);
 
   const [file, setFile] = useState(null);
+
+  const [language, setLanguage] = useState("english");
+
 
 
   const [extractedContent, setExtractedContent] =
@@ -43,6 +62,17 @@ export default function AIGeneratePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+
+  useEffect(() => {
+    const load = async () => {
+      const defaultLanguage = await fetchOcrLanguages(schoolSlug);
+      setLanguage(defaultLanguage);
+    };
+
+    load();
+  }, [schoolSlug]);
+
+
   const handleExtract = async () => {
     if (!file) {
       setError("Please select a PDF or image file.");
@@ -53,9 +83,10 @@ export default function AIGeneratePage() {
 
       setExtracting(true);
       setError("");
-
+      
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("language", language);
 
       const res = await API.post(
         `/api/teacher/${schoolSlug}/ai/extract`,
@@ -136,6 +167,7 @@ export default function AIGeneratePage() {
 
       formData.append("difficulty", difficulty);
       formData.append("question_count", count);
+      formData.append("language", language);
 
       const res = await API.post(
         `/api/teacher/${schoolSlug}/ai/generate`,
@@ -175,6 +207,7 @@ export default function AIGeneratePage() {
 
   return (
     <>
+
       {(loading  && (
         <LoadingOverlay message="Generating AI Questions..." />
       )) || (extracting && (
@@ -192,69 +225,149 @@ export default function AIGeneratePage() {
             ) : null
           }
         />
-
       {/* Topic Section */}
-      <div className="border rounded-lg p-4 mb-6">
-        <h2 className="font-semibold text-lg mb-2">
-          Option 1: Generate from Topic
-        </h2>
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
 
-        <p className="text-sm text-gray-600 mb-3">
-          Enter a topic and generate questions directly.
-        </p>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+            <PenSquare className="w-5 h-5 text-indigo-600" />
+          </div>
+
+          <div>
+            <h2 className="font-semibold text-lg">
+              Generate from Topic
+            </h2>
+
+            <p className="text-sm text-gray-500">
+              Enter a topic and let AI generate questions instantly.
+            </p>
+          </div>
+        </div>
 
         <input
-          className="w-full border rounded p-2"
+          className="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g. Photosynthesis"
+          placeholder="Example: Photosynthesis"
         />
       </div>
 
       {/* Divider */}
-      <div className="text-center text-gray-500 font-medium mb-6">
-        ─────── OR ───────
+      <div className="flex items-center gap-4 my-5">
+        <div className="flex-1 h-px bg-slate-200" />
+
+        <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          OR
+        </span>
+
+        <div className="flex-1 h-px bg-slate-200" />
       </div>
 
       {/* File Section */}
-      <div className="border rounded-lg p-4 mb-6">
-        <h2 className="font-semibold text-lg mb-2">
-          Option 2: Generate from PDF or Image
-        </h2>
 
-        <p className="text-sm text-gray-600 mb-1">
-          Upload a PDF or image containing the content you want to use
-          for question generation.
-        </p>
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-6">
 
-        <p className="text-sm text-blue-600 mb-4">
-          Recommended: PDF files usually provide the most accurate
-          results.
-        </p>
+          <div className="flex items-center gap-3 mb-4">
 
-        <input
-          type="file"
-          accept=".pdf,image/*"
-          onChange={(e) => {
-            setFile(e.target.files[0]);
-            setExtractedContent("");
-            setSourceType("");
-            setWordCount(0);
-            setCharacterCount(0);
-          }}
-        />
+            <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-green-600" />
+            </div>
+
+            <div>
+
+              <h2 className="font-semibold text-lg">
+                Generate from PDF or Image
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Upload teaching material and generate questions using AI.
+              </p>
+              <p className="text-sm text-blue-600 mb-4">
+                Recommended: PDF files usually provide the most accurate
+                results.
+              </p>
+
+            </div>
+
+          </div>
+
+        
+          <div className="mb-4">
+
+          <div className="flex items-center gap-2 mb-1">
+
+            <Languages className="w-4 h-4 text-indigo-600" />
+
+            <label className="font-medium">
+              Document Language
+            </label>
+
+          </div>
+
+          <p className="text-xs text-gray-500 mb-2">
+            Choose the language used in the uploaded document.
+          </p>
+
+          <select
+            className="w-full border border-slate-300 rounded-lg px-3 py-2.5"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+          >
+            {ocrLanguages.map((lang) => (
+              <option
+                key={lang.value}
+                value={lang.value}
+              >
+                {lang.label}
+              </option>
+            ))}
+          </select>
+
+        </div>
+        <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center mb-4 hover:border-indigo-400 transition">
+
+          <Upload className="mx-auto w-8 h-8 text-indigo-500 mb-2" />
+
+          <p className="font-medium">
+            Upload PDF or Image
+          </p>
+
+          <p className="text-sm text-gray-500 mb-4">
+            PDF • JPG • PNG
+          </p>
+
+          <input
+            type="file"
+            accept=".pdf,image/*"
+            onChange={(e) => {
+              setFile(e.target.files[0]);
+              setExtractedContent("");
+              setSourceType("");
+              setWordCount(0);
+              setCharacterCount(0);
+            }}
+            className="mx-auto"
+          />
+
+        </div>
 
         {file && (
-          <p className="text-sm text-green-600 mt-2">
-            Selected: {file.name}
-          </p>
-        )}
+
+          <div className="inline-flex items-center gap-2 rounded-full bg-green-100 text-green-700 px-4 py-2 text-sm mb-4">
+
+          <CheckCircle2 className="w-4 h-4"/>
+
+          <span>{file.name}</span>
+
+          </div>
+
+          )}
 
         <button
           type="button"
           onClick={handleExtract}
           disabled={!file || extracting}
-          className="mt-4 bg-green-600 text-white px-4 py-2 rounded"
+          className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-medium transition"
         >
           {extracting ? "Extracting..." : "Extract Content"}
         </button>

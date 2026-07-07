@@ -1,49 +1,59 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Save } from "lucide-react";
+
 import { useTeacherStore } from "../../store/teacherStore";
 import { teacherRoutes } from "../../routes/teacherRoutes";
-import {
-  Calendar,
-  Clock,
-  Repeat,
-  ArrowLeft,
-  Save,
-  FileText,
-  UserCheck,
-  Award,
-  MinusCircle,
-  User
-} from "lucide-react";
 
- 
 import PageHeader from "../../components/ui/PageHeader";
 import Button from "../../components/ui/Button";
 import { useToast } from "../../components/ui/Toast";
 
+import ExamRegistrationMode from "../../components/teacher/exams/ExamRegistrationMode";
+import ExamBasicInfo from "../../components/teacher/exams/ExamBasicInfo";
+import ExamTargetSelector from "../../components/teacher/exams/ExamTargetSelector";
+import ExamSettings from "../../components/teacher/exams/ExamSettings";
+import ExamSchedule from "../../components/teacher/exams/ExamSchedule";
+import ExamOptions from "../../components/teacher/exams/ExamOptions";
+
 export default function CreateExamPage() {
-  const { showToast } = useToast(); 
+
+  const { showToast } = useToast();
+
   const navigate = useNavigate();
+
   const { schoolSlug } = useParams();
+
   const routes = teacherRoutes(schoolSlug);
-  const createExam = useTeacherStore((s) => s.createExam);
+
+  const createExam = useTeacherStore(
+    (s) => s.createExam
+  );
 
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
-  title: "",
-  class_name: "",
-  duration_minutes: 30,
-  marks: 1,
-  negative: 0,
-  max_attempts: 1,
-  registration_mode: "open",
-  show_result_review: true,
-  start_date: "",
-  end_date: "",
-});
+    title: "",
+    school_class_id: "",
+    targets: [],
+    duration_minutes: 30,
+    marks: 1,
+    negative: 0,
+    max_attempts: 1,
+    registration_mode: "open",
+    show_result_review: true,
+    start_date: "",
+    end_date: "",
+  });
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
 
     setForm((prev) => ({
       ...prev,
@@ -52,12 +62,15 @@ export default function CreateExamPage() {
           ? checked
           : value,
     }));
+
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     try {
+
       setLoading(true);
 
       await createExam(
@@ -65,276 +78,101 @@ export default function CreateExamPage() {
         form
       );
 
+      showToast(
+        "Exam created successfully.",
+        "success"
+      );
+
       navigate(routes.exams.list);
 
     } catch (err) {
+
       console.error(err);
-      showToast(err.response?.data?.message || "Failed to create exam", "error");
-    
+
+      showToast(
+        err.response?.data?.message ||
+        "Failed to create exam",
+        "error"
+      );
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   return (
+
     <div className="max-w-4xl mx-auto">
 
       <div className="bg-white rounded-lg border shadow-sm p-6">
 
-        {/* ================= HEADER ================= */}
         <PageHeader
           title="Create Exam"
           description="Configure exam settings before publishing"
         />
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-2">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6 mt-2"
+        >
 
-          {/* ================= EXAM MODE ================= */}
+          <ExamRegistrationMode
+            value={form.registration_mode}
+            onChange={handleChange}
+          />
 
-          <div className="border rounded-lg p-4">
+          <ExamBasicInfo
+            form={form}
+            handleChange={handleChange}
+          >
 
-          <h3 className="flex items-center gap-2 text-sm font-semibold mb-4">
-            <UserCheck size={16} />
-              Registration Mode
-            
-          </h3>
-
-          <div className="flex flex-col md:flex-row gap-4">
-
-            <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500 flex-1">
-
-              <input
-                type="radio"
-                name="registration_mode"
-                value="open"
-                checked={form.registration_mode === "open"}
-                onChange={handleChange}
-                className="mt-1"
-              />
-
-              <div>
-                <p className="font-medium">
-                  Open Registration
-                </p>
-
-                <p className="text-sm text-gray-500">
-                  Any student can register and take this quiz.
-                </p>
-              </div>
-
-            </label>
-
-            <label className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:border-indigo-500 flex-1">
-
-              <input
-                type="radio"
-                name="registration_mode"
-                value="verified"
-                checked={form.registration_mode === "verified"}
-                onChange={handleChange}
-                className="mt-1"
-              />
-
-              <div>
-                <p className="font-medium">
-                  Verified Students Only
-                </p>
-
-                <p className="text-sm text-gray-500">
-                  Only students already added by the school can take this quiz.
-                </p>
-              </div>
-
-            </label>
-
-          </div>
-
-        </div>
-         <div className="grid md:grid-cols-2 gap-4">
-
-          {/* ================= TITLE ================= */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium mb-2">
-             <FileText size={16} />
-                Exam Title
-            </label>
-
-            <input
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              placeholder="e.g. MathQuizChap 1"
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          
-          {/* ================= CLASS ================= */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium mb-2">
-              <User size={16} />
-              Class
-            </label>
-
-            <input
-              name="class_name"
-              value={form.class_name}
-              onChange={handleChange}
-              placeholder="e.g. 1 Rose, 3A"
-              required
-              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          </div>
-          {/* ================= GRID SETTINGS ================= */}
-          <div className="grid md:grid-cols-2 gap-4">
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Clock size={16} />
-                Duration (minutes)
-              </label>
-
-              <input
-                type="number"
-                name="duration_minutes"
-                value={form.duration_minutes}
-                onChange={handleChange}
-                min="1"
-                required
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-
-
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Award size={16} />
-                Marks Per Question
-              </label>
-
-              <input
-                type="number"
-                name="marks"
-                value={form.marks}
-                onChange={handleChange}
-                min="1"
-                step="0.5"
-                required
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <MinusCircle size={16} />
-                Negative Marks
-              </label>
-
-              <input
-                type="number"
-                name="negative"
-                value={form.negative}
-                onChange={handleChange}
-                min="0"
-                step="0.25"
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Repeat size={16} />
-                Max Attempts
-              </label>
-
-              <input
-                type="number"
-                name="max_attempts"
-                value={form.max_attempts}
-                onChange={handleChange}
-                min="1"
-                required
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-            </div>
-            
-          {/* ================= DATES ================= */}
-          <div className="grid md:grid-cols-2 gap-4">
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Calendar size={16} />
-                Start Date
-              </label>
-
-              <input
-                type="datetime-local"
-                name="start_date"
-                value={form.start_date}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                <Calendar size={16} />
-                End Date
-              </label>
-
-              <input
-                type="datetime-local"
-                name="end_date"
-                value={form.end_date}
-                onChange={handleChange}
-                required
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            </div>
-
-          </div>
-
-           {/* ================= TOGGLE ================= */}
-        <div className="border rounded-lg p-3">
-          <label className="flex items-center gap-3 text-sm">
-
-            <input
-              type="checkbox"
-              name="show_result_review"
-              checked={form.show_result_review}
-              onChange={handleChange}
-              className="w-4 h-4"
+            <ExamTargetSelector
+              schoolSlug={schoolSlug}
+              form={form}
+              setForm={setForm}
             />
 
-            <span className="text-sm">
-              Allow Detailed Result Review
-            </span>
+          </ExamBasicInfo>
 
-          </label>
-          </div>
+          <ExamSettings
+            form={form}
+            handleChange={handleChange}
+          />
 
-          
+          <ExamSchedule
+            form={form}
+            handleChange={handleChange}
+          />
 
-          {/* ================= ACTIONS ================= */}
+          <ExamOptions
+            form={form}
+            handleChange={handleChange}
+          />
+
           <div className="flex justify-end gap-3 pt-4 border-t">
 
             <Button
               type="button"
               variant="secondary"
               onClick={() => navigate(-1)}
-               className="flex items-center gap-2"
+              className="flex items-center gap-2"
             >
-              <ArrowLeft size={16} className="mr-2" />
+              <ArrowLeft size={16} />
               Cancel
             </Button>
 
-            <Button type="submit" disabled={loading}  className="flex items-center gap-2">
-              <Save size={16} className="mr-2" />
-              {loading ? "Creating..." : "Create Exam"}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              <Save size={16} />
+              {loading
+                ? "Creating..."
+                : "Create Exam"}
             </Button>
 
           </div>
@@ -344,5 +182,7 @@ export default function CreateExamPage() {
       </div>
 
     </div>
+
   );
+
 }

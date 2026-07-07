@@ -41,6 +41,7 @@ def ai_generate(school_slug):
 def ai_extract(school_slug):
 
     file = request.files.get("file")
+ 
 
     if not file:
         return jsonify({
@@ -48,7 +49,9 @@ def ai_extract(school_slug):
             "message": "File is required"
         }), 400
 
-    extracted = extract_input({}, file)
+    data = request.form.to_dict()
+
+    extracted = extract_input(data, file)
 
     if not extracted.get("success"):
         return jsonify(extracted), 400
@@ -205,4 +208,18 @@ def ai_history(school_slug):
             "limit": limit,
             "total": total
         }
+    })
+
+
+from smart_exam_system.config import Config
+
+@api_teacher_bp.route("/<school_slug>/ai/options", methods=["GET"])
+@login_required
+@teacher_required
+def ai_options(school_slug):
+
+    return jsonify({
+        "success": True,
+        "ocr_languages": Config.OCR_LANGUAGE_OPTIONS,
+        "default_language": Config.DEFAULT_OCR_LANGUAGE,
     })

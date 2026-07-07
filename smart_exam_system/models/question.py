@@ -20,4 +20,14 @@ class QuestionModel(db.Model):
     ai_generated = db.Column(db.Integer, default=0)
 
     created_at = db.Column(db.DateTime)
+
+#     exam_id = db.Column(
+#     db.Integer,
+#     db.ForeignKey(
+#         "exams.id",
+#         ondelete="CASCADE",
+#     ),
+#     nullable=False,
+#     index=True,
+# )
      

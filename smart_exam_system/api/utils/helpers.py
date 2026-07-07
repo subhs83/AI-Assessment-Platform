@@ -1,5 +1,14 @@
 from datetime import datetime, timezone
 
+
+def serialize_school_class(school_class):
+    return {
+        "id": school_class.id,
+        "name": school_class.name,
+        "display_order": school_class.display_order,
+        "is_active": school_class.is_active,
+    }
+
 def normalize(dt):
     if dt is None:
         return None

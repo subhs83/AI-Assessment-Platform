@@ -121,6 +121,60 @@ deleteStudent: (schoolSlug, studentUid) => {
     }
   ),
 
+  // -------------------------
+// School Classes
+// -------------------------
+
+getSchoolClasses: (schoolSlug) =>
+  API.get(`/api/teacher/${schoolSlug}/school-classes`),
+
+createSchoolClass: (schoolSlug, payload) =>
+  API.post(
+    `/api/teacher/${schoolSlug}/school-classes`,
+    payload
+  ),
+
+updateSchoolClass: (
+  schoolSlug,
+  classId,
+  payload
+) =>
+  API.put(
+    `/api/teacher/${schoolSlug}/school-classes/${classId}`,
+    payload
+  ),
+
+deleteSchoolClass: (
+  schoolSlug,
+  classId
+) =>
+  API.delete(
+    `/api/teacher/${schoolSlug}/school-classes/${classId}`
+  ),
+
+  // -------------------------
+// Sections
+// -------------------------
+
+getSections: (schoolSlug, classId) =>
+  API.get(`/api/teacher/${schoolSlug}/school-classes/${classId}/sections`),
+
+createSection: (schoolSlug, classId, payload) =>
+  API.post(
+    `/api/teacher/${schoolSlug}/school-classes/${classId}/sections`,
+    payload
+  ),
+
+updateSection: (schoolSlug, classId, sectionId, payload) =>
+  API.put(
+    `/api/teacher/${schoolSlug}/school-classes/${classId}/sections/${sectionId}`,
+    payload
+  ),
+
+deleteSection: (schoolSlug, classId, sectionId) =>
+  API.delete(
+    `/api/teacher/${schoolSlug}/school-classes/${classId}/sections/${sectionId}`
+  ),
   
 
 }

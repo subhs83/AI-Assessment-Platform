@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def generate_from_gemini(content, difficulty, question_count):
+def generate_from_gemini(content, difficulty, question_count,language,):
 
     client = genai.Client(
         api_key=current_app.config["GEMINI_API_KEY"]
@@ -17,6 +17,9 @@ def generate_from_gemini(content, difficulty, question_count):
     # Step 1: Concept Analysis
     # -----------------------------
     analysis_prompt = f"""
+Document Language: {language}
+
+Analyze the following content in its original language.
 Analyze the following content and extract:
 
 - Main topics
@@ -50,6 +53,10 @@ Content:
     generation_prompt = f"""
 You are an expert exam question generator.
 
+Document Language: {language}
+
+Generate every question, option and answer in {language}.
+
 Generate {question_count} multiple choice questions.
 
 Difficulty: {difficulty}
@@ -80,6 +87,13 @@ Do NOT use phrases such as:
 - following paragraph
 
 Return ONLY valid JSON:
+Language Rules:
+
+- question_text must be in {language}
+- option_a must be in {language}
+- option_b must be in {language}
+- option_c must be in {language}
+- option_d must be in {language}
 
 [
   {{

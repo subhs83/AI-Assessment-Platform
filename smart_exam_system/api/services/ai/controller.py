@@ -2,11 +2,12 @@ from smart_exam_system.api.services.ai.extractor import extract_input
 from smart_exam_system.api.services.ai.ai_service import generate_from_gemini
 from smart_exam_system.api.services.ai.response_parser import parse_ai_response
 from smart_exam_system.api.services.ai.ai_summary_service import generate_ai_summary
-from smart_exam_system.api.services.ai.content_preparer import (
-    prepare_ai_content
-)
+from smart_exam_system.api.services.ai.content_preparer import prepare_ai_content
 from smart_exam_system.models import AIGenerationRequest
 from smart_exam_system.extensions import db
+from smart_exam_system.config import Config
+
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -38,12 +39,14 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
 
     difficulty = data.get("difficulty", "medium")
     question_count = data.get("question_count", 5)
+    language = data.get( "language", Config.DEFAULT_OCR_LANGUAGE,)
 
     try:
         ai_response = generate_from_gemini(
             content=content,
             difficulty=difficulty,
-            question_count=question_count
+            question_count=question_count,
+            language=language
         )
     except Exception:
         logger.exception("Failed to generate questions")
@@ -68,7 +71,9 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
         difficulty=difficulty,
         question_count=question_count,
         generated_questions=questions,
-        status="completed"
+        document_language=language,
+        status="completed",
+        
     )
 
     db.session.add(ai_request)

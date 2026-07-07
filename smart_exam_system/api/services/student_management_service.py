@@ -6,6 +6,8 @@ from uuid import uuid4
 from openpyxl import load_workbook
 from smart_exam_system.api.services.react_student_service import create_student, normalize_text
 from smart_exam_system.models.student import StudentRegistrationType
+from smart_exam_system.api.services.school_class_service import find_school_class
+from smart_exam_system.api.services.school_section_service import find_section
 
 
 def validate_student_fields(
@@ -64,9 +66,10 @@ def get_students(school_id):
         StudentModel.query
         .filter_by(school_id=school_id)
         .order_by(
-            StudentModel.student_class.asc(),
+            StudentModel.school_class_id.asc(),
+            StudentModel.school_section_id.asc(),
             StudentModel.roll_number.asc(),
-            StudentModel.first_name.asc()
+            StudentModel.first_name.asc(),
         )
         .all()
     )
@@ -76,11 +79,30 @@ def get_students(school_id):
             "student_uid": student.student_uid,
             "first_name": student.first_name,
             "last_name": student.last_name,
-            "student_name": f"{student.first_name} {student.last_name}".strip(),
-            "student_class": student.student_class,
+            "student_name": (
+                f"{student.first_name} {student.last_name}"
+            ).strip(),
+
+            "school_class_id": student.school_class_id,
+            "school_section_id": student.school_section_id,
+
+            "student_class": (
+                student.school_class.name
+                if student.school_class
+                else None
+            ),
+
+            "student_section": (
+                student.school_section.name
+                if student.school_section
+                else None
+            ),
+
             "roll_number": student.roll_number,
             "mobile": student.mobile,
-            "student_registration_type": student.student_registration_type,
+            "student_registration_type": (
+                student.student_registration_type
+            ),
         }
         for student in students
     ]
@@ -119,6 +141,7 @@ def import_students(school_id, excel_file):
         "First Name",
         "Last Name",
         "Class",
+        "Section",
         "Roll Number",
         "Mobile",
     ]
@@ -140,10 +163,10 @@ def import_students(school_id, excel_file):
 
     existing_students = {
         (
-            student.student_class.strip().lower(),
+            student.school_class_id,
             student.roll_number.strip().lower(),
         )
-        for student in StudentModel.query.filter_by(
+            for student in StudentModel.query.filter_by(
             school_id=school_id
         ).all()
     }
@@ -158,8 +181,36 @@ def import_students(school_id, excel_file):
         first_name = normalize_text(row[0], field="name")
         last_name = normalize_text(row[1], field="name")
         student_class = normalize_text(row[2], field="class")
-        roll_number = normalize_text(row[3], field="roll_number")
-        mobile = normalize_text(row[4], field="mobile")
+        student_section = normalize_text(row[3], field="section")
+        roll_number = normalize_text(row[4], field="roll_number")
+        mobile = normalize_text(row[5], field="mobile")
+
+        school_class = find_school_class(
+            school_id=school_id,
+            name=student_class,
+        )
+
+        if not school_class:
+            invalid_rows.append({
+                "row": row_number,
+                "reason": f'Class "{student_class}" not found.',
+            })
+            continue
+
+        section = find_section(
+            school_class_id=school_class.id,
+            name=student_section,
+        )
+
+        if not section:
+            invalid_rows.append({
+                "row": row_number,
+                "reason": (
+                    f'Section "{student_section}" '
+                    f'not found for class "{student_class}".'
+                ),
+            })
+            continue
 
         errors = validate_student_fields(
             first_name=first_name,
@@ -177,7 +228,7 @@ def import_students(school_id, excel_file):
             continue
 
         key = (
-            student_class.lower(),
+            school_class.id,
             roll_number.lower(),
         )
 
@@ -193,9 +244,10 @@ def import_students(school_id, excel_file):
 
         create_student(
             school_id=school_id,
+            school_class_id=school_class.id,
+            school_section_id=section.id,
             first_name=first_name,
             last_name=last_name,
-            student_class=student_class,
             roll_number=roll_number,
             mobile=mobile,
             student_registration_type=StudentRegistrationType.VERIFIED,

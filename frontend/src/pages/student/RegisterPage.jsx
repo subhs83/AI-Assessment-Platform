@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../../api/client";
 import BrandHeader from "../../components/student/BrandHeader"
@@ -13,15 +13,77 @@ const RegisterPage = () => {
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
-    student_class: "",
+    school_class_id: "",
+    school_section_id: "",
     roll_number: "",
     mobile: "",
   });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [schoolClasses, setSchoolClasses] = useState([]);
+  const [sections, setSections] = useState([]);
+
+
+  useEffect(() => {
+
+  const loadAcademicStructure = async () => {
+
+    try {
+
+      const res = await API.get(
+        `/api/student/${schoolSlug}/academic-structure`
+      );
+
+      setSchoolClasses(
+        res.data.data.classes
+      );
+
+    } catch (err) {
+
+      console.error(err);
+
+      showToast(
+        "Failed to load classes.",
+        "error"
+      );
+
+    }
+
   };
 
+  loadAcademicStructure();
+
+}, [schoolSlug]);
+
+
+  const handleChange = (e) => {
+
+  const { name, value } = e.target;
+
+  if (name === "school_class_id") {
+
+    const selectedClass = schoolClasses.find(
+      (c) => String(c.id) === value
+    );
+
+    setSections(
+      selectedClass?.sections || []
+    );
+
+    setForm((prev) => ({
+      ...prev,
+      school_class_id: value,
+      school_section_id: "",
+    }));
+
+    return;
+  }
+
+  setForm((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -126,18 +188,48 @@ const RegisterPage = () => {
 
             {/* Class */}
 
-            <input
-              type="text"
-              name="student_class"
-              value={form.student_class}
+            <select
+              name="school_class_id"
+              value={form.school_class_id}
               onChange={handleChange}
-              placeholder="Class (e.g. 1 Rose, 10 A)"
-              autoCapitalize="words"
-              autoComplete="off"
-              spellCheck={false}
               required
-              className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
-            />
+              className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+            >
+              <option value="">
+                Select Class
+              </option>
+
+              {schoolClasses.map((schoolClass) => (
+                <option
+                  key={schoolClass.id}
+                  value={schoolClass.id}
+                >
+                  {schoolClass.name}
+                </option>
+              ))}
+            </select>
+            <select
+                name="school_section_id"
+                value={form.school_section_id}
+                onChange={handleChange}
+                disabled={!form.school_class_id || sections.length === 0}
+                className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100"
+              >
+                <option value="">
+                  {sections.length
+                    ? "Select Section"
+                    : "No Sections"}
+                </option>
+
+                {sections.map((section) => (
+                  <option
+                    key={section.id}
+                    value={section.id}
+                  >
+                    {section.name}
+                  </option>
+                ))}
+              </select>
 
             {/* Roll Number */}
 

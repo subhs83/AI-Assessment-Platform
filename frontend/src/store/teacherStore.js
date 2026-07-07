@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { teacherApi } from "../api/teacherApi";
+import aiApi from "../api/aiApi";
 
 export const useTeacherStore = create((set, get) => ({
   dashboard: null,
@@ -7,6 +8,9 @@ export const useTeacherStore = create((set, get) => ({
   error: null,
 
   students: [],
+  schoolClasses: [],
+  sections: [],
+  ocrLanguages: [],
 
   // -------------------------
   // NEW: Upload states
@@ -54,6 +58,19 @@ export const useTeacherStore = create((set, get) => ({
 
     return res.data;
   },
+
+  
+  fetchOcrLanguages: async (schoolSlug) => {
+      try {
+        const res = await aiApi.getOcrLanguages(schoolSlug);
+
+        set({
+          ocrLanguages: res.data.ocr_languages,
+        });
+      } catch (err) {
+        console.error("Failed to load OCR languages", err);
+      }
+    },
 
   // -------------------------
   // Students list
@@ -110,6 +127,7 @@ deleteStudent: async (
   return response.data;
 
 },
+
 
   // -------------------------
   // Templates
@@ -172,6 +190,114 @@ deleteStudent: async (
     }
   },
 
+
+  // -------------------------
+// School Classes
+// -------------------------
+
+fetchSchoolClasses: async (schoolSlug) => {
+
+  const res =
+    await teacherApi.getSchoolClasses(
+      schoolSlug
+    );
+
+  set({
+    schoolClasses:
+      res.data.data.school_classes,
+  });
+
+},
+
+createSchoolClass: async (
+  schoolSlug,
+  payload
+) => {
+
+  const response =
+    await teacherApi.createSchoolClass(
+      schoolSlug,
+      payload
+    );
+
+  return response.data;
+
+},
+
+updateSchoolClass: async (
+  schoolSlug,
+  classId,
+  payload
+) => {
+
+  const response =
+    await teacherApi.updateSchoolClass(
+      schoolSlug,
+      classId,
+      payload
+    );
+
+  return response.data;
+
+},
+
+deleteSchoolClass: async (
+  schoolSlug,
+  classId
+) => {
+
+  const response =
+    await teacherApi.deleteSchoolClass(
+      schoolSlug,
+      classId
+    );
+
+  return response.data;
+
+},
+
+// -------------------------
+// Sections
+// -------------------------
+
+fetchSections: async (schoolSlug, classId) => {
+  const res = await teacherApi.getSections(schoolSlug, classId);
+
+  set({
+    sections: res.data.data.sections,
+  });
+},
+
+createSection: async (schoolSlug, classId, payload) => {
+  const res = await teacherApi.createSection(
+    schoolSlug,
+    classId,
+    payload
+  );
+
+  return res.data;
+},
+
+updateSection: async (schoolSlug, classId, sectionId, payload) => {
+  const res = await teacherApi.updateSection(
+    schoolSlug,
+    classId,
+    sectionId,
+    payload
+  );
+
+  return res.data;
+},
+
+deleteSection: async (schoolSlug, classId, sectionId) => {
+  const res = await teacherApi.deleteSection(
+    schoolSlug,
+    classId,
+    sectionId
+  );
+
+  return res.data;
+},
   // -------------------------
   // Reset
   // -------------------------
@@ -184,5 +310,7 @@ deleteStudent: async (
       uploadLoading: false,
       uploadResult: null,
       uploadError: null,
+      schoolClasses: [],
+      sections: [],
     }),
 }));
