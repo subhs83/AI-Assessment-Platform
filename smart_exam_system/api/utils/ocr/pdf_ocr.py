@@ -22,27 +22,37 @@ def extract_pdf_text( file, language,):
 
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
 
-        kwargs = {
-            "dpi": Config.PDF_RENDER_DPI,
-        }
-
-        if Config.POPPLER_PATH:
-            kwargs["poppler_path"] = Config.POPPLER_PATH
-
-        images = convert_from_bytes(
-            pdf_bytes,
-            **kwargs,
-        )
-
-        for page, image in zip(pdf.pages, images):
+        for page in pdf.pages:
 
             page_text = page.extract_text() or ""
 
             if is_valid_pdf_text(page_text):
                 print(f"Page {page.page_number}: Native PDF text extracted.")
                 text += page_text + "\n\n"
+
             else:
                 print(f"Page {page.page_number}: OCR fallback.")
-                text += extract_text_from_image( image, language=language,) + "\n\n"
+
+                kwargs = {
+                    "first_page": page.page_number,
+                    "last_page": page.page_number,
+                    "dpi": Config.PDF_RENDER_DPI,
+                }
+
+                if Config.POPPLER_PATH:
+                    kwargs["poppler_path"] = Config.POPPLER_PATH
+
+                image = convert_from_bytes(
+                    pdf_bytes,
+                    **kwargs,
+                )[0]
+
+                text += (
+                    extract_text_from_image(
+                        image,
+                        language=language,
+                    )
+                    + "\n\n"
+                )
 
     return text
