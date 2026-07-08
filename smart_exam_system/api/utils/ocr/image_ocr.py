@@ -21,7 +21,7 @@ def extract_text_from_image(image, language):
     return pytesseract.image_to_string(
     image,
     lang = ocr_lang,
-    config="--oem 1 --psm 6",
+    config="--oem 3 --psm 6",
 )
 
 
