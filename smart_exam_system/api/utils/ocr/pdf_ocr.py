@@ -1,6 +1,7 @@
 import pdfplumber
 from pdf2image import convert_from_bytes
-import io
+import io,time
+
 from smart_exam_system.config import Config
 from smart_exam_system.api.utils.ocr.image_ocr import extract_text_from_image
 from smart_exam_system.api.utils.ocr.text_validator import is_valid_pdf_text
@@ -23,6 +24,7 @@ def extract_pdf_text( file, language,):
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
 
         for page in pdf.pages:
+            start = time.perf_counter()
 
             page_text = page.extract_text() or ""
 
@@ -32,6 +34,7 @@ def extract_pdf_text( file, language,):
 
             else:
                 print(f"Page {page.page_number}: OCR fallback.")
+                render_start = time.perf_counter()
 
                 kwargs = {
                     "first_page": page.page_number,
@@ -46,6 +49,8 @@ def extract_pdf_text( file, language,):
                     pdf_bytes,
                     **kwargs,
                 )[0]
+                print(f"Render: {time.perf_counter() - render_start:.2f}s")
+                ocr_start = time.perf_counter()
 
                 text += (
                     extract_text_from_image(
@@ -54,5 +59,8 @@ def extract_pdf_text( file, language,):
                     )
                     + "\n\n"
                 )
+                print(f"OCR: {time.perf_counter() - ocr_start:.2f}s")
+
+                print(f"Total page: {time.perf_counter() - start:.2f}s")
 
     return text
