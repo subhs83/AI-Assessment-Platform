@@ -60,6 +60,7 @@ def extract_pdf_text( file, language,):
                     + "\n\n"
                 )
                 print(f"OCR: {time.perf_counter() - ocr_start:.2f}s")
+                print("image.size :", image.size)
 
                 print(f"Total page: {time.perf_counter() - start:.2f}s")
 

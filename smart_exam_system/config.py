@@ -40,20 +40,20 @@ class Config:
     POPPLER_PATH = os.getenv("POPPLER_PATH")
 
     OCR_LANGUAGE_MAP = {
-                "english": "eng",
-                "hindi": "eng+hin",
-                "sanskrit": "eng+san",
-                "marathi": "eng+mar",
-                "bengali": "eng+ben",
-                "gujarati": "eng+guj",
-                "kannada": "eng+kan",
-                "malayalam": "eng+mal",
-                "odia": "eng+ori",
-                "punjabi": "eng+pan",
-                "tamil": "eng+tam",
-                "telugu": "eng+tel",
-                "urdu": "eng+urd",
-            }
+        "english": "eng",
+        "hindi": "hin",
+        "sanskrit": "san",
+        "marathi": "mar",
+        "bengali": "ben",
+        "gujarati": "guj",
+        "kannada": "kan",
+        "malayalam": "mal",
+        "odia": "ori",
+        "punjabi": "pan",
+        "tamil": "tam",
+        "telugu": "tel",
+        "urdu": "urd",
+    }
     OCR_LANGUAGE_OPTIONS = [
         {
             "value": key,
