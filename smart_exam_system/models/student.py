@@ -27,11 +27,6 @@ class StudentModel(db.Model):
         index=True,
     )
 
-    # TODO:
-    # Future migration:
-    # student_class  -> class
-    # student_section -> section
-    student_class = db.Column(db.String(50))
     roll_number = db.Column(db.String(50))
 
     # Registration Category
@@ -96,16 +91,52 @@ class StudentModel(db.Model):
             == StudentRegistrationType.VERIFIED
         )
 
+    @property
+    def full_name(self):
+        return (
+            f"{self.first_name} {self.last_name}"
+        ).strip()
+
+
+    @property
+    def class_name(self):
+        return (
+            self.school_class.name
+            if self.school_class
+            else None
+        )
+
+    @property
+    def section_name(self):
+        return (
+            self.school_section.name
+            if self.school_section
+            else None
+        )
+
+    @property
+    def class_section(self):
+        parts = []
+
+        if self.class_name:
+            parts.append(self.class_name)
+
+        if self.section_name:
+            parts.append(self.section_name)
+
+        return " ".join(parts) if parts else None
+
+
     def to_dict(self):
         return {
             "student_uid": self.student_uid,
-            "student_name": (
-                f"{self.first_name} {self.last_name}"
-            ).strip(),
+            "student_name": self.full_name,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "mobile": self.mobile,
-            "student_class": self.student_class,
+            "class_name": self.class_name,
+            "section_name": self.section_name,
+            "class_section": self.class_section,
             "roll_number": self.roll_number,
             "student_registration_type": (
                 self.student_registration_type

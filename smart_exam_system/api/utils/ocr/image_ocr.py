@@ -17,7 +17,7 @@ def extract_text_from_image(image, language):
         language,
         Config.OCR_LANGUAGE_MAP[Config.DEFAULT_OCR_LANGUAGE],
     )
-    print("Tesseract lang:", ocr_lang)
+    # print("Tesseract lang:", ocr_lang)
     return pytesseract.image_to_string(
     image,
     lang = ocr_lang,

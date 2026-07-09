@@ -282,9 +282,6 @@ def create_student_api(school_slug):
             school_class_id=school_class.id,
             school_section_id=section.id,
 
-            # Temporary legacy field
-            student_class=school_class.name,
-
             roll_number=roll_number,
             mobile=mobile or None,
             student_registration_type=StudentRegistrationType.VERIFIED,
@@ -445,9 +442,6 @@ def update_student_api(school_slug, student_uid):
         student.last_name = last_name
         student.school_class_id = school_class.id
         student.school_section_id = section.id
-
-        # Temporary legacy field
-        student.student_class = school_class.name
 
         student.roll_number = roll_number
         student.mobile = mobile or None

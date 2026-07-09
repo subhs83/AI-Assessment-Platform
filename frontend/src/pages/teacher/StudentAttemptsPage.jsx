@@ -61,18 +61,12 @@ export default function StudentAttemptsPage() {
  return (
   <div className="space-y-6">
      
-          <BackButton to={routes.exams.results(examId)} label="Go Back" />
-          
     {/* Header */}
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-
       <PageHeader
         title="Student Attempts"
         description="View attempt history and performance analysis"
-        backTo={`/school/${schoolSlug}/teacher/exams/${examId}/results`}
-        backLabel="Back to Results"
+        actions={<BackButton to={routes.exams.results(examId)} label="Go Back" /> }
       />
-    </div>
 
     {/* Student Summary */}
     <div className="bg-white border rounded-xl shadow-sm p-5">

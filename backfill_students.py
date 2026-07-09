@@ -1,3 +1,15 @@
+"""
+One-time migration script.
+
+Purpose:
+- Create StudentModel records from historical AttemptModel data.
+- Link AttemptModel.student_db_id.
+
+Executed during the StudentModel migration.
+
+Do not run again.
+"""
+
 from smart_exam_system import create_app
 from smart_exam_system.extensions import db
 from smart_exam_system.models import AttemptModel, StudentModel

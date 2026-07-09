@@ -109,10 +109,11 @@ export default function SectionsPage() {
   return (
 
     <div className="space-y-6">
-      <BackButton to={-1} label="Go Back" />
+      
       <PageHeader
         title={`Sections${schoolClass ? ` • Class ${schoolClass.name}` : ""}`}
         description="Manage sections for this class."
+        actions ={<BackButton to={-1} label="Go Back" />}
       />
       <ManagementToolbar
         search={search}

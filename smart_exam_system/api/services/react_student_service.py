@@ -637,7 +637,7 @@ def get_student_result(attempt_id):
         "attempted": attempted,
 
         "student_name": f"{student.first_name} {student.last_name}",
-        "student_class": student.student_class,
+        "class_section": student.class_section,
         "roll_number": student.roll_number,
 
         "rank": rank,

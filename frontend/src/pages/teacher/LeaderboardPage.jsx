@@ -251,7 +251,7 @@ export default function LeaderboardPage() {
                     </td>
 
                     <td className="p-3">
-                      {s.student_class || "-"}
+                      {s.class_section || "-"}
                     </td>
 
                     <td className="p-3">

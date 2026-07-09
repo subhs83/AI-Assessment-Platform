@@ -145,7 +145,6 @@ const handleSectionToggle = (sectionId) => {
       </h3>
 
       <Select
-        label="Class"
         icon={GraduationCap}
         value={form.school_class_id}
         onChange={(e) =>

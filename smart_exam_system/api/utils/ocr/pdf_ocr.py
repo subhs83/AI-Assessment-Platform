@@ -24,17 +24,17 @@ def extract_pdf_text( file, language,):
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
 
         for page in pdf.pages:
-            start = time.perf_counter()
+            # start = time.perf_counter()
 
             page_text = page.extract_text() or ""
 
             if is_valid_pdf_text(page_text):
-                print(f"Page {page.page_number}: Native PDF text extracted.")
+                # print(f"Page {page.page_number}: Native PDF text extracted.")
                 text += page_text + "\n\n"
 
             else:
-                print(f"Page {page.page_number}: OCR fallback.")
-                render_start = time.perf_counter()
+                # print(f"Page {page.page_number}: OCR fallback.")
+                # render_start = time.perf_counter()
 
                 kwargs = {
                     "first_page": page.page_number,
@@ -49,8 +49,8 @@ def extract_pdf_text( file, language,):
                     pdf_bytes,
                     **kwargs,
                 )[0]
-                print(f"Render: {time.perf_counter() - render_start:.2f}s")
-                ocr_start = time.perf_counter()
+                # print(f"Render: {time.perf_counter() - render_start:.2f}s")
+                # ocr_start = time.perf_counter()
 
                 text += (
                     extract_text_from_image(
@@ -59,9 +59,9 @@ def extract_pdf_text( file, language,):
                     )
                     + "\n\n"
                 )
-                print(f"OCR: {time.perf_counter() - ocr_start:.2f}s")
-                print("image.size :", image.size)
+                # print(f"OCR: {time.perf_counter() - ocr_start:.2f}s")
+                # print("image.size :", image.size)
 
-                print(f"Total page: {time.perf_counter() - start:.2f}s")
+                # print(f"Total page: {time.perf_counter() - start:.2f}s")
 
     return text

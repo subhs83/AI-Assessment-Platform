@@ -99,15 +99,12 @@ export default function ResultsPage() {
   return (
   <div className="space-y-6">
 
-    {/* Back */}
-    <BackButton to={routes.exams.list} label="Go Back" />
-    
     {/* Header */}
     <PageHeader
       title="Exam Results"
       description={`Exam Title: ${data?.exam_title}`}
-      actions={
-        <div className="w-full md:w-72">
+      actions={<>
+        <div className="w-full md:w-72 px-4">
           <input
             type="text"
             placeholder="Search student or roll..."
@@ -116,7 +113,11 @@ export default function ResultsPage() {
             className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+        <BackButton to={routes.exams.list} label="Go Back" />
+        </>
+        
       }
+      
     />
 
     {/* Summary Cards */}
@@ -231,7 +232,7 @@ export default function ResultsPage() {
                     </td>
 
                     <td className="p-3">
-                      {r.student_class || "-"}
+                      {r.class_section || "-"}
                     </td>
 
                     <td className="p-3">

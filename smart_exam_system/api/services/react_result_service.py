@@ -102,7 +102,7 @@ def get_attempt_detailed_report(attempt_id, school_id):
         "attempt_id": attempt.id,
 
         "student_name": f"{student.first_name} {student.last_name}",
-        "student_class": student.student_class,
+        "class_section": student.class_section,
         "roll_number": student.roll_number,
 
         "score": attempt.score,
@@ -185,7 +185,7 @@ def get_results(exam_id, school_id):
             "first_name": s.first_name,
             "last_name": s.last_name,
             "roll_number": s.roll_number,
-            "student_class": getattr(s, "student_class", None),
+            "class_section": getattr(s, "class_section", None),
 
             # ✔ ATTEMPT DATA
             "score": a.score,
@@ -300,7 +300,7 @@ def generate_leaderboard(exam_id, school_id):
             # ✅ StudentModel (truth source)
             "first_name": student.first_name if student else "Unknown",
             "last_name": student.last_name if student else "",
-            "student_class": student.student_class if student else "-",
+            "class_section": student.class_section if student else "-",
             "roll_number": student.roll_number if student else "-",
             "mobile": student.mobile if student else "-",
 
@@ -349,7 +349,7 @@ def export_results_to_excel(exam_id, file_path):
             row.student_id,
             row.first_name,
             row.last_name,
-            row.student_class,
+            row.class_section,
             row.roll_number,
             row.score,
             row.total_marks,
@@ -426,7 +426,7 @@ def get_student_attempts(exam_id, student_db_id, school_id):
                 "name": f"{student.first_name} {student.last_name}",
                 "first_name": student.first_name,
                 "last_name": student.last_name,
-                "class": student.student_class,
+                "class": student.class_section,
                 "roll": student.roll_number,
                 "mobile": student.mobile,
             }
@@ -533,7 +533,7 @@ def build_student_summary(attempts):
     return {
         "student_id": first_attempt.student_id,
         "name": f"{first_attempt.first_name} {first_attempt.last_name}",
-        "class": first_attempt.student_class,
+        "class": first_attempt.class_section,
         "roll": first_attempt.roll_number
     }
 

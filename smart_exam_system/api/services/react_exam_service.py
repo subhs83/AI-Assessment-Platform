@@ -110,7 +110,7 @@ def get_exam_performance_by_school(school_id):
         data.append({
             "exam_id": exam.id,
             "exam_title": exam.title,
-            "class_name": exam.class_name,
+            "class_section": exam.class_section,
             "teacher_id": teacher.id if teacher else None,
             "teacher_name": teacher.name if teacher else "Unknown",
 

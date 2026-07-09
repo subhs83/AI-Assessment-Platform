@@ -370,7 +370,7 @@ export default function AdminDashboardPage() {
               </td>
 
               <td className="px-6 py-4">
-                {exam.class_name || "-"}
+                {exam.class_section || "-"}
               </td>
 
               <td className="px-6 py-4 text-center">

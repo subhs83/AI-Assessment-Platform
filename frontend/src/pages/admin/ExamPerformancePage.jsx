@@ -49,7 +49,7 @@ const teachers = [
 const classes = [
   ...new Set(
     exams.map((exam) => 
-      exam.class_name).filter(Boolean)
+      exam.class_section).filter(Boolean)
   ),
 ];
 
@@ -64,7 +64,7 @@ const filteredExams = exams.filter((exam) => {
       .toLowerCase()
       .includes(search.toLowerCase()) ||
 
-    (exam.class_name || "")
+    (exam.class_section || "")
       .toLowerCase()
       .includes(search.toLowerCase());
 
@@ -74,7 +74,7 @@ const filteredExams = exams.filter((exam) => {
 
   const matchesClass =
     classFilter === "all" ||
-    exam.class_name === classFilter;
+    exam.class_section === classFilter;
 
   return (
     matchesSearch &&
@@ -304,7 +304,7 @@ const filteredExams = exams.filter((exam) => {
                     />
 
                     <span>
-                      {exam.class_name || "-"}
+                      {exam.class_section || "-"}
                     </span>
 
                   </div>
