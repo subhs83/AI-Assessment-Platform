@@ -10,6 +10,7 @@ from smart_exam_system.models.answer import StudentAnswerModel
 from smart_exam_system.models.student import StudentModel
 from smart_exam_system.models.login_log import LoginLogModel
 from smart_exam_system.models.democontact import DemoRequest, ContactMessage
+from smart_exam_system.models.additionalattemptgrant import AdditionalAttemptGrant
 
 from smart_exam_system.models.ai_generation_requests import AIGenerationRequest
 
@@ -29,5 +30,6 @@ __all__ = [
     "ContactMessage",
     "StudentModel",
     "LoginLogModel",
-    "AIGenerationRequest"
+    "AIGenerationRequest",
+    "AdditionalAttemptGrant"
 ]

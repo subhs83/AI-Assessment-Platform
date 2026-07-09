@@ -59,7 +59,7 @@ export const teacherApi = {
   // -------------------------
   getStudentAttempts: (schoolSlug, examId, studentDbId) =>
     API.get(
-      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/attempts`
+      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/grant-attempt`
     ),
 
   // -------------------------
@@ -69,6 +69,29 @@ export const teacherApi = {
     API.get(`/api/teacher/${schoolSlug}/attempts/${attemptId}`),
 
 
+  // -------------------------
+  // Additional Attempts
+  // -------------------------
+
+  grantAdditionalAttempt: (
+    schoolSlug,
+    examId,
+    studentDbId,
+    payload,
+  ) =>
+    API.post(
+      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/grant-attempt`,
+      payload
+    ),
+
+  getAdditionalAttemptGrants: (
+    schoolSlug,
+    examId,
+    studentDbId,
+  ) =>
+    API.get(
+      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/grant-attempts`
+    ),
   // -------------------------
   // Students
   // -------------------------

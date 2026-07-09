@@ -59,6 +59,43 @@ export const useTeacherStore = create((set, get) => ({
     return res.data;
   },
 
+
+  // -------------------------
+// Additional Attempts
+// -------------------------
+
+  grantAdditionalAttempt: async (
+    schoolSlug,
+    examId,
+    studentDbId,
+    payload,
+  ) => {
+    const res =
+      await teacherApi.grantAdditionalAttempt(
+        schoolSlug,
+        examId,
+        studentDbId,
+        payload,
+      );
+
+    return res.data;
+  },
+
+  getAdditionalAttemptGrants: async (
+    schoolSlug,
+    examId,
+    studentDbId,
+  ) => {
+    const res =
+      await teacherApi.getAdditionalAttemptGrants(
+        schoolSlug,
+        examId,
+        studentDbId,
+      );
+
+    return res.data;
+  },
+
   
   fetchOcrLanguages: async (schoolSlug) => {
       try {

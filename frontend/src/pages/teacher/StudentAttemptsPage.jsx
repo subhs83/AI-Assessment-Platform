@@ -1,20 +1,31 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/client";
+import { useTeacherStore } from "../../store/teacherStore";
+
 import SkeletonCard from "../../components/ui/SkeletonCard";
+import AdditionalAttemptCard from "../../components/teacher/attempts/AdditionalAttemptCard";
+import GrantAttemptModal from "../../components/teacher/attempts/GrantAttemptModal";
 import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
 import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
+import { useToast } from "../../components/ui/Toast";
 
 export default function StudentAttemptsPage() {
   const { schoolSlug, examId, studentDbId } = useParams();
   const routes = teacherRoutes(schoolSlug);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const { grantAdditionalAttempt, getAdditionalAttemptGrants } = useTeacherStore();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [grantModalOpen, setGrantModalOpen] = useState(false);
+  const [grantLoading, setGrantLoading] = useState(false);
+  const [grantHistory, setGrantHistory] = useState([]);
+  const [totalGrantedAttempts, setTotalGrantedAttempts] = useState(0);
 
   const attempts = useMemo(() => {
   return data?.attempts || [];
@@ -49,7 +60,58 @@ export default function StudentAttemptsPage() {
 
   useEffect(() => {
     fetchAttempts();
+    loadAdditionalAttemptGrants();
   }, [fetchAttempts]);
+
+ 
+
+
+  const loadAdditionalAttemptGrants = async () => {
+    try {
+      const res = await getAdditionalAttemptGrants(
+        schoolSlug,
+        examId,
+        studentDbId,
+      );
+
+      setGrantHistory(res.data.grants);
+      setTotalGrantedAttempts(
+        res.data.total_granted_attempts
+      );
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleGrantAttempt = async (payload) => {
+      try {
+        setGrantLoading(true);
+
+        const res = await grantAdditionalAttempt(
+          schoolSlug,
+          examId,
+          studentDbId,
+          payload,
+        );
+
+        showToast(res.message, "success");
+
+        await loadAdditionalAttemptGrants();
+
+        setGrantModalOpen(false);
+
+      } catch (error) {
+        showToast(
+          error?.response?.data?.message ||
+          "Failed to grant additional attempt.",
+          "error",
+        );
+
+      } finally {
+        setGrantLoading(false);
+      }
+    };
 
   if (loading) return <SkeletonCard />;
   if (!data) return <EmptyState message="No attempts found" />;
@@ -110,6 +172,11 @@ export default function StudentAttemptsPage() {
       </div>
 
     </div>
+    {/* Additional Attempt */}
+    <AdditionalAttemptCard
+      totalGrantedAttempts={totalGrantedAttempts}
+      onGrant={() => setGrantModalOpen(true)}
+  />
 
     {/* Filter Pills */}
     <div className="flex flex-wrap gap-2">
@@ -273,6 +340,16 @@ export default function StudentAttemptsPage() {
       </div>
     )}
 
+      <GrantAttemptModal
+        open={grantModalOpen}
+        loading={grantLoading}
+        onClose={() => setGrantModalOpen(false)}
+        onSubmit={handleGrantAttempt}
+      />
+
+
   </div>
+
+
 );
 }

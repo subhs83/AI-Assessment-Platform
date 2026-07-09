@@ -34,8 +34,9 @@ class AdditionalAttemptGrant(db.Model):
 
     teacher_id = db.Column(
         db.Integer,
-        db.ForeignKey("teachers.id"),
+        db.ForeignKey("users.id"),
         nullable=False,
+        index=True,
     )
 
     granted_attempts = db.Column(
@@ -47,6 +48,27 @@ class AdditionalAttemptGrant(db.Model):
     reason = db.Column(
         db.Text,
         nullable=False,
+    )
+
+    school_id = db.Column(
+        db.Integer,
+        db.ForeignKey("schools.id"),
+        nullable=False,
+        index=True,
+    )
+
+    exam_id = db.Column(
+        db.Integer,
+        db.ForeignKey("exams.id"),
+        nullable=False,
+        index=True,
+    )
+
+    student_db_id = db.Column(
+        db.Integer,
+        db.ForeignKey("students.id"),
+        nullable=False,
+        index=True,
     )
 
     created_at = db.Column(
@@ -66,8 +88,8 @@ class AdditionalAttemptGrant(db.Model):
     )
 
     teacher = db.relationship(
-        "TeacherModel",
-        backref="additional_attempt_grants"
+        "UserModel",
+        backref="additional_attempt_grants",
     )
 
     school = db.relationship(

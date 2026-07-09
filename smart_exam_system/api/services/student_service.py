@@ -12,6 +12,10 @@ from smart_exam_system.models import (
     SchoolClassModel,
     SchoolSectionModel
 )
+
+from smart_exam_system.api.services.additional_attempt_service import (
+    get_attempt_limit_info
+)
 import  json, random
 
 from smart_exam_system.models.student import StudentRegistrationType
@@ -408,15 +412,21 @@ def _create_attempt(
       - option randomization
     """
 
+
     previous_attempts = AttemptModel.query.filter_by(
         exam_id=exam.id,
-        student_db_id=student_db_id
+        student_db_id=student_db_id,
     ).count()
 
-    if (
-        exam.max_attempts_per_student
-        and previous_attempts >= exam.max_attempts_per_student
-    ):
+    attempt_info = get_attempt_limit_info(
+        school_id=exam.school_id,
+        exam_id=exam.id,
+        student_db_id=student_db_id,
+    )
+
+    allowed_attempts = attempt_info["allowed_attempts"]
+
+    if previous_attempts >= allowed_attempts:
         latest_attempt = (
             AttemptModel.query.filter_by(
                 exam_id=exam.id,
@@ -614,12 +624,18 @@ def get_student_result(attempt_id):
     )
 
     # --------------------------------------------------
-    # SAFE MAX ATTEMPT LOGIC
+    # ATTEMPT LIMIT
     # --------------------------------------------------
-    max_attempts = exam.max_attempts_per_student
+    attempt_info = get_attempt_limit_info(
+        school_id=exam.school_id,
+        exam_id=exam.id,
+        student_db_id=student.id,
+    )
+
+    max_attempts = attempt_info["allowed_attempts"]
 
     can_take_next_attempt = (
-        True if not max_attempts else attempt.attempt_number < max_attempts
+        attempt.attempt_number < max_attempts
     )
 
     # --------------------------------------------------
@@ -684,10 +700,17 @@ def start_next_attempt(previous_attempt_id):
     # ==================================================
     # FIX 2: USE LATEST FOR LIMIT CHECK
     # ==================================================
+    attempt_info = get_attempt_limit_info(
+        school_id=exam.school_id,
+        exam_id=exam.id,
+        student_db_id=previous_attempt.student_db_id,
+    )
+
+    allowed_attempts = attempt_info["allowed_attempts"]
+        
     if (
-        exam.max_attempts_per_student
-        and latest_attempt
-        and latest_attempt.attempt_number >= exam.max_attempts_per_student
+        latest_attempt
+        and latest_attempt.attempt_number >= allowed_attempts
     ):
         return {
             "success": False,
@@ -1073,3 +1096,4 @@ def get_attempt_detailed_report(attempt_id):
     }
 
   
+

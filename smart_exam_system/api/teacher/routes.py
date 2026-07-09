@@ -4,6 +4,10 @@ from smart_exam_system.api.teacher import api_teacher_bp
 from smart_exam_system.api.utils.decorators import teacher_required,exam_owner_required
 from smart_exam_system.models import SchoolModel, ExamModel
 from smart_exam_system.api.utils.api_response import api_response
+from smart_exam_system.api.services.additional_attempt_service import (
+    grant_additional_attempt,
+    get_additional_attempt_grants
+)
 from smart_exam_system.api.services.exam_service import ( 
     create_exam, 
     get_teacher_exams, 
@@ -455,6 +459,57 @@ def manage_questions_overview_api(school_slug):
         data={
             "exams": exams
         }
+    )
+
+
+
+@api_teacher_bp.route(
+    "/<school_slug>/exams/<int:exam_id>/students/<student_db_id>/grant-attempt",
+    methods=["POST"],
+)
+@login_required
+@teacher_required
+def grant_attempt_api(
+    school_slug,
+    exam_id,
+    student_db_id,
+):
+    data = request.get_json() or {}
+
+    result, status = grant_additional_attempt(
+        school_id=current_user.school_id,
+        exam_id=exam_id,
+        student_db_id=student_db_id,
+        teacher_id=current_user.id,
+        granted_attempts=data.get("granted_attempts", 1),
+        reason=data.get("reason", ""),
+    )
+
+    return api_response(**result, status=status,)
+
+
+
+@api_teacher_bp.route(
+    "/<school_slug>/exams/<int:exam_id>/students/<student_db_id>/grant-attempts",
+    methods=["GET"],
+)
+@login_required
+@teacher_required
+def grant_attempt_history_api(
+    school_slug,
+    exam_id,
+    student_db_id,
+):
+    
+    result, status = get_additional_attempt_grants(
+        school_id=current_user.school_id,
+        exam_id=exam_id,
+        student_db_id=student_db_id,
+    )
+
+    return api_response(
+        **result,
+        status=status,
     )
 
 
