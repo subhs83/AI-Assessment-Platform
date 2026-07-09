@@ -17,14 +17,13 @@ from smart_exam_system.api.services.student_management_service import (
 from smart_exam_system.api.services.school_class_service import (
     get_school_class,
     
-
 )
 
 from smart_exam_system.api.services.school_section_service import (
     get_section,
 )
 
-from smart_exam_system.api.services.react_student_service import create_student, normalize_text
+from smart_exam_system.api.services.student_service import create_student, normalize_text
 
 import logging
 

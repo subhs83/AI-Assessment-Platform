@@ -7,7 +7,7 @@ UserModel,
 AttemptModel,
 SchoolModel
 )
-from smart_exam_system.api.services.react_exam_service import get_school_analytics
+from smart_exam_system.api.services.exam_service import get_school_analytics
 from datetime import datetime
 from smart_exam_system.api.utils.helpers import generate_slug
 

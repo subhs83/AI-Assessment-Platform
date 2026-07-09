@@ -10,7 +10,7 @@ from smart_exam_system.models import (
     AttemptModel,
     SchoolModel
 )
-from smart_exam_system.api.services.react_student_service import (
+from smart_exam_system.api.services.student_service import (
     start_student_attempt,
     resolve_attempt,
     normalize_question_index,

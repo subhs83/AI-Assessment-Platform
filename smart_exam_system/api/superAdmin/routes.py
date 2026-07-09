@@ -6,14 +6,11 @@ from smart_exam_system.api.utils.decorators import super_admin_required
 from smart_exam_system.api.utils.security import (
     generate_temp_password,
     hash_password,
-    verify_password
 )
-from smart_exam_system.api.services.react_school_service import (
-    generate_unique_school_slug,
+from smart_exam_system.api.services.school_service import (
     edit_school_service,
 )
 from smart_exam_system.api.services.super_admin_service import (
-    build_super_admin_dashboard,
     create_school_service,
     get_login_stats
 )

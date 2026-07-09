@@ -124,7 +124,7 @@ class StudentModel(db.Model):
         if self.section_name:
             parts.append(self.section_name)
 
-        return " ".join(parts) if parts else None
+        return "".join(parts) if parts else None
 
 
     def to_dict(self):

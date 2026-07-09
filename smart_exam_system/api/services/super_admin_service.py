@@ -6,7 +6,7 @@ from smart_exam_system.models.exam import ExamModel
 from smart_exam_system.models.attempt import AttemptModel
 from smart_exam_system.models.login_log import LoginLogModel
 from smart_exam_system.models.democontact import DemoRequest, ContactMessage
-from smart_exam_system.api.services.react_school_service import generate_unique_school_slug
+from smart_exam_system.api.services.school_service import generate_unique_school_slug
 import os
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename

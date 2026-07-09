@@ -4,7 +4,7 @@ from pathlib import Path
 from werkzeug.exceptions import NotFound
 from uuid import uuid4
 from openpyxl import load_workbook
-from smart_exam_system.api.services.react_student_service import create_student, normalize_text
+from smart_exam_system.api.services.student_service import create_student, normalize_text
 from smart_exam_system.models.student import StudentRegistrationType
 from smart_exam_system.api.services.school_class_service import find_school_class
 from smart_exam_system.api.services.school_section_service import find_section

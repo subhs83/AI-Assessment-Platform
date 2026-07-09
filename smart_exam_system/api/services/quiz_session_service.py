@@ -2,10 +2,9 @@ from smart_exam_system.api.services.student_management_service import is_registr
 from smart_exam_system.extensions import db
 from smart_exam_system.models.student import (
     StudentModel,
-    StudentRegistrationType,
 )
 
-from smart_exam_system.api.services.react_student_service import (
+from smart_exam_system.api.services.student_service import (
     get_submitted_attempts,
     get_max_attempts,
     get_student_identity,

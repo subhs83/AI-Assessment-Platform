@@ -4,7 +4,7 @@ from smart_exam_system.api.teacher import api_teacher_bp
 from smart_exam_system.api.utils.decorators import teacher_required,exam_owner_required
 from smart_exam_system.models import SchoolModel, ExamModel
 from smart_exam_system.api.utils.api_response import api_response
-from smart_exam_system.api.services.react_exam_service import ( 
+from smart_exam_system.api.services.exam_service import ( 
     create_exam, 
     get_teacher_exams, 
     publish_exam, 
@@ -13,8 +13,8 @@ from smart_exam_system.api.services.react_exam_service import (
     get_question_template
     
     )
-from smart_exam_system.api.services.react_question_service import upload_questions, get_exam_questions
-from smart_exam_system.api.services.react_result_service import(
+from smart_exam_system.api.services.question_service import upload_questions, get_exam_questions
+from smart_exam_system.api.services.result_service import(
     get_results,
     generate_leaderboard,
     get_student_attempts,

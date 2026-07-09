@@ -3,14 +3,13 @@ from flask_login import login_required, current_user
 from smart_exam_system.api.admin import api_admin_bp
 from smart_exam_system.api.utils.decorators import school_admin_required
 from smart_exam_system.models import UserModel,SchoolModel,ExamModel
-from smart_exam_system.api.services.react_school_service import build_school_dashboard_data,build_teacher_exam_list
-from smart_exam_system.api.services.react_exam_service import (
+from smart_exam_system.api.services.exam_service import (
     get_teacher_performance_by_school,
     get_exam_performance_by_school,
     get_school_analytics
     
 )
-from smart_exam_system.api.services.react_result_service import generate_leaderboard
+from smart_exam_system.api.services.result_service import generate_leaderboard
 import csv
 from io import StringIO
 

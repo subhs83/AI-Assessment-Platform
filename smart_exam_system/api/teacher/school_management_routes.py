@@ -7,7 +7,7 @@ from smart_exam_system.api.utils.helpers import serialize_school_class
 from smart_exam_system.api.utils.decorators import teacher_required
 
 from smart_exam_system.models import SchoolModel
-from smart_exam_system.api.services.react_student_service import normalize_text
+from smart_exam_system.api.services.student_service import normalize_text
 from smart_exam_system.api.services.school_class_service import (
     create_school_class,
     list_school_classes,
