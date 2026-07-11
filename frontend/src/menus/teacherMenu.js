@@ -56,7 +56,7 @@ export const getTeacherMenu = (schoolSlug) => [
   },
 
   {
-    label: "Upload Questions",
+    label: "Import Questions",
     icon: Upload,
     path: `/school/${schoolSlug}/teacher/questions/upload`,
     end: true,

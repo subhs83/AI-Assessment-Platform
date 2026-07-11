@@ -9,6 +9,12 @@ import Button from "../../components/ui/Button";
 import { useToast } from "../../components/ui/Toast";
 import  LoadingOverlay  from "../../components/common/LoadingOverlay";
 import { downloadFile } from "../../utils/downloadFile";
+import {
+  ExamSelector,
+  TemplateDownloadCard,
+  UploadDropzone,
+  UploadActions
+} from "../../components/teacher/question-upload";
 
 import {
   UploadCloud,
@@ -36,7 +42,6 @@ export default function UploadQuestionsPage() {
   const [exams, setExams] = useState([]);
   const [selectedExam, setSelectedExam] = useState("");
 
-  const [showInstructions, setShowInstructions] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const downloadQuestionTemplate =  useTeacherStore((s) => s.downloadQuestionTemplate);
@@ -167,244 +172,34 @@ export default function UploadQuestionsPage() {
       />
 
       {/* EXAM SELECT */}
-      <div className="bg-white border rounded-xl p-5 shadow-sm">
-
-        <label className="block mb-2 font-medium">
-          Select Exam
-        </label>
-
-        <select
-          className="w-full border rounded-lg p-2"
-          value={selectedExam}
-          onChange={(e) =>
-            setSelectedExam(e.target.value)
-          }
-        >
-          <option value="">
-            -- Select Exam --
-          </option>
-
-          {exams.map((exam) => (
-            <option
-              key={exam.id}
-              value={exam.id}
-            >
-              {exam.title}
-            </option>
-          ))}
-        </select>
-
-      </div>
+      <ExamSelector
+        exams={exams}
+        selectedExam={selectedExam}
+        setSelectedExam={setSelectedExam}
+      />
       
       {/* Downloaded section */}
-      <div className="border rounded-xl bg-blue-50 shadow-sm p-5">
-
-        {/* TOP */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Sample Excel Template
-            </h3>
-
-            <p className="text-sm text-gray-600 mt-1">
-              Download the template and replace only the content while keeping the same format.
-            </p>
-          </div>
-
-         <Button
-            onClick={handleDownloadTemplate}
-            className="flex items-center gap-2"
-          >
-            <Download size={18} />
-            Download Sample File
-          </Button>
-
-        </div>
-
-        {/* TOGGLE */}
-        <button
-          onClick={() => setShowInstructions(!showInstructions)}
-          className="
-            mt-4
-            flex items-center gap-2
-            text-sm font-medium text-blue-700
-            hover:text-blue-900
-            transition
-          "
-        >
-          {showInstructions ? (
-            <>
-              <ChevronUp size={16} />
-              Hide Instructions
-            </>
-          ) : (
-            <>
-              <ChevronDown size={16} />
-              Show Instructions
-            </>
-          )}
-        </button>
-
-        {/* BODY */}
-        {showInstructions && (
-          <div className="mt-5 border-t pt-5">
-
-            <div className="space-y-3 text-sm text-gray-700">
-
-              <div className="flex gap-2">
-                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Replace only question and option values.</span>
-              </div>
-
-              <div className="flex gap-2">
-                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Keep the same column names.</span>
-              </div>
-
-              <div className="flex gap-2">
-                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Do not rename, remove, or reorder columns.</span>
-              </div>
-
-              <div className="flex gap-2">
-                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-                <span>
-                  Keep only the questions you want to import and delete the remaining sample rows.
-                </span>
-              </div>
-
-              <div className="flex gap-2">
-                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Correct answer should be A, B, C or D.</span>
-              </div>
-
-              <div className="flex gap-2">
-                <CheckCircle2 size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-                <span>Supported formats: .xlsx and .xls.</span>
-              </div>
-
-            </div>
-
-            {/* REQUIRED COLUMNS */}
-            <div className="mt-5 bg-white border rounded-xl p-4">
-
-              <div className="flex items-center gap-2 mb-3 font-semibold text-gray-800">
-                <Table2 size={18} />
-                Required Columns
-              </div>
-
-              <div className="overflow-x-auto">
-                <div className="
-                  inline-flex
-                  gap-2
-                  text-xs md:text-sm
-                  font-mono
-                  whitespace-nowrap
-                ">
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    question_text
-                  </span>
-
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    option_a
-                  </span>
-
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    option_b
-                  </span>
-
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    option_c
-                  </span>
-
-                  <span className="bg-gray-100 px-2 py-1 rounded">
-                    option_d
-                  </span>
-
-                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
-                    correct_option
-                  </span>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        )}
-
-      </div>
+      <TemplateDownloadCard
+        onDownload={handleDownloadTemplate}
+      />
 
       {/* UPLOAD BOX */}
       <div className="bg-white border rounded-xl p-6 space-y-4 shadow-sm">
 
         {/* FILE AREA */}
-        <div className="border-2 border-dashed rounded-lg p-6 text-center bg-gray-50 hover:bg-gray-100 transition">
-
-          {!file ? (
-            <>
-              <UploadCloud
-                className="mx-auto text-gray-400"
-                size={32}
-              />
-
-              <p className="text-sm text-gray-600 mt-2">
-                Drag & drop Excel file here or click to select
-              </p>
-
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(e) =>
-                  setFile(e.target.files[0])
-                }
-                className="mt-4 block w-full text-sm"
-              />
-            </>
-          ) : (
-            <div className="flex items-center justify-between bg-white border rounded-lg p-3">
-
-              <span className="text-sm font-medium">
-                {file.name}
-              </span>
-
-              <button
-                onClick={() => setFile(null)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <X size={18} />
-              </button>
-
-            </div>
-          )}
-
-        </div>
+        <UploadDropzone
+          file={file}
+          setFile={setFile}
+        />
 
         {/* ACTIONS */}
-        <div className="flex justify-end gap-3">
-
-          <Button
-            variant="secondary"
-            onClick={() =>
-              navigate(routes.exams.list)
-            }
-          >
-            <ArrowLeft size={16} />
-            Cancel
-          </Button>
-
-          <Button
-            variant="primary"
-            onClick={handleUpload}
-            disabled={loading}
-          >
-            <Upload size={16} />
-            {loading
-              ? "Uploading..."
-              : "Upload File"}
-          </Button>
-
-        </div>
+        <UploadActions
+          loading={loading}
+          onCancel={() =>
+            navigate(routes.exams.list)
+          }
+          onUpload={handleUpload}
+        />
 
       </div>
 
