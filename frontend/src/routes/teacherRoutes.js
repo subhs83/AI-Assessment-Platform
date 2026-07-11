@@ -45,4 +45,7 @@ schoolClasses: {
     list: `/school/${schoolSlug}/teacher/school-classes`,
   },
 
+subscription:
+    `/school/${schoolSlug}/teacher/subscription`,
+
 });

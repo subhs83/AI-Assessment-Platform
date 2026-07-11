@@ -11,6 +11,8 @@ export const useTeacherStore = create((set, get) => ({
   schoolClasses: [],
   sections: [],
   ocrLanguages: [],
+  aiConfig: null,
+  subscription: null,
 
   // -------------------------
   // NEW: Upload states
@@ -58,6 +60,18 @@ export const useTeacherStore = create((set, get) => ({
 
     return res.data;
   },
+
+
+
+  fetchAIConfig: async (schoolSlug) => {
+    const res = await aiApi.getAIConfig(
+        schoolSlug
+    );
+
+    set({
+        aiConfig: res.data.data,
+    });
+},
 
 
   // -------------------------
@@ -335,6 +349,37 @@ deleteSection: async (schoolSlug, classId, sectionId) => {
 
   return res.data;
 },
+
+
+  fetchSubscription: async (schoolSlug) => {
+    try {
+      set({
+        subscription: null,
+        loading: true,
+        error: null,
+      });
+
+      const res = await teacherApi.getSubscription(
+        schoolSlug
+      );
+
+      set({
+        subscription: res.data.data,
+        loading: false,
+      });
+
+    } catch (err) {
+
+      set({
+        subscription: null,
+        loading: false,
+        error:
+          err.response?.data?.message ||
+          "Failed to load subscription.",
+      });
+
+    }
+  },
   // -------------------------
   // Reset
   // -------------------------
@@ -349,5 +394,12 @@ deleteSection: async (schoolSlug, classId, sectionId) => {
       uploadError: null,
       schoolClasses: [],
       sections: [],
+      aiConfig: null,
+      subscription: null,
+    }),
+
+    resetSubscription: () =>
+    set({
+        subscription: null,
     }),
 }));

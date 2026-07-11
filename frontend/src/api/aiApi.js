@@ -30,6 +30,9 @@ getHistory: (schoolSlug, params = {}) =>
     getOcrLanguages: (schoolSlug) =>
   API.get(`/api/teacher/${schoolSlug}/ai/options`),
 
+    getAIConfig: (schoolSlug) =>
+    API.get(`/api/teacher/${schoolSlug}/ai/config`),
+
 };
 
 export default aiApi

@@ -69,9 +69,12 @@ def get_school_subscription_summary(school_id):
         },
 
         "usage": {
-            "used_credits": quota["used_credits"],
+            "monthly_credits": limits["monthly_ai_credits"],
             "bonus_credits": usage.bonus_ai_credits,
             "remaining_credits": quota["remaining_credits"],
+             "total_credits": quota["total_credits"],
+              "used_credits": quota["used_credits"],
+
         },
     }
 
@@ -210,3 +213,6 @@ def update_subscription_status(
     db.session.commit()
 
     return subscription
+
+
+

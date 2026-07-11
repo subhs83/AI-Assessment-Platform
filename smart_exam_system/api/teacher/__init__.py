@@ -7,3 +7,4 @@ from smart_exam_system.api.teacher import routes
 from smart_exam_system.api.teacher import ai_routes
 from smart_exam_system.api.teacher import student_routes
 from smart_exam_system.api.teacher import school_management_routes
+from smart_exam_system.api.teacher import subscription_routes

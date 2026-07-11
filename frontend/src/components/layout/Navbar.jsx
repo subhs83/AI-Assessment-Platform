@@ -9,6 +9,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { getPageTitle } from "../../config/pageTitles";
 import { useAuthStore } from "../../store/authStore";
+import { useTeacherStore } from "../../store/teacherStore";
 import logo from "../../assets/logo.png";
 
 export default function Navbar({ onToggleSidebar }) {
@@ -17,6 +18,9 @@ export default function Navbar({ onToggleSidebar }) {
 
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
+  const dashboard = useTeacherStore((s) => s.dashboard);
+
+  const subscription = dashboard?.subscription;
 
   const [openMenu, setOpenMenu] = useState(false);
 
@@ -125,10 +129,34 @@ export default function Navbar({ onToggleSidebar }) {
 
         {/* RIGHT */}
 
-        <div
-          className="relative"
-          ref={menuRef}
-        >
+        <div className="flex items-center gap-4">
+
+          {(user?.role === "teacher" ||
+            user?.role === "school_admin") &&
+            subscription && (
+
+              <div className="hidden lg:flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2">
+
+                <div>
+
+                  <div className="text-xs text-slate-500">
+                    {subscription.plan}
+                  </div>
+
+                  <div className="text-sm font-semibold text-emerald-700">
+                    {subscription.remaining_ai_credits.toLocaleString()} Credits Left
+                  </div>
+
+                </div>
+
+              </div>
+
+          )}
+
+          <div
+            className="relative"
+            ref={menuRef}
+          >
 
           <button
             onClick={() => setOpenMenu((v) => !v)}
@@ -205,6 +233,8 @@ export default function Navbar({ onToggleSidebar }) {
 
         </div>
 
+      </div>
+      
       </div>
 
     </header>

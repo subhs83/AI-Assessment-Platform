@@ -6,7 +6,7 @@ import SkeletonCard from "../../components/ui/SkeletonCard";
 import ErrorState from "../../components/ui/ErrorState";
 import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
-import { FileText, Users, HelpCircle, BarChart3, Share2, PlusCircle } from "lucide-react";
+import { FileText, Users, BarChart3, Share2, PlusCircle } from "lucide-react";
 import { teacherRoutes } from "../../routes/teacherRoutes"
 import { shareLink } from "../../utils/share";
 import { useToast } from "../../components/ui/Toast"
@@ -48,12 +48,21 @@ export default function DashboardPage() {
   const stats = dashboard?.stats ?? {
     total_exams: 0,
     total_attempts: 0,
-    total_questions: 0,
+    draft_exams: 0,
+  };
+
+  const subscription = dashboard?.subscription ?? {
+    plan: "",
+    status: "",
+    remaining_ai_credits: 0,
+    used_ai_credits: 0,
+    total_ai_credits: 0,
+    expires_at: null,
   };
 
   const teacher = dashboard?.teacher ?? {};
 
-  const recentExams = exams.slice(0, 5);
+  const recentExams = exams.slice(0, 3);
 
   // Loading
   if (loading && !dashboard) {
@@ -92,6 +101,78 @@ export default function DashboardPage() {
           </Button>
         }
     />
+
+    {/* ================= SUBSCRIPTION ================= */}
+
+    <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 shadow-sm">
+
+      <div className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
+
+        {/* Left */}
+
+        <div>
+
+          <div className="flex items-center gap-3">
+
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              {subscription.plan}
+            </span>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${
+                subscription.status === "ACTIVE"
+                  ? "bg-green-100 text-green-700"
+                  : subscription.status === "TRIAL"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {subscription.status}
+            </span>
+
+          </div>
+
+          <h2 className="mt-4 text-2xl font-bold text-slate-900">
+
+            {subscription.remaining_ai_credits.toLocaleString()} AI Credits Remaining
+
+          </h2>
+
+          <p className="mt-2 text-sm text-slate-600">
+
+            {subscription.used_ai_credits.toLocaleString()} used of{" "}
+            {subscription.total_ai_credits.toLocaleString()} monthly credits.
+
+          </p>
+
+        </div>
+
+        {/* Right */}
+
+        <div className="flex flex-col items-start gap-3 lg:items-end">
+
+          <div className="text-sm text-slate-500">
+            Subscription expires
+          </div>
+
+          <div className="text-lg font-semibold text-slate-800">
+            {new Date(
+              subscription.expires_at
+            ).toLocaleDateString()}
+          </div>
+
+          <button
+            onClick={() => navigate(routes.subscription)}
+            className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+          >
+            View Subscription
+        </button>
+
+        </div>
+
+      </div>
+
+    </div>
 
     {/* ================= STATS ================= */}
     <div className="grid gap-5 md:grid-cols-3">
@@ -148,26 +229,30 @@ export default function DashboardPage() {
 
     </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
 
       <div className="flex items-center justify-between">
 
         <div>
-          <p className="text-3xl font-bold text-purple-700">
-            {stats.total_questions}
+
+          <p className="text-3xl font-bold text-amber-700">
+            {stats.draft_exams}
           </p>
 
           <p className="mt-1 font-medium text-slate-700">
-            Total Questions
+            Draft Exams
           </p>
 
           <p className="mt-2 text-xs text-slate-500">
-            Live Data
+            Pending publication
           </p>
+
         </div>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100">
-          <HelpCircle className="h-6 w-6 text-purple-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100">
+
+          <FileText className="h-6 w-6 text-amber-600" />
+
         </div>
 
       </div>
@@ -180,7 +265,7 @@ export default function DashboardPage() {
     <div className="bg-white rounded-lg shadow-sm border">
 
       <div className="border-b px-5 py-4">
-        <h2 className="font-semibold">Recent Exams</h2>
+        <h2 className="font-semibold">Latest Published Exams</h2>
         <p className="text-sm text-gray-500 mt-1">
           Showing latest {Math.min(recentExams.length, 5)} exams
         </p>

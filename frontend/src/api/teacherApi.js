@@ -199,6 +199,8 @@ deleteSection: (schoolSlug, classId, sectionId) =>
     `/api/teacher/${schoolSlug}/school-classes/${classId}/sections/${sectionId}`
   ),
   
+  getSubscription: (schoolSlug) =>
+  API.get(`/api/teacher/${schoolSlug}/subscription`),
 
 }
 

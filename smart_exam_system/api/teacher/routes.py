@@ -24,6 +24,14 @@ from smart_exam_system.api.services.result_service import(
     get_student_attempts,
     get_attempt_detailed_report,
 )
+
+from smart_exam_system.api.services.subscription_management_service import get_school_subscription_summary
+
+from smart_exam_system.api.services.subscription_service import (
+    get_active_ai_features,
+    get_school_ai_quota
+)
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -56,30 +64,59 @@ def dashboard(school_slug):
     )
 
     ai_exams = [
-        e for e in exams
-        if e.get("status") == "draft"
+        exam
+        for exam in exams
+        if exam.get("status") == "draft"
+    ]
+
+    published_exams = [
+        exam
+        for exam in exams
+        if exam.get("is_published")
     ]
 
     stats = {
         "total_exams": len(exams),
-        "total_attempts": sum(e.get("total_attempts", 0) for e in exams),
-        "total_questions": sum(e.get("total_questions", 0) for e in exams),
+        "total_attempts": sum(
+            e.get("total_attempts", 0)
+            for e in exams
+        ),
+        "draft_exams": len(ai_exams),
     }
+
+    subscription = get_school_subscription_summary( school.id )
+    ai_features = get_active_ai_features()
+    quota = get_school_ai_quota(school.id)
 
     return api_response(
         success=True,
         message="Dashboard loaded successfully",
         data={
             "school_slug": school.slug,
+
             "teacher": {
                 "id": current_user.id,
                 "name": current_user.name,
-                "email": current_user.email
+                "email": current_user.email,
             },
+
             "stats": stats,
-            "exams": exams,
-            "ai_exams": ai_exams
-        }
+
+            "exams": published_exams,
+
+            "ai_exams": ai_exams,
+
+            "subscription": {
+                "plan": subscription["plan"]["name"],
+                "status": subscription["subscription"]["status"],
+                "total_ai_credits": quota["total_credits"],
+                "used_ai_credits": quota["used_credits"],
+                "remaining_ai_credits": quota["remaining_credits"],
+                "expires_at": subscription["subscription"]["expires_at"],
+            },
+
+            "ai_features": ai_features,
+        },
     )
 
 

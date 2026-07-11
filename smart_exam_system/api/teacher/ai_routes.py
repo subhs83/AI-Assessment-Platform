@@ -4,10 +4,16 @@ from sqlalchemy import or_
 from flask_login import login_required, current_user
 from smart_exam_system.api.teacher import api_teacher_bp
 from smart_exam_system.models import AIGenerationRequest
+from smart_exam_system.api.utils.api_response import api_response
 from smart_exam_system.api.services.ai.extractor import extract_input
 from smart_exam_system.api.utils.decorators import  teacher_required
 from smart_exam_system.api.services.ai.controller import ( generate_ai_questions_controller)
-from smart_exam_system.models import QuestionModel
+from smart_exam_system.models import (
+    QuestionModel,
+    SchoolModel
+)
+
+from smart_exam_system.api.services.ai_config_service import get_ai_configuration
 from smart_exam_system.extensions import db
 
 
@@ -223,3 +229,40 @@ def ai_options(school_slug):
         "ocr_languages": Config.OCR_LANGUAGE_OPTIONS,
         "default_language": Config.DEFAULT_OCR_LANGUAGE,
     })
+
+
+
+@api_teacher_bp.route(
+    "/<school_slug>/ai/config",
+    methods=["GET"],
+)
+@login_required
+@teacher_required
+def ai_config(school_slug):
+
+    school = SchoolModel.query.filter_by(
+        slug=school_slug
+    ).first()
+
+    if not school:
+        return api_response(
+            success=False,
+            message="School not found",
+            status=404,
+        )
+
+    if school.id != current_user.school_id:
+        return api_response(
+            success=False,
+            message="Invalid school access",
+            status=403,
+        )
+
+    config = get_ai_configuration(
+        school.id
+    )
+
+    return api_response(
+        success=True,
+        data=config,
+    )

@@ -52,6 +52,7 @@ def calculate_subscription_expiry(duration_days):
 
     return starts_at, expires_at
 
+
 def get_subscription_plan(plan_code):
     """
     Return an active subscription plan by its plan code.
@@ -168,6 +169,7 @@ def get_school_ai_quota(school_id):
     )
     remaining = max(total - used, 0)
 
+
     return {
         "total_credits": total,
         "used_credits": used,
@@ -279,3 +281,101 @@ def get_ai_feature(feature_code):
         )
 
     return feature
+
+
+
+def validate_ai_credit_usage(
+    school_id,
+    feature_code,
+):
+    """
+    Validate whether a school can use an AI feature.
+
+    Args:
+        school_id (int): School ID.
+        feature_code (str): AI feature code.
+
+    Returns:
+        dict:
+            {
+                "subscription": SchoolSubscriptionModel,
+                "feature": AIFeatureModel,
+                "quota": dict,
+            }
+
+    Raises:
+        ValueError:
+            - Subscription is suspended.
+            - Subscription has expired.
+            - Insufficient AI credits.
+            - Feature not found.
+    """
+
+    subscription = get_school_subscription(school_id)
+    feature = get_ai_feature(feature_code)
+    quota = get_school_ai_quota(school_id)
+
+    now = datetime.now(UTC)
+
+    if subscription.status == "SUSPENDED":
+        raise ValueError(
+            "School subscription is suspended."
+        )
+
+    if subscription.status == "EXPIRED":
+        raise ValueError(
+            "School subscription has expired."
+        )
+
+    if (
+        subscription.expires_at is not None
+        and subscription.expires_at < now
+    ):
+        raise ValueError(
+            "School subscription has expired."
+        )
+
+    if quota["remaining_credits"] < feature.credits_required:
+        raise ValueError(
+            "Insufficient AI credits."
+        )
+
+    return {
+        "subscription": subscription,
+        "feature": feature,
+        "quota": quota,
+    }
+
+
+
+def get_active_ai_features():
+    """
+    Return all active AI features with their credit cost.
+    """
+
+    features = (
+        AIFeatureModel.query
+        .filter_by(is_active=True)
+        .order_by(AIFeatureModel.id)
+        .all()
+    )
+
+    return [
+        {
+            "feature_code": feature.feature_code,
+            "feature_name": feature.feature_name,
+            "credits_required": feature.credits_required,
+        }
+        for feature in features
+    ]
+
+
+def get_ai_feature_summary():
+    features = AIFeatureModel.query.filter_by(
+        is_active=True
+    ).all()
+
+    return {
+        feature.feature_code: feature.credits_required
+        for feature in features
+    }

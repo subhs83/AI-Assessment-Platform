@@ -38,6 +38,7 @@ import AIHistoryPage from "./pages/teacher/ai/AIHistoryPage";
 import StudentsPage from "./pages/teacher/StudentsPage";  
 import AcademicStructurePage from "./pages/teacher/AcademicStructurePage";
 import SectionsPage from "./pages/teacher/SectionsPage";
+import SubscriptionPage  from "./pages/teacher/SubscriptionPage";
 
 
 
@@ -140,6 +141,8 @@ function AppContent() {
             <Route  path="academic-structure"  element={<AcademicStructurePage />}/>
 
             <Route  path="academic-structure/classes/:classId/sections"  element={<SectionsPage />}/>
+
+            <Route path="subscription" element={<SubscriptionPage />}/>
             
           </Route>
  

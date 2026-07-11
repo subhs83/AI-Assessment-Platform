@@ -1,43 +1,40 @@
+from smart_exam_system.constants.ai_features import AIFeature
 from smart_exam_system.api.services.subscription_service import (
-    get_ai_feature,
-    get_school_ai_quota,
+    validate_ai_credit_usage,
 )
-
-FEATURE_MAP = {
-    "topic": "TOPIC_QUESTION",
-    "manual": "TEXT_QUESTION",
-    "pdf": "PDF_QUESTION",
-    "image": "IMAGE_QUESTION",
-}
 
 
 def process_ai_credit(school_id, input_type):
     """
-    Validate whether the school has enough AI credits for the requested feature.
+    Validate AI credit availability for the requested feature.
 
     Args:
         school_id (int): School ID.
         input_type (str): topic, manual, pdf or image.
 
     Returns:
-        int: Credits required for this request.
+        int: Credits required for the request.
 
     Raises:
-        ValueError: If the feature is unsupported or credits are insufficient.
+        ValueError: If the feature is unsupported or the request
+        is not permitted.
     """
 
-    feature_code = FEATURE_MAP.get(input_type)
+    feature = {
+        "topic": AIFeature.TOPIC_QUESTION,
+        "manual": AIFeature.TEXT_QUESTION,
+        "pdf": AIFeature.PDF_QUESTION,
+        "image": AIFeature.IMAGE_QUESTION,
+    }.get(input_type)
 
-    if not feature_code:
-        raise ValueError(f"Unsupported AI feature: {input_type}")
-
-    feature = get_ai_feature(feature_code)
-
-    quota = get_school_ai_quota(school_id)
-
-    if quota["remaining_credits"] < feature.credits_required:
+    if feature is None:
         raise ValueError(
-            "Your school has insufficient AI credits. Please upgrade your subscription or purchase additional credits."
+            f"Unsupported AI feature: {input_type}"
         )
 
-    return feature.credits_required
+    validation = validate_ai_credit_usage(
+        school_id=school_id,
+        feature_code=feature.value,
+    )
+
+    return validation["feature"].credits_required
