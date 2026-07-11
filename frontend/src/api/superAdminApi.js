@@ -53,6 +53,45 @@ export const superAdminApi = {
   resetSchoolAdminPassword: (userId) =>
   API.post( `/api/superadmin/admins/${userId}/reset-password` ),
 
+
+  // =====================================================
+  // Subscriptions
+  // =====================================================
+
+  getSchoolSubscription(schoolId) {
+    return API.get(
+      `/api/superadmin/schools/${schoolId}/subscription`
+    );
+  },
+
+  changeSubscriptionPlan(schoolId, data) {
+    return API.put(
+      `/api/superadmin/schools/${schoolId}/subscription/plan`,
+      data
+    );
+  },
+
+  extendSubscription(schoolId, data) {
+    return API.put(
+      `/api/superadmin/schools/${schoolId}/subscription/extend`,
+      data
+    );
+  },
+
+  addBonusCredits(schoolId, data) {
+    return API.put(
+      `/api/superadmin/schools/${schoolId}/subscription/bonus-credits`,
+      data
+    );
+  },
+
+  updateSubscriptionStatus(schoolId, data) {
+    return API.put(
+      `/api/superadmin/schools/${schoolId}/subscription/status`,
+      data
+    );
+  },
+
   // =====================
   // DEMO REQUESTS
   // =====================

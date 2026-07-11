@@ -1,0 +1,8 @@
+from enum import Enum
+
+
+class AIFeature(str, Enum):
+    TOPIC_QUESTION = "TOPIC_QUESTION"
+    TEXT_QUESTION = "TEXT_QUESTION"
+    PDF_QUESTION = "PDF_QUESTION"
+    IMAGE_QUESTION = "IMAGE_QUESTION"

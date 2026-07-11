@@ -21,7 +21,6 @@ export default function CreateSchoolPage() {
     address: "",
     phone: demo?.phone || "",
     email: demo?.email || "",
-    duration_days: ""
   });
 
   const [logo, setLogo] = useState(null);
@@ -54,7 +53,6 @@ export default function CreateSchoolPage() {
       payload.append("address", formData.address);
       payload.append("phone", formData.phone);
       payload.append("email", formData.email);
-      payload.append("duration_days", formData.duration_days);
 
       if (logo) {
         payload.append("logo", logo);
@@ -151,22 +149,7 @@ export default function CreateSchoolPage() {
               className="w-full border rounded-lg px-3 py-2"
             />
           </div>
-
-          <div>
-            <label className="block mb-1 font-medium">
-              Duration (Days)
-            </label>
-
-            <input
-              type="number"
-              min="1"
-              name="duration_days"
-              value={formData.duration_days}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
-          </div>
-
+          
           <div>
             <label className="block mb-1 font-medium">
               School Logo

@@ -11,6 +11,10 @@ from smart_exam_system.models.student import StudentModel
 from smart_exam_system.models.login_log import LoginLogModel
 from smart_exam_system.models.democontact import DemoRequest, ContactMessage
 from smart_exam_system.models.additionalattemptgrant import AdditionalAttemptGrant
+from smart_exam_system.models.subscription_plan import SubscriptionPlanModel
+from smart_exam_system.models.school_subscription import SchoolSubscriptionModel
+from smart_exam_system.models.ai_feature_cost import AIFeatureModel
+from smart_exam_system.models.school_usage import SchoolUsageModel
 
 from smart_exam_system.models.ai_generation_requests import AIGenerationRequest
 
@@ -31,5 +35,9 @@ __all__ = [
     "StudentModel",
     "LoginLogModel",
     "AIGenerationRequest",
-    "AdditionalAttemptGrant"
+    "AdditionalAttemptGrant",
+    "SubscriptionPlanModel",
+    "SchoolSubscriptionModel",
+    "AIFeatureModel",
+    "SchoolUsageModel"
 ]

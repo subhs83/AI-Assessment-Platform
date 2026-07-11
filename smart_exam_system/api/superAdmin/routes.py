@@ -3,17 +3,22 @@ from smart_exam_system.extensions import db
 from smart_exam_system.api.superAdmin import api_superadmin_bp
 from flask_login import login_required, current_user
 from smart_exam_system.api.utils.decorators import super_admin_required
+from smart_exam_system.api.utils.api_response import api_response
+from smart_exam_system.api.utils.request_validator import validate_required_fields
 from smart_exam_system.api.utils.security import (
     generate_temp_password,
     hash_password,
 )
 from smart_exam_system.api.services.school_service import (
     edit_school_service,
+    get_school_list_summary
 )
 from smart_exam_system.api.services.super_admin_service import (
     create_school_service,
     get_login_stats
 )
+
+
 from smart_exam_system.models import (
     SchoolModel,
     UserModel,
@@ -31,7 +36,8 @@ import secrets,string
 from sqlalchemy import func, distinct,case
 from datetime import datetime, timedelta
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 
 
@@ -127,30 +133,27 @@ def get_dashboard():
 @login_required
 @super_admin_required
 def get_schools():
+    """
+    Return all schools with subscription and usage summary.
+    """
 
-    schools = SchoolModel.query.order_by(SchoolModel.id.desc()).all()
+    try:
+        schools = get_school_list_summary()
 
-    return jsonify({
-        "success": True,
-        "data": [
-            {
-                "id": s.id,
-                "name": s.name,
-                "slug": s.slug,
-                "email": s.email,
-                "phone": s.phone,
-                "is_active": s.is_active,
-                "created_at": s.created_at,
-                "expiry_date": (
-                    s.expiry_date.strftime("%Y-%m-%d")
-                    if s.expiry_date
-                    else None
-                )
-            }
-            for s in schools
-        ]
-    })
+        return api_response(
+            success=True,
+            message="Schools retrieved successfully.",
+            data=schools,
+        )
 
+    except Exception:
+        logger.exception("Failed to retrieve schools.")
+
+        return api_response(
+            success=False,
+            message="Failed to retrieve schools.",
+            status=500,
+        )
 
 
 @api_superadmin_bp.route("/schools/<int:school_id>/toggle", methods=["PATCH"])

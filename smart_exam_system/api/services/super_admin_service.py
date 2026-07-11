@@ -12,6 +12,11 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 
 
+from smart_exam_system.api.services.subscription_service import (
+    initialize_school_subscription,
+)
+
+
 
 
 def create_school_service(data, files):
@@ -20,7 +25,6 @@ def create_school_service(data, files):
     address = data.get("address", "").strip()
     phone = data.get("phone", "").strip()
     email = data.get("email", "").strip()
-    duration_days = data.get("duration_days")
 
     # duplicate check
     existing_school = SchoolModel.query.filter(
@@ -36,11 +40,6 @@ def create_school_service(data, files):
     # slug
 
     slug = generate_unique_school_slug(name)
-
-    # expiry
-    expiry_date = None
-    if duration_days:
-        expiry_date = datetime.utcnow() + timedelta(days=int(duration_days))
 
     # logo upload
     logo_file = files.get("logo")
@@ -58,13 +57,20 @@ def create_school_service(data, files):
         address=address,
         phone=phone,
         email=email,
-        expiry_date=expiry_date,
         logo=logo_filename
     )
 
     db.session.add(new_school)
 
-    # demo conversion
+    # Get school.id before commit
+    db.session.flush()
+
+    # Initialize subscription & usage
+    initialize_school_subscription(
+        school_id=new_school.id
+    )
+
+    # Demo conversion
     demo_id = data.get("demo_id")
     if demo_id:
         demo = db.session.get(DemoRequest, demo_id)
@@ -72,7 +78,6 @@ def create_school_service(data, files):
             demo.status = "converted"
 
     db.session.commit()
-
     return {"success": True}
 
 

@@ -27,7 +27,20 @@ class SchoolModel(db.Model):
     admins = db.relationship("UserModel", backref="school", lazy="dynamic")
 
     attempts = db.relationship("AttemptModel", backref="school")
+    
+    subscription = db.relationship(
+        "SchoolSubscriptionModel",
+        back_populates="school",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
+    usages = db.relationship(
+        "SchoolUsageModel",
+        back_populates="school",
+        cascade="all, delete-orphan",
+    )
+    
     @classmethod
     def get(cls,school_id):
         school = db.session.get(SchoolModel, school_id)

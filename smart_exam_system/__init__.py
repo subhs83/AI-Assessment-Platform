@@ -15,6 +15,11 @@ from .api.superAdmin import api_superadmin_bp
 from .api.public import api_public_bp
 
 from .api.utils.init_data import create_default_super_admin
+from .api.utils.init_subscription_data import (
+    create_default_subscription_plans,
+    create_default_ai_features,
+)
+
 
 def create_app():
     base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -56,6 +61,8 @@ def create_app():
 
     with app.app_context():
         create_default_super_admin()
+        create_default_subscription_plans()
+        create_default_ai_features()
 
     return app
 

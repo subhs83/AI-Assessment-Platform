@@ -62,6 +62,7 @@ import LoginLogsPage  from "./pages/superAdmin/LoginLogsPage";
 import PlatformStatsPage  from "./pages/superAdmin/PlatformStatsPage";
 import SystemHealthPage  from "./pages/superAdmin/SystemHealthPage";
 import AIAnalyticsPage  from "./pages/superAdmin/AIAnalyticsPage";
+import SchoolSubscriptionPage  from "./pages/superAdmin/SchoolSubscriptionPage";
 
 import PublicRoutes from "./routes/PublicRoutes";
 
@@ -185,6 +186,9 @@ function AppContent() {
             <Route path="schools/:schoolId/edit" element={<EditSchoolPage />} />
             <Route path="schools/:schoolId/admins" element={<SchoolAdminsPage />} />
             <Route path="schools/:schoolId/admins/create" element={<CreateSchoolAdminPage />} />
+
+            {/* ================= Subscription ================= */}
+            <Route path="schools/:schoolId/subscription" element={<SchoolSubscriptionPage />} />
 
             {/* ================= Communication ================= */}
             <Route path="demo-requests" element={<DemoRequestsPage />} />

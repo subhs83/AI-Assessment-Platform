@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import { superAdminApi } from "../api/superAdminApi";
 
-
-
-
 export const useSuperAdminStore = create((set, get) => ({
     
     
@@ -502,7 +499,105 @@ getSchoolAdmins: async (schoolId) => {
 
 },
 
+// =====================================================
+// Subscriptions
+// =====================================================
 
+// -------------------------
+// Get Subscription Details
+// -------------------------
+getSchoolSubscription: async (schoolId) => {
+
+  set({ loading: true });
+
+  try {
+
+    const response =
+      await superAdminApi.getSchoolSubscription(
+        schoolId
+      );
+
+    return response.data;
+
+  } finally {
+
+    set({ loading: false });
+
+  }
+
+},
+
+// -------------------------
+// Change Plan
+// -------------------------
+changeSubscriptionPlan: async (
+  schoolId,
+  payload
+) => {
+
+  const response =
+    await superAdminApi.changeSubscriptionPlan(
+      schoolId,
+      payload
+    );
+
+  return response.data;
+
+},
+
+// -------------------------
+// Extend Subscription
+// -------------------------
+extendSubscription: async (
+  schoolId,
+  payload
+) => {
+
+  const response =
+    await superAdminApi.extendSubscription(
+      schoolId,
+      payload
+    );
+
+  return response.data;
+
+},
+
+// -------------------------
+// Add Bonus AI Credits
+// -------------------------
+addBonusCredits: async (
+  schoolId,
+  payload
+) => {
+
+  const response =
+    await superAdminApi.addBonusCredits(
+      schoolId,
+      payload
+    );
+
+  return response.data;
+
+},
+
+// -------------------------
+// Update Subscription Status
+// -------------------------
+updateSubscriptionStatus: async (
+  schoolId,
+  payload
+) => {
+
+  const response =
+    await superAdminApi.updateSubscriptionStatus(
+      schoolId,
+      payload
+    );
+
+  return response.data;
+
+},
 // -------------------------
 //  Create Admin
 // -------------------------
@@ -620,29 +715,6 @@ deleteContactMessage: async (
 
 },
 
-
-extendSchoolValidity: async (schoolId, payload) => {
-
-  const response =
-    await superAdminApi.extendSchoolValidity(
-      schoolId,
-      payload
-    );
-
-  return response.data;
-
-},
-
-resetSchoolValidity: async (schoolId) => {
-
-  const response =
-    await superAdminApi.resetSchoolValidity(
-      schoolId
-    );
-
-  return response.data;
-
-},
 
 
 deleteSchool: async (schoolId) => {
