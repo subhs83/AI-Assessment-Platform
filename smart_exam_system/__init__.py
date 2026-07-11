@@ -14,11 +14,7 @@ from .api.admin import api_admin_bp
 from .api.superAdmin import api_superadmin_bp
 from .api.public import api_public_bp
 
-from .api.utils.init_data import create_default_super_admin
-from .api.utils.init_subscription_data import (
-    create_default_subscription_plans,
-    create_default_ai_features,
-)
+from .api.utils.helpers import initialize_default_data
 
 
 def create_app():
@@ -60,9 +56,7 @@ def create_app():
     app.register_blueprint(api_public_bp)
 
     with app.app_context():
-        create_default_super_admin()
-        create_default_subscription_plans()
-        create_default_ai_features()
+        initialize_default_data()
 
     return app
 

@@ -1,5 +1,15 @@
 from datetime import datetime, timezone,timedelta
 
+from sqlalchemy import inspect
+
+from smart_exam_system.extensions import db
+from smart_exam_system.api.utils.init_data import create_default_super_admin
+from smart_exam_system.api.utils.init_subscription_data import (
+    create_default_subscription_plans,
+    create_default_ai_features,
+)
+
+
 def serialize_school_class(school_class):
     return {
         "id": school_class.id,
@@ -56,3 +66,19 @@ def generate_slug(name):
 
 
 
+
+
+
+def initialize_default_data():
+
+    inspector = inspect(db.engine)
+    tables = set(inspector.get_table_names())
+
+    if "users" in tables:
+        create_default_super_admin()
+
+    if "subscription_plans" in tables:
+        create_default_subscription_plans()
+
+    if "ai_features" in tables:
+        create_default_ai_features()
