@@ -44,10 +44,7 @@ export default function UploadQuestionsPage() {
   try {
     const res = await teacherApi.getExamOptions(schoolSlug);
 
-    console.log("res.data: ",res.data);
-    console.log("res.data.data: ",res.data.data);
-
-    setExams(res.data.data || []);
+    setExams(res.data.data.exam || []);
   } catch (err) {
     console.error(err);
 

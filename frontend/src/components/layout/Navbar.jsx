@@ -18,9 +18,10 @@ export default function Navbar({ onToggleSidebar }) {
 
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
-  const dashboard = useTeacherStore((s) => s.dashboard);
+  const examOptions = useTeacherStore((s) => s.examOptions);
 
-  const subscription = dashboard?.subscription;
+  const aiQuota = examOptions?.ai_quota;
+
 
   const [openMenu, setOpenMenu] = useState(false);
 
@@ -29,7 +30,7 @@ export default function Navbar({ onToggleSidebar }) {
   const roleLabel = {
     teacher: "Teacher",
     school_admin: "School Admin",
-    super_admin: "Super Admin",
+    super_admin: "Super Admin", 
   };
 
   const title = getPageTitle(location.pathname);
@@ -133,18 +134,18 @@ export default function Navbar({ onToggleSidebar }) {
 
           {(user?.role === "teacher" ||
             user?.role === "school_admin") &&
-            subscription && (
+            aiQuota && (
 
               <div className="hidden lg:flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-2">
 
                 <div>
 
                   <div className="text-xs text-slate-500">
-                    {subscription.plan}
+                    {aiQuota.ai_features_name}
                   </div>
 
                   <div className="text-sm font-semibold text-emerald-700">
-                    {subscription.remaining_ai_credits.toLocaleString()} Credits Left
+                    {aiQuota.remaining_ai_credits.toLocaleString()} Credits Left
                   </div>
 
                 </div>

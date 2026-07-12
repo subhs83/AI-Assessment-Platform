@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useTeacherStore } from "../store/teacherStore";
 import { Outlet } from "react-router-dom";
 
 import Sidebar from "../components/layout/Sidebar";
@@ -9,6 +11,18 @@ import PageTransition from "../components/common/PageTransition";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const { schoolSlug } = useParams();
+
+  const fetchExamOptions = useTeacherStore(
+    (s) => s.fetchExamOptions
+  );
+
+  useEffect(() => {
+    if (schoolSlug) {
+      fetchExamOptions(schoolSlug);
+    }
+  }, [schoolSlug, fetchExamOptions]);
 
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">

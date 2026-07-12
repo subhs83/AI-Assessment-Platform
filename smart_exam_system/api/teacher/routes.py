@@ -31,6 +31,7 @@ from smart_exam_system.api.services.subscription_management_service import get_s
 from smart_exam_system.api.services.subscription_service import (
     get_active_ai_features,
     get_school_ai_quota
+
 )
 
 import logging
@@ -578,6 +579,24 @@ def exam_options_api(school_slug):
         school_id=current_user.school_id,
         teacher_id=current_user.id,
     )
+
+    quota = get_school_ai_quota(
+        school_id=current_user.school_id,
+    )
+
+    subscription = get_school_subscription_summary(
+        school_id=current_user.school_id,
+    )
+
+    result["data"] = {
+        "exams": result["data"],
+        "ai_quota": {
+            "plan": subscription["plan"]["name"],
+            "total_ai_credits": quota["total_credits"],
+            "used_ai_credits": quota["used_credits"],
+            "remaining_ai_credits": quota["remaining_credits"],
+        },
+    }
 
     return api_response(
         **result,

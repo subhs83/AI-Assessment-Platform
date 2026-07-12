@@ -11,6 +11,7 @@ export const useTeacherStore = create((set, get) => ({
   schoolClasses: [],
   sections: [],
   ocrLanguages: [],
+  examOptions: null,
   aiConfig: null,
   subscription: null,
 
@@ -386,6 +387,24 @@ deleteSection: async (schoolSlug, classId, sectionId) => {
 
     }
   },
+
+ fetchExamOptions: async (schoolSlug) => {
+    console.log("fetchExamOptions called");
+
+    const res = await teacherApi.getExamOptions(schoolSlug);
+
+    console.log("API response:", res.data);
+
+    set({
+        examOptions: res.data.data,
+    });
+
+    console.log("Store examOptions:", useTeacherStore.getState().examOptions);
+
+    return res.data.data;
+},
+
+  
   // -------------------------
   // Reset
   // -------------------------

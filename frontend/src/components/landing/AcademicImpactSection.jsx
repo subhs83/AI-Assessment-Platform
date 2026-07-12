@@ -123,7 +123,7 @@ export default function AcademicImpactSection() {
             const Icon = item.icon;
 
             return (
-              <StaggerItem key={impacts.item}>
+              <StaggerItem key={item.title}>
               <div
                 className="
                   group
