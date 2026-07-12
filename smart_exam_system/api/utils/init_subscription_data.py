@@ -121,13 +121,13 @@ DEFAULT_AI_FEATURES = [
     {
         "feature_code": "PDF_QUESTION",
         "feature_name": "Generate Questions from PDF",
-        "credits_required": 10,
+        "credits_required": 15,
         "is_active": True,
     },
     {
         "feature_code": "IMAGE_QUESTION",
         "feature_name": "Generate Questions from Image",
-        "credits_required": 10,
+        "credits_required": 15,
         "is_active": True,
     },
 ]
