@@ -31,34 +31,14 @@ export default function UploadQuestionsPage() {
 
   const [isUploading, setIsUploading] = useState(false);
 
-  const [exams, setExams] = useState([]);
 
   const downloadQuestionTemplate =  useTeacherStore((s) => s.downloadQuestionTemplate);
 
+  const examOptions = useTeacherStore((s) => s.examOptions);
 
+  const exams = examOptions?.exams || [];
 
-  // -------------------------
-  // FETCH EXAMS
-  // -------------------------
-  const fetchExams = useCallback(async () => {
-  try {
-    const res = await teacherApi.getExamOptions(schoolSlug);
-
-    setExams(res.data.data.exam || []);
-  } catch (err) {
-    console.error(err);
-
-    showToast(
-      "Failed to load exams",
-      "error"
-    );
-  }
-}, [schoolSlug, showToast]);
-
-  useEffect(() => {
-    fetchExams();
-   
-  }, [fetchExams]);
+  
 
   // -------------------------
   // Download & UPLOAD
