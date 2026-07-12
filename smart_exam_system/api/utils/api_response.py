@@ -11,8 +11,8 @@ def api_response(
     response = jsonify({
         "success": success,
         "message": message,
-        "data": data or {},
-        "meta": meta or {},
+        "data": data if data is not None else {},
+        "meta": meta if meta is not None else {},
     })
 
     response.status_code = status

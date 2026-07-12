@@ -51,6 +51,12 @@ class AIGenerationRequest(db.Model):
         default="english",
     )
 
+    blooms_level = db.Column(
+        db.String(30),
+        nullable=False,
+        default="mixed",
+    )
+
     source_summary = db.Column(db.Text, nullable=True)
 
     generated_questions = db.Column(
@@ -61,7 +67,6 @@ class AIGenerationRequest(db.Model):
         db.JSON
     )
     
-
     status = db.Column(
         db.String(20),
         default="completed"

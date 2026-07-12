@@ -559,3 +559,34 @@ def get_question_template():
 
     return file_path
 
+
+
+def get_exam_options_api(
+    school_id,
+    teacher_id,
+):
+
+    exams = (
+        ExamModel.query.filter(
+            ExamModel.school_id == school_id,
+            ExamModel.teacher_id == teacher_id,
+            ExamModel.status == "draft",   # use your existing status value
+        )
+        .order_by(ExamModel.created_at.desc())
+        .all()
+    )
+
+    return (
+        {
+            "success": True,
+            "message": "Exam options fetched successfully.",
+            "data": [
+                {
+                    "id": exam.id,
+                    "title": exam.title,
+                }
+                for exam in exams
+            ],
+        },
+        200,
+    )

@@ -27,7 +27,10 @@ export default function AIGeneratePage() {
 
   const [topic, setTopic] = useState(previousSourceType === "topic" ? previousSourceText : "");
 
-  const [difficulty, setDifficulty] = useState(location.state?.difficulty || "easy");
+  const [difficulty, setDifficulty] = useState(location.state?.difficulty || "mixed");
+  const [bloomsLevel, setBloomsLevel] = useState(
+  location.state?.blooms_level || "mixed"
+);
 
   const [count, setCount] = useState(location.state?.question_count || 3);
 
@@ -166,6 +169,7 @@ export default function AIGeneratePage() {
     }
 
       formData.append("difficulty", difficulty);
+      formData.append("blooms_level", bloomsLevel);
       formData.append("question_count", count);
       formData.append("language", language);
 
@@ -180,8 +184,6 @@ export default function AIGeneratePage() {
         }
       );
       
-      console.log("Generate Response:", res.data);
-
       const requestId = res.data.request_id;
 
       if (!res.data.success || !res.data.request_id) {
@@ -296,6 +298,8 @@ export default function AIGeneratePage() {
       <AIQuestionSettings
         difficulty={difficulty}
         setDifficulty={setDifficulty}
+        bloomsLevel={bloomsLevel}
+        setBloomsLevel={setBloomsLevel}
         count={count}
         setCount={setCount}
       />

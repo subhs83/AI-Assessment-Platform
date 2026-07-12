@@ -35,6 +35,7 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
         input_type = extracted["data"]["type"]
 
     difficulty = data.get("difficulty", "medium")
+    blooms_level = data.get("blooms_level", "mixed",)
     question_count = data.get("question_count", 5)
     language = data.get(
         "language",
@@ -56,6 +57,7 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
         ai_response = generate_from_gemini(
             content=content,
             difficulty=difficulty,
+            blooms_level=blooms_level,
             question_count=question_count,
             language=language,
         )
@@ -80,6 +82,7 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
         source_type=input_type,
         source_text=content,
         difficulty=difficulty,
+        blooms_level=blooms_level,
         question_count=question_count,
         generated_questions=questions,
         document_language=language,

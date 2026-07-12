@@ -49,6 +49,12 @@ export const useTeacherStore = create((set, get) => ({
     }
   },
 
+  fetchExamList: async (schoolSlug) => {
+    const res = await teacherApi.getExamList(schoolSlug);
+
+    return res.data.data;
+  },
+
   // -------------------------
   // Exams
   // -------------------------
@@ -396,6 +402,7 @@ deleteSection: async (schoolSlug, classId, sectionId) => {
       sections: [],
       aiConfig: null,
       subscription: null,
+      
     }),
 
     resetSubscription: () =>

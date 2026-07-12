@@ -5,7 +5,6 @@ import { teacherApi } from "../../api/teacherApi";
 import { teacherRoutes } from "../../routes/teacherRoutes";
 import { useTeacherStore } from "../../store/teacherStore";
 import PageHeader from "../../components/ui/PageHeader";
-import Button from "../../components/ui/Button";
 import { useToast } from "../../components/ui/Toast";
 import  LoadingOverlay  from "../../components/common/LoadingOverlay";
 import { downloadFile } from "../../utils/downloadFile";
@@ -16,17 +15,6 @@ import {
   UploadActions
 } from "../../components/teacher/question-upload";
 
-import {
-  UploadCloud,
-  X,
-  ArrowLeft,
-  Upload,
-   Download,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  Table2
-} from "lucide-react";
 
 export default function UploadQuestionsPage() {
   const { schoolSlug } = useParams();
@@ -39,10 +27,11 @@ export default function UploadQuestionsPage() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const [exams, setExams] = useState([]);
   const [selectedExam, setSelectedExam] = useState("");
 
   const [isUploading, setIsUploading] = useState(false);
+
+  const [exams, setExams] = useState([]);
 
   const downloadQuestionTemplate =  useTeacherStore((s) => s.downloadQuestionTemplate);
 
@@ -52,27 +41,26 @@ export default function UploadQuestionsPage() {
   // FETCH EXAMS
   // -------------------------
   const fetchExams = useCallback(async () => {
-    try {
-      
-      const res = await teacherApi.getDashboard(schoolSlug);
+  try {
+    const res = await teacherApi.getExamOptions(schoolSlug);
 
-      const exams = res.data?.data?.ai_exams || [];
-      const draftExams = exams.filter(
-      (exam) => exam.display_status !== "expired"
+    console.log("res.data: ",res.data);
+    console.log("res.data.data: ",res.data.data);
+
+    setExams(res.data.data || []);
+  } catch (err) {
+    console.error(err);
+
+    showToast(
+      "Failed to load exams",
+      "error"
     );
-      setExams(draftExams);
-    } catch (err) {
-      console.log(err);
-
-      showToast(
-        "Failed to load exams",
-        "error"
-      );
-    }
-  },[schoolSlug, showToast]);
+  }
+}, [schoolSlug, showToast]);
 
   useEffect(() => {
     fetchExams();
+   
   }, [fetchExams]);
 
   // -------------------------

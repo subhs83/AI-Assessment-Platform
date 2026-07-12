@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTeacherStore } from "../../store/teacherStore";
 import { teacherRoutes } from "../../routes/teacherRoutes";
@@ -7,6 +7,7 @@ import ExamCard from "../../components/teacher/exams/ExamCard";
 import PageHeader from "../../components/ui/PageHeader";
 import Button from "../../components/ui/Button";
 import { PlusCircle } from "lucide-react";
+import SkeletonCard from "../../components/ui/SkeletonCard";
 
 
 export default function ExamsPage() {
@@ -14,13 +15,28 @@ export default function ExamsPage() {
   const routes = teacherRoutes(schoolSlug);
   const navigate = useNavigate();
 
-  const { dashboard, fetchDashboard } = useTeacherStore();
+  const {fetchExamList, } = useTeacherStore();
+ 
+  const [exams, setExams] = useState([]);
 
-  const exams = dashboard?.exams || [];
+  const [loading, setLoading] = useState(true);
+
+  const loadExams = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const data = await fetchExamList(schoolSlug);
+      setExams(data);
+    } finally {
+      setLoading(false);
+    }
+  },[schoolSlug, fetchExamList])
 
   useEffect(() => {
-    fetchDashboard(schoolSlug);
-  }, [schoolSlug, fetchDashboard]);
+    loadExams();
+  }, [loadExams]);
+
+ if (loading) return <SkeletonCard />;
 
   return (
     <div className="space-y-6">
@@ -54,7 +70,7 @@ export default function ExamsPage() {
               key={exam.id}
               exam={exam}
               schoolSlug={schoolSlug}
-              refresh={() => fetchDashboard(schoolSlug)}
+               refresh={loadExams}
             />
           ))}
         </div>

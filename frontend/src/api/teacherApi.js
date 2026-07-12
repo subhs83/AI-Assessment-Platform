@@ -10,6 +10,9 @@ export const teacherApi = {
   // -------------------------
   // Exams
   // -------------------------
+  getExamList: (schoolSlug) =>
+    API.get(`/api/teacher/${schoolSlug}/exams`),
+
   createExam: (schoolSlug, payload) =>
     API.post(`/api/teacher/${schoolSlug}/exams`, payload),
 
@@ -201,6 +204,12 @@ deleteSection: (schoolSlug, classId, sectionId) =>
   
   getSubscription: (schoolSlug) =>
   API.get(`/api/teacher/${schoolSlug}/subscription`),
+
+  getExamOptions(schoolSlug) {
+  return API.get(
+    `/api/teacher/${schoolSlug}/teacher/exams/options`
+  );
+}
 
 }
 

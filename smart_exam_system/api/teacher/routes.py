@@ -14,7 +14,8 @@ from smart_exam_system.api.services.exam_service import (
     publish_exam, 
     delete_exam,
     extract_exam_form_data,
-    get_question_template
+    get_question_template,
+    get_exam_options_api
     
     )
 from smart_exam_system.api.services.question_service import upload_questions, get_exam_questions
@@ -120,7 +121,21 @@ def dashboard(school_slug):
     )
 
 
+@api_teacher_bp.route("/<school_slug>/exams", methods=["GET"],)
+@login_required
+@teacher_required
+def teacher_exam_list_api(school_slug):
 
+    result = get_teacher_exams(
+        school_id=current_user.school_id,
+        teacher_id=current_user.id,
+    )
+
+    return api_response(
+        success=True,
+        message="Exam list fetched successfully.",
+        data=result,
+    )
 
 @api_teacher_bp.route("/<school_slug>/exams", methods=["POST"])
 @login_required
@@ -551,5 +566,20 @@ def grant_attempt_history_api(
 
 
 
+@api_teacher_bp.route(
+    "/<school_slug>/teacher/exams/options",
+    methods=["GET"],
+)
+@login_required
+@teacher_required
+def exam_options_api(school_slug):
 
+    result, status = get_exam_options_api(
+        school_id=current_user.school_id,
+        teacher_id=current_user.id,
+    )
 
+    return api_response(
+        **result,
+        status=status,
+    )

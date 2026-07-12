@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def generate_from_gemini(content, difficulty, question_count,language,):
+def generate_from_gemini(content, difficulty,blooms_level, question_count,language,):
 
     client = genai.Client(
         api_key=current_app.config["GEMINI_API_KEY"]
@@ -46,6 +46,19 @@ Content:
     )
 
     analysis = analysis_response.text[:5000]
+    BLOOMS_PROMPTS = {
+        "remember": "Generate questions that primarily test remembering facts, definitions, terms, and basic recall.",
+        "understand": "Generate questions that primarily test understanding, explanation, interpretation, and comprehension.",
+        "apply": "Generate questions that primarily test applying knowledge to practical situations and problem solving.",
+        "analyze": "Generate questions that primarily test analysis, comparison, classification, reasoning, and relationships.",
+        "evaluate": "Generate questions that primarily test evaluation, judgment, critical thinking, and decision making.",
+        "mixed": "Generate a balanced mix of Remember, Understand, Apply, Analyze, and Evaluate questions."
+    }
+
+    blooms_instruction = BLOOMS_PROMPTS.get(
+        blooms_level,
+        BLOOMS_PROMPTS["mixed"],
+    )
 
     # -----------------------------
     # Step 2: Question Generation
@@ -60,6 +73,9 @@ Generate every question, option and answer in {language}.
 Generate {question_count} multiple choice questions.
 
 Difficulty: {difficulty}
+
+Bloom's Taxonomy:
+{blooms_instruction}
 
 Concept Analysis:
 {analysis}

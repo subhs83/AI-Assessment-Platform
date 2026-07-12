@@ -109,13 +109,13 @@ DEFAULT_AI_FEATURES = [
     {
         "feature_code": "TOPIC_QUESTION",
         "feature_name": "Generate Questions from Topic",
-        "credits_required": 5,
+        "credits_required": 10,
         "is_active": True,
     },
     {
         "feature_code": "TEXT_QUESTION",
         "feature_name": "Generate Questions from Text",
-        "credits_required": 5,
+        "credits_required": 10,
         "is_active": True,
     },
     {
