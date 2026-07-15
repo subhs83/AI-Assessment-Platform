@@ -420,7 +420,7 @@ def _create_attempt(
 
     attempt_info = get_attempt_limit_info( 
         school_id=exam.school_id,
-        exam_id=exam.exam_uid,
+        exam_uid=exam.exam_uid,
         student_db_id=student_db_id,
     )
 
@@ -628,7 +628,7 @@ def get_student_result(attempt_id):
     # --------------------------------------------------
     attempt_info = get_attempt_limit_info(
         school_id=exam.school_id,
-        exam_id=exam.exam_uid,
+        exam_uid=exam.exam_uid,
         student_db_id=student.id,
     )
 
@@ -702,7 +702,7 @@ def start_next_attempt(previous_attempt_id):
     # ==================================================
     attempt_info = get_attempt_limit_info(
         school_id=exam.school_id,
-        exam_id=exam.exam_uid,
+        exam_uid=exam.exam_uid,
         student_db_id=previous_attempt.student_db_id,
     )
 
