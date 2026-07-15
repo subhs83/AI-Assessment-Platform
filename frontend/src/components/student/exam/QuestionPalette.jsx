@@ -55,15 +55,7 @@ export default function QuestionPalette({
 
     {/* Header */}
 
-    <div
-      className="
-        flex-1
-        overflow-y-auto
-        border-t
-        border-slate-100
-        p-4
-      "
-    >
+    <div className="border-b border-slate-100 p-4">
 
       <div className="flex items-center gap-3">
 
@@ -206,7 +198,15 @@ export default function QuestionPalette({
 
     {/* Question Grid */}
 
-    <div className="border-t border-slate-100 p-4">
+     <div
+        className="
+          flex-1
+          overflow-y-auto
+          border-t
+          border-slate-100
+          p-4
+        "
+      >
 
       <div className="grid grid-cols-5 gap-2.5">
 
