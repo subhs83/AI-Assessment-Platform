@@ -13,7 +13,8 @@ import {
   BarChart3,
   Trophy,
   Trash2,
-  Share2
+  Share2,
+  Pencil
 } from "lucide-react";
 
 export default function ExamCard({
@@ -60,6 +61,18 @@ export default function ExamCard({
             {exam.title}
           </h3>
 
+           {exam.class_section && (
+            <p className="text-sm text-blue-600 mt-1">
+              Class:{" "}
+              <span className="text-sm text-blue-600 mt-1">
+                {exam.class_section}
+              </span>
+            </p>
+
+          )}
+
+          
+
           {exam.quiz_code && (
             <p className="text-sm text-gray-500 mt-1">
               Quiz Code:{" "}
@@ -83,18 +96,28 @@ export default function ExamCard({
 
         {!exam.is_published && !exam.is_expired && (
           <button
-            onClick={() => publishExam(schoolSlug, exam.id, refresh)}
-            className="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center gap-1"
+            onClick={() => publishExam(schoolSlug, exam.exam_uid, refresh)}
+            className="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700 flex items-center gap-2"
           >
             <Play size={14} />
             Publish
           </button>
         )}
 
+        {!exam.is_published && !exam.is_expired && (
+          <Link
+            to={routes.exams.edit(exam.exam_uid)}
+            className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2"
+          >
+            <Pencil size={14} />
+            Edit
+          </Link>
+        )}
+
         {exam.quiz_code && !exam.is_expired && (
             <button
               onClick={() => handleShareQuiz(exam)}
-              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+              className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
             >
               <Share2 size={14} />
               Share Quiz
@@ -104,8 +127,8 @@ export default function ExamCard({
 
         {exam.total_questions > 0 && !exam.is_expired && (
           <Link
-            to={routes.exams.questions(exam.id)}
-            className="px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-800 flex items-center gap-1"
+            to={routes.exams.questions(exam.exam_uid)}
+            className="px-3 py-1 text-sm bg-gray-700 text-white rounded hover:bg-gray-800 flex items-center gap-2"
           >
             <FileText size={14} />
             Review
@@ -114,8 +137,8 @@ export default function ExamCard({
 
         {exam.is_published && exam.total_attempts > 0 && (
           <Link
-            to={routes.exams.results(exam.id)}
-            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"
+            to={routes.exams.results(exam.exam_uid)}
+            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
           >
             <BarChart3 size={14} />
             Results
@@ -124,8 +147,8 @@ export default function ExamCard({
 
         {exam.is_published && exam.total_attempts > 0 && (
           <Link
-            to={routes.exams.leaderboard(exam.id)}
-            className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-1"
+            to={routes.exams.leaderboard(exam.exam_uid)}
+            className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
           >
             <Trophy size={14} />
             Leaderboard
@@ -134,8 +157,8 @@ export default function ExamCard({
 
         {((exam.total_attempts === 0 && !exam.is_expired) || (exam.total_questions === 0)) && (
           <button
-            onClick={() => setExamToDelete(exam.id)}
-            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-1"
+            onClick={() => setExamToDelete(exam.exam_uid)}
+            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 flex items-center gap-2"
           >
             <Trash2 size={14} />
             Delete

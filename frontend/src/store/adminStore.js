@@ -22,6 +22,9 @@ export const useAdminStore = create((set, get) => ({
   schoolAnalyticsError: null,
   topTeachers: [],
   topExams: [],
+  subscription: null,
+  subscriptionLoading: false,
+  subscriptionError: null,
   // -------------------------
   // Dashboard
   // -------------------------
@@ -265,6 +268,35 @@ getSchoolAnalytics: async (schoolSlug) => {
 
 },
 
+fetchSubscription: async (schoolSlug) => {
+    set({
+        subscriptionLoading: true,
+        subscriptionError: null,
+    });
+
+    try {
+        const response = await adminApi.getSubscription(
+            schoolSlug
+        );
+
+        set({
+            subscription: response.data.data,
+            subscriptionLoading: false,
+        });
+
+        return response.data.data;
+    } catch (error) {
+        set({
+            subscriptionLoading: false,
+            subscriptionError:
+                error.response?.data?.message ||
+                "Failed to load subscription.",
+        });
+
+        throw error;
+    }
+},
+
 reset: () =>
   set({
     dashboardData: null,
@@ -274,5 +306,8 @@ reset: () =>
     teachers: [],
     teachersLoading: false,
     teachersError: null,
+    subscription: null,
+    subscriptionLoading: false,
+    subscriptionError: null,
   }),
 }));

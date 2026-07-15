@@ -13,6 +13,7 @@ from .api.teacher import api_teacher_bp
 from .api.admin import api_admin_bp
 from .api.superAdmin import api_superadmin_bp
 from .api.public import api_public_bp
+from .api.school import api_school_bp
 
 from .api.utils.helpers import initialize_default_data
 
@@ -54,6 +55,7 @@ def create_app():
     app.register_blueprint(api_admin_bp)
     app.register_blueprint(api_superadmin_bp)
     app.register_blueprint(api_public_bp)
+    app.register_blueprint(api_school_bp)
 
     with app.app_context():
         initialize_default_data()

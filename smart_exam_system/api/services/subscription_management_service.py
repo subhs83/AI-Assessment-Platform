@@ -13,7 +13,8 @@ from smart_exam_system.api.services.subscription_service import (
     get_current_school_usage,
     get_subscription_plan,
     calculate_subscription_expiry,
-    get_school_subscription_record
+    get_school_subscription_record,
+    get_school_resource_usage
 )
 
 
@@ -38,6 +39,8 @@ def get_school_subscription_summary(school_id):
     quota = get_school_ai_quota(school_id)
 
     usage = get_current_school_usage(school_id)
+
+    resource_usage = get_school_resource_usage( school_id)
 
     plan = subscription.plan
 
@@ -65,17 +68,24 @@ def get_school_subscription_summary(school_id):
         "limits": {
             "max_students": limits["max_students"],
             "max_teachers": limits["max_teachers"],
+            "max_upload_size_mb": limits["storage_mb"],
+            "max_pdf_pages": limits["max_pdf_pages"],
+            "max_images_per_request": limits["max_images_per_request"],
+            "max_questions_per_generation": limits["max_questions_per_generation"],
             "monthly_ai_credits": limits["monthly_ai_credits"],
         },
 
-        "usage": {
-            "monthly_credits": limits["monthly_ai_credits"],
-            "bonus_credits": usage.bonus_ai_credits,
-            "remaining_credits": quota["remaining_credits"],
-             "total_credits": quota["total_credits"],
-              "used_credits": quota["used_credits"],
 
+        "usage": {
+
+            "bonus_ai_credits": usage.bonus_ai_credits,
+
+            "total_ai_credits": quota["total_credits"],
+            "used_ai_credits": quota["used_credits"],
+            "remaining_ai_credits": quota["remaining_credits"],
         },
+
+        "resources": resource_usage,
     }
 
 

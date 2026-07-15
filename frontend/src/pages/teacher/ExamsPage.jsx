@@ -67,7 +67,7 @@ export default function ExamsPage() {
         <div className="grid gap-4">
           {exams.map((exam) => (
             <ExamCard
-              key={exam.id}
+              key={exam.exam_uid}
               exam={exam}
               schoolSlug={schoolSlug}
                refresh={loadExams}

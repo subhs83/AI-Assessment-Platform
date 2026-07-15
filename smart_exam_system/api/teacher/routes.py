@@ -10,12 +10,14 @@ from smart_exam_system.api.services.additional_attempt_service import (
 )
 from smart_exam_system.api.services.exam_service import ( 
     create_exam, 
+    update_exam,
     get_teacher_exams, 
+    get_exam_by_uid,
     publish_exam, 
     delete_exam,
     extract_exam_form_data,
     get_question_template,
-    get_exam_options_api
+    get_teacher_exam_detail
     
     )
 from smart_exam_system.api.services.question_service import upload_questions, get_exam_questions
@@ -30,7 +32,6 @@ from smart_exam_system.api.services.subscription_management_service import get_s
 
 from smart_exam_system.api.services.subscription_service import (
     get_active_ai_features,
-    get_school_ai_quota
 
 )
 
@@ -88,7 +89,6 @@ def dashboard(school_slug):
 
     subscription = get_school_subscription_summary( school.id )
     ai_features = get_active_ai_features()
-    quota = get_school_ai_quota(school.id)
 
     return api_response(
         success=True,
@@ -111,9 +111,9 @@ def dashboard(school_slug):
             "subscription": {
                 "plan": subscription["plan"]["name"],
                 "status": subscription["subscription"]["status"],
-                "total_ai_credits": quota["total_credits"],
-                "used_ai_credits": quota["used_credits"],
-                "remaining_ai_credits": quota["remaining_credits"],
+                "total_ai_credits": subscription["usage"]["total_ai_credits"],
+                "used_ai_credits": subscription["usage"]["used_ai_credits"],
+                "remaining_ai_credits": subscription["usage"]["remaining_ai_credits"],
                 "expires_at": subscription["subscription"]["expires_at"],
             },
 
@@ -203,6 +203,108 @@ def create_exam_api(school_slug):
         )
 
 
+
+@api_teacher_bp.route("/<school_slug>/exams/<exam_uid>", methods=["GET"],)
+@login_required
+@teacher_required
+def get_exam_detail_api( school_slug,  exam_uid,):
+
+    if current_user.school_id is None:
+        return api_response(
+            success=False,
+            message="Invalid school access.",
+            status=403,
+        )
+
+
+    exam = get_teacher_exam_detail(
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
+    )
+
+
+    if not exam:
+        return api_response(
+            success=False,
+            message="Exam not found.",
+            status=404,
+        )
+
+
+    return api_response(
+        success=True,
+        message="Exam fetched successfully.",
+        data=exam,
+    )
+
+
+
+@api_teacher_bp.route( "/<school_slug>/exams/<exam_uid>",  methods=["PUT"],)
+@login_required
+@teacher_required
+def update_exam_api(school_slug, exam_uid):
+
+    school = SchoolModel.query.filter_by(slug=school_slug).first()
+
+    if not school:
+        return api_response(
+            success=False,
+            message="School not found",
+            status=404
+        )
+
+    if current_user.school_id != school.id:
+        return api_response(
+            success=False,
+            message="Unauthorized school access",
+            status=403
+        )
+
+    data = request.get_json()
+
+    if not data:
+        return api_response(
+            success=False,
+            message="Invalid request payload",
+            status=400
+        )
+
+    try:
+        exam_data = extract_exam_form_data(data)
+
+        success, msg = update_exam(
+            school_id=current_user.school_id,
+            exam_uid=exam_uid,
+            **exam_data,
+        )
+
+        if not success:
+            return api_response(
+                success=False,
+                message=msg,
+                status=400
+            )
+
+        return api_response(
+            success=True,
+            message=msg,
+            data={
+                "created": True
+            },
+            status=201
+        )
+
+    except Exception:
+        logger.exception("Failed to process request")
+        return api_response(
+            success=False,
+            message="Server error while creating exam",
+            data= None,
+            status=500
+        )
+
+
+
 @api_teacher_bp.route("/<school_slug>/questions/template", methods=["GET"])
 @login_required
 @teacher_required
@@ -236,11 +338,11 @@ def download_question_template_api(school_slug):
     )
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/questions/upload", methods=["POST"])
+@api_teacher_bp.route("/<school_slug>/exams/<exam_uid>/questions/upload", methods=["POST"])
 @login_required
 @teacher_required
 @exam_owner_required
-def upload_questions_api(school_slug, exam_id):
+def upload_questions_api(school_slug, exam_uid):
 
     file = request.files.get("excel_file")
 
@@ -255,7 +357,7 @@ def upload_questions_api(school_slug, exam_id):
     school_id = current_user.school_id
 
     success, msg = upload_questions(
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         school_id=school_id,
         excel_file=file
     )
@@ -271,21 +373,21 @@ def upload_questions_api(school_slug, exam_id):
         success=True,
         message=msg,
         data={
-            "exam_id": exam_id,
+            "exam_uid": exam_uid,
             "uploaded": True
         }
     )
 
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/questions", methods=["GET"])
+@api_teacher_bp.route("/<school_slug>/exams/<exam_uid>/questions", methods=["GET"])
 @login_required
 @teacher_required
 @exam_owner_required
-def review_questions_api(school_slug, exam_id):
+def review_questions_api(school_slug, exam_uid):
 
     questions = get_exam_questions(
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         school_id=current_user.school_id
     )
 
@@ -293,7 +395,7 @@ def review_questions_api(school_slug, exam_id):
     success=True,
     message="Questions fetched successfully",
     data={
-        "exam_id": exam_id,
+        "exam_uid": exam_uid,
         "questions": [
             {
                 "id": q.id,
@@ -317,13 +419,13 @@ def review_questions_api(school_slug, exam_id):
 
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/publish", methods=["POST"])
+@api_teacher_bp.route("/<school_slug>/exams/<exam_uid>/publish", methods=["POST"])
 @login_required
 @teacher_required
-def publish_exam_api(school_slug, exam_id):
+def publish_exam_api(school_slug, exam_uid):
 
     success, result = publish_exam(
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         school_id=current_user.school_id,
         teacher_id=current_user.id
     )
@@ -339,7 +441,7 @@ def publish_exam_api(school_slug, exam_id):
         success=True,
         message="Exam published successfully",
         data={
-            "exam_id": exam_id,
+            "exam_uid": exam_uid,
             "quiz_code": result
         }
     )
@@ -347,47 +449,62 @@ def publish_exam_api(school_slug, exam_id):
 
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/results", methods=["GET"])
+@api_teacher_bp.route(
+    "/<school_slug>/exams/<exam_uid>/results",
+    methods=["GET"],
+)
 @login_required
 @teacher_required
 @exam_owner_required
-def results_api(school_slug, exam_id):
+def results_api(
+    school_slug,
+    exam_uid,
+):
+    exam = get_exam_by_uid(
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
+    )
 
-    results = get_results( exam_id=exam_id, school_id=current_user.school_id )
-    exam = ExamModel.query.filter_by(id=exam_id).first()
-    exam_title =exam.title
+    results = get_results(
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
+    )
 
     return api_response(
         success=True,
         message="Results fetched successfully",
         data={
-            "exam_id": exam_id,
-            "exam_title": exam_title,
-            "results": results
-        }
+            "exam_uid": exam.exam_uid,
+            "exam_title": exam.title,
+            "results": results,
+        },
     )
 
 
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/leaderboard", methods=["GET"])
+@api_teacher_bp.route("/<school_slug>/exams/<exam_uid>/leaderboard", methods=["GET"])
 @login_required
 @teacher_required
 @exam_owner_required
-def leaderboard_api(school_slug, exam_id):
+def leaderboard_api(school_slug, exam_uid):
+
+    exam = get_exam_by_uid(
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
+    )
 
     leaderboard = generate_leaderboard(
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         school_id=current_user.school_id
     )
-    exam = ExamModel.query.filter_by(id=exam_id).first()
-    exam_title =exam.title
+
     return api_response(
         success=True,
         message="Leaderboard fetched successfully",
         data={
-            "exam_id": exam_id,
-            "exam_title": exam_title,
+            "exam_uid": exam.exam_uid,
+            "exam_title": exam.title,
             "leaderboard": leaderboard
         }
     )
@@ -395,13 +512,16 @@ def leaderboard_api(school_slug, exam_id):
 
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>", methods=["DELETE"])
+@api_teacher_bp.route("/<school_slug>/exams/<exam_uid>", methods=["DELETE"])
 @login_required
 @teacher_required
 @exam_owner_required
-def delete_exam_api(school_slug, exam_id):
+def delete_exam_api(school_slug, exam_uid):
 
-    success, msg = delete_exam(exam_id=exam_id)
+    success, msg = delete_exam(
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
+    )
 
     if not success:
         return api_response(
@@ -414,7 +534,7 @@ def delete_exam_api(school_slug, exam_id):
         success=True,
         message=msg,
         data={
-            "exam_id": exam_id,
+            "exam_id": exam_uid,
             "deleted": True
         }
     )
@@ -423,48 +543,49 @@ def delete_exam_api(school_slug, exam_id):
 
 
 
-@api_teacher_bp.route("/<school_slug>/exams/<int:exam_id>/students/<student_db_id>/attempts", methods=["GET"])
+@api_teacher_bp.route(
+    "/<school_slug>/exams/<exam_uid>/students/<student_db_id>/attempts",
+    methods=["GET"],
+)
 @login_required
 @teacher_required
-def attempts_api(school_slug, exam_id, student_db_id):
-
+@exam_owner_required
+def attempts_api(
+    school_slug,
+    exam_uid,
+    student_db_id,
+):
     attempts = get_student_attempts(
-        exam_id=exam_id,
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
         student_db_id=student_db_id,
-        school_id=current_user.school_id
     )
 
-    # ---------------------------------
-    # BEST ATTEMPT (DICT SAFE)
-    # ---------------------------------
     best = None
+
     if attempts:
         best = max(
             attempts,
-            key=lambda a: float(a.get("percentage") or 0)
+            key=lambda a: float(a.get("percentage") or 0),
         )
 
     best_id = best.get("id") if best else None
 
-    # ---------------------------------
-    # RESPONSE
-    # ---------------------------------
     return api_response(
         success=True,
         message="Attempts fetched successfully",
         data={
-            "exam_id": exam_id,
+            "exam_uid": exam_uid,
             "student_db_id": student_db_id,
             "best_attempt_id": best_id,
-
             "attempts": [
                 {
-                    **a,
-                    "is_best": a.get("id") == best_id
+                    **attempt,
+                    "is_best": attempt.get("id") == best_id,
                 }
-                for a in attempts
-            ]
-        }
+                for attempt in attempts
+            ],
+        },
     )
 
 
@@ -517,46 +638,50 @@ def manage_questions_overview_api(school_slug):
 
 
 @api_teacher_bp.route(
-    "/<school_slug>/exams/<int:exam_id>/students/<student_db_id>/grant-attempt",
+    "/<school_slug>/exams/<exam_uid>/students/<student_db_id>/grant-attempt",
     methods=["POST"],
 )
 @login_required
 @teacher_required
+@exam_owner_required
 def grant_attempt_api(
     school_slug,
-    exam_id,
+    exam_uid,
     student_db_id,
 ):
     data = request.get_json() or {}
 
     result, status = grant_additional_attempt(
         school_id=current_user.school_id,
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         student_db_id=student_db_id,
         teacher_id=current_user.id,
         granted_attempts=data.get("granted_attempts", 1),
-        reason=data.get("reason", ""),
+        reason=data.get("reason", "").strip(),
     )
 
-    return api_response(**result, status=status,)
+    return api_response(
+        **result,
+        status=status,
+    )
 
 
 
 @api_teacher_bp.route(
-    "/<school_slug>/exams/<int:exam_id>/students/<student_db_id>/grant-attempts",
+    "/<school_slug>/exams/<exam_uid>/students/<student_db_id>/grant-attempts",
     methods=["GET"],
 )
 @login_required
 @teacher_required
 def grant_attempt_history_api(
     school_slug,
-    exam_id,
+    exam_uid,
     student_db_id,
 ):
     
     result, status = get_additional_attempt_grants(
         school_id=current_user.school_id,
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         student_db_id=student_db_id,
     )
 
@@ -567,38 +692,3 @@ def grant_attempt_history_api(
 
 
 
-@api_teacher_bp.route(
-    "/<school_slug>/teacher/exams/options",
-    methods=["GET"],
-)
-@login_required
-@teacher_required
-def exam_options_api(school_slug):
-
-    result, status = get_exam_options_api(
-        school_id=current_user.school_id,
-        teacher_id=current_user.id,
-    )
-
-    quota = get_school_ai_quota(
-        school_id=current_user.school_id,
-    )
-
-    subscription = get_school_subscription_summary(
-        school_id=current_user.school_id,
-    )
-
-    result["data"] = {
-        "exams": result["data"],
-        "ai_quota": {
-            "plan": subscription["plan"]["name"],
-            "total_ai_credits": quota["total_credits"],
-            "used_ai_credits": quota["used_credits"],
-            "remaining_ai_credits": quota["remaining_credits"],
-        },
-    }
-
-    return api_response(
-        **result,
-        status=status,
-    )

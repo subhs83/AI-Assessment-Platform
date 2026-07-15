@@ -1,7 +1,9 @@
+
+from flask import g
 from functools import wraps
 from flask import jsonify
 from flask_login import current_user
-from smart_exam_system.models import ExamModel
+from smart_exam_system.models import ExamModel,SchoolModel
 from smart_exam_system.extensions import db
 
 
@@ -78,14 +80,36 @@ def exam_owner_required(f):
     def decorated_function(*args, **kwargs):
 
         if not current_user.is_authenticated:
-            return _json_error("Please login first.", 401)
+            return _json_error(
+                "Please login first.",
+                401,
+            )
 
-        exam_id = kwargs.get("exam_id") or (args[0] if args else None)
+        exam_uid = (
+            kwargs.get("exam_uid")
+            or (args[0] if args else None)
+        )
+        if not exam_uid:
+            return _json_error(
+                "Exam not found.",
+                404,
+            )
 
-        exam = db.session.get(ExamModel, exam_id)
+        exam = (
+            ExamModel.query
+            .filter_by(
+                exam_uid=exam_uid,
+                school_id=current_user.school_id,
+            )
+            .first()
+        )
+
 
         if not exam:
-            return _json_error("Exam not found.", 404)
+            return _json_error(
+                "Exam not found.",
+                404,
+            )
 
         if exam.teacher_id != current_user.id:
             return _json_error(
@@ -103,19 +127,47 @@ def school_access_required(f):
     def decorated_function(*args, **kwargs):
 
         if not current_user.is_authenticated:
-            return _json_error("Please login first.", 401)
+            return _json_error(
+                "Please login first.",
+                401,
+            )
 
-        school_id = kwargs.get("school_id")
-
+        # Super Admin can access everything
         if current_user.role == "super_admin":
             return f(*args, **kwargs)
 
-        if current_user.role == "school_admin":
-            if current_user.school_id != school_id:
-                return _json_error(
-                    "Access denied for this school.",
-                    403,
-                )
+        school = None
+
+        # Route uses school_id
+        school_id = kwargs.get("school_id")
+        if school_id is not None:
+            school = db.session.get(
+                SchoolModel,
+                school_id,
+            )
+
+        # Route uses school_slug
+        if school is None:
+            school_slug = kwargs.get("school_slug")
+            if school_slug:
+                school = SchoolModel.query.filter_by(
+                    slug=school_slug,
+                ).first()
+
+        if school is None:
+            return _json_error(
+                "School not found.",
+                404,
+            )
+
+        # Store for downstream use
+        g.school = school
+
+        if current_user.school_id != school.id:
+            return _json_error(
+                "Access denied for this school.",
+                403,
+            )
 
         return f(*args, **kwargs)
 

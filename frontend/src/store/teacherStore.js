@@ -12,6 +12,7 @@ export const useTeacherStore = create((set, get) => ({
   sections: [],
   ocrLanguages: [],
   examOptions: null,
+  
   aiConfig: null,
   subscription: null,
 
@@ -87,14 +88,14 @@ export const useTeacherStore = create((set, get) => ({
 
   grantAdditionalAttempt: async (
     schoolSlug,
-    examId,
+    examUid,
     studentDbId,
     payload,
   ) => {
     const res =
       await teacherApi.grantAdditionalAttempt(
         schoolSlug,
-        examId,
+        examUid,
         studentDbId,
         payload,
       );
@@ -104,13 +105,13 @@ export const useTeacherStore = create((set, get) => ({
 
   getAdditionalAttemptGrants: async (
     schoolSlug,
-    examId,
+    examUid,
     studentDbId,
   ) => {
     const res =
       await teacherApi.getAdditionalAttemptGrants(
         schoolSlug,
-        examId,
+        examUid,
         studentDbId,
       );
 
@@ -388,22 +389,32 @@ deleteSection: async (schoolSlug, classId, sectionId) => {
     }
   },
 
- fetchExamOptions: async (schoolSlug) => {
-    console.log("fetchExamOptions called");
 
-    const res = await teacherApi.getExamOptions(schoolSlug);
+  fetchExam: async (schoolSlug, examUid) => {
+      const res = await teacherApi.getExam(
+          schoolSlug,
+          examUid
+      );
 
-    console.log("API response:", res.data);
+      return res.data.data;
+  },
 
-    set({
-        examOptions: res.data.data,
-    });
+  updateExam: async (
+      schoolSlug,
+      examUid,
+      payload
+  ) => {
+      const res = await teacherApi.updateExam(
+          schoolSlug,
+          examUid,
+          payload
+      );
 
-    console.log("Store examOptions:", useTeacherStore.getState().examOptions);
+      return res.data;
+  },
 
-    return res.data.data;
-},
 
+  
   
   // -------------------------
   // Reset

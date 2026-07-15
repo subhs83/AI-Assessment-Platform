@@ -266,7 +266,7 @@ const filteredExams = exams.filter((exam) => {
             {filteredExams.map((exam) => (
 
               <tr
-                key={exam.exam_id}
+                key={exam.exam_uid}
                 className="hover:bg-gray-50 transition"
               >
 
@@ -371,9 +371,9 @@ const filteredExams = exams.filter((exam) => {
 
                 {/* Leaderboard */}
                 <td className="px-6 py-4 text-center">
-
+                  {exam.attempt_count>0 &&
                   <Link
-                    to={`/school/${schoolSlug}/admin/performance/exams/${exam.exam_id}/leaderboard`}
+                    to={`/school/${schoolSlug}/admin/performance/exams/${exam.exam_uid}/leaderboard`}
                     className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
                   >
 
@@ -382,7 +382,7 @@ const filteredExams = exams.filter((exam) => {
                     View
 
                   </Link>
-
+                  }
                 </td>
 
               </tr>

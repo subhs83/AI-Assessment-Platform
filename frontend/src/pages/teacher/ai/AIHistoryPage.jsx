@@ -9,12 +9,14 @@ import {
   HistoryPagination,
 } from "../../../components/teacher/ai-history";
 import HistorySkeleton from "../../../components/teacher/ai-history/HistorySkeleton";
+import { useToast } from "../../../components/ui/Toast";
 
 
 
 export default function AIHistoryPage() {
   const { schoolSlug } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState([]);

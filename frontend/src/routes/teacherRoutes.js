@@ -5,20 +5,23 @@ export const teacherRoutes = (schoolSlug) => ({
     list: `/school/${schoolSlug}/teacher/exams`,
     create: `/school/${schoolSlug}/teacher/exams/create`,
 
-    questions: (examId) =>
-      `/school/${schoolSlug}/teacher/exams/${examId}/questions`,
+    edit: (examUid) =>
+    `/school/${schoolSlug}/teacher/exams/${examUid}/edit`,
 
-    upload: (examId) =>
-      `/school/${schoolSlug}/teacher/exams/${examId}/questions/upload`,
+    questions: (examUid) =>
+      `/school/${schoolSlug}/teacher/exams/${examUid}/questions`,
 
-    results: (examId) =>
-      `/school/${schoolSlug}/teacher/exams/${examId}/results`,
+    upload: (examUid) =>
+      `/school/${schoolSlug}/teacher/exams/${examUid}/questions/upload`,
 
-    leaderboard: (examId) =>
-      `/school/${schoolSlug}/teacher/exams/${examId}/leaderboard`,
+    results: (examUid) =>
+      `/school/${schoolSlug}/teacher/exams/${examUid}/results`,
 
-    studentAttempts: (examId, studentDbId) =>
-      `/school/${schoolSlug}/teacher/exams/${examId}/students/${studentDbId}/attempts`,
+    leaderboard: (examUid) =>
+      `/school/${schoolSlug}/teacher/exams/${examUid}/leaderboard`,
+
+    studentAttempts: (examUid, studentDbId) =>
+      `/school/${schoolSlug}/teacher/exams/${examUid}/students/${studentDbId}/attempts`,
   },
 
   ai: {

@@ -309,6 +309,14 @@ export default function DashboardPage() {
         <h3 className="font-semibold text-lg">
           {exam.title}
         </h3>
+        {exam.class_section && (
+            <p className="text-sm text-blue-600 mt-1">
+              Class:{" "}
+              <span className="text-sm text-blue-600 mt-1">
+                {exam.class_section}
+              </span>
+            </p>
+          )}
 
         <span
           className={`
@@ -362,7 +370,7 @@ export default function DashboardPage() {
 
       {exam.is_published && exam.total_attempts > 0 ? (
         <Link
-          to={routes.exams.results(exam.id)}
+          to={routes.exams.results(exam.exam_uid)}
           className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 transition"
         >
           <BarChart3 size={16} />

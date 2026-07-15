@@ -10,7 +10,7 @@ import { useAuthStore } from "../../store/authStore";
 
 
 export default function LeaderboardPage() {
-  const { schoolSlug, examId } = useParams();
+  const { schoolSlug, examUid } = useParams();
 
   const { user } = useAuthStore();
 
@@ -23,8 +23,8 @@ export default function LeaderboardPage() {
 
       const endpoint =
       user.role === "school_admin"
-        ? `/api/admin/${schoolSlug}/exams/${examId}/leaderboard`
-        : `/api/teacher/${schoolSlug}/exams/${examId}/leaderboard`;
+        ? `/api/admin/${schoolSlug}/exams/${examUid}/leaderboard`
+        : `/api/teacher/${schoolSlug}/exams/${examUid}/leaderboard`;
 
     const res = await API.get(endpoint);
 
@@ -34,7 +34,7 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [schoolSlug, examId, user.role]);
+  }, [schoolSlug, examUid, user.role]);
 
   useEffect(() => {
     fetchLeaderboard();

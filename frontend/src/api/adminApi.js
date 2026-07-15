@@ -59,19 +59,19 @@ export const adminApi = {
 
   getExamPerformanceDetail: (
     schoolSlug,
-    examId
+    examUid
   ) =>
     API.get(
-      `/api/admin/${schoolSlug}/performance/exams/${examId}`
+      `/api/admin/${schoolSlug}/performance/exams/${examUid}`
     ),
 
 
   getExamLeaderboard: (
   schoolSlug,
-  examId
+  examUid
 ) =>
   API.get(
-    `/api/admin/${schoolSlug}/exams/${examId}/leaderboard`
+    `/api/admin/${schoolSlug}/exams/${examUid}/leaderboard`
   ),
 
   // =========================
@@ -111,5 +111,12 @@ downloadSummaryReport: (schoolSlug) =>
       responseType: "blob"
     }
   ),
+
+
+  getSubscription(schoolSlug) {
+    return API.get(
+        `/api/admin/${schoolSlug}/subscription`
+    );
+},
 
 };

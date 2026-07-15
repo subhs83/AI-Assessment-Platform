@@ -7,6 +7,7 @@ AttemptModel,
 StudentAnswerModel,
 StudentModel
 )
+from smart_exam_system.api.services.exam_service import get_exam_by_uid
 import json
 from openpyxl import Workbook
 from datetime import datetime, timezone
@@ -115,13 +116,13 @@ def get_attempt_detailed_report(attempt_id, school_id):
 # ---------------------------------
 # Get all attempts for an exam
 # ---------------------------------
-def get_results(exam_id, school_id):
+def get_results(exam_uid, school_id):
 
     # ---------------------------------
     # SECURITY: validate exam belongs to school
     # ---------------------------------
     exam = ExamModel.query.filter_by(
-        id=exam_id,
+        exam_uid=exam_uid,
         school_id=school_id
     ).first()
 
@@ -132,7 +133,7 @@ def get_results(exam_id, school_id):
     # FETCH ATTEMPTS
     # ---------------------------------
     attempts = AttemptModel.query.filter(
-        AttemptModel.exam_id == exam_id,
+        AttemptModel.exam_id == exam.id,
         AttemptModel.is_submitted == True
     ).all()
 
@@ -199,6 +200,7 @@ def get_results(exam_id, school_id):
             "violation_count": a.violation_count,
             "auto_submitted_reason": a.auto_submitted_reason
         })
+        print("results:", results)
 
     return results
 
@@ -210,13 +212,13 @@ def get_results(exam_id, school_id):
 
 
 
-def generate_leaderboard(exam_id, school_id):
+def generate_leaderboard(exam_uid, school_id):
 
     # ---------------------------------
     # SECURITY: validate exam belongs to school
     # ---------------------------------
     exam = ExamModel.query.filter_by(
-        id=exam_id,
+        exam_uid=exam_uid,
         school_id=school_id
     ).first()
 
@@ -235,7 +237,7 @@ def generate_leaderboard(exam_id, school_id):
     # FETCH VALID ATTEMPTS
     # ---------------------------------
     attempts = AttemptModel.query.filter(
-        AttemptModel.exam_id == exam_id,
+        AttemptModel.exam_id == exam.id,
         AttemptModel.is_submitted == True,
         AttemptModel.score.isnot(None),
         AttemptModel.total_marks.isnot(None),
@@ -363,51 +365,44 @@ def export_results_to_excel(exam_id, file_path):
     return True, f"Results exported to {file_path}"
 
 
-def get_student_attempts(exam_id, student_db_id, school_id):
-
-    # ---------------------------------
-    # SECURITY: validate exam belongs to school
-    # ---------------------------------
-    exam = ExamModel.query.filter_by(
-        id=exam_id,
-        school_id=school_id
-    ).first()
+def get_student_attempts(
+    school_id,
+    exam_uid,
+    student_db_id,
+):
+    exam = get_exam_by_uid(
+        school_id=school_id,
+        exam_uid=exam_uid,
+    )
 
     if not exam:
         return []
 
-    # ---------------------------------
-    # VALIDATE STUDENT (source of truth)
-    # ---------------------------------
     student = StudentModel.query.filter_by(
         id=student_db_id,
-        school_id=school_id
+        school_id=school_id,
     ).first()
 
     if not student:
         return []
 
-    # ---------------------------------
-    # FETCH ATTEMPTS
-    # ---------------------------------
     attempts = (
         AttemptModel.query.filter(
-            AttemptModel.exam_id == exam_id,
-            AttemptModel.student_db_id == student_db_id
+            AttemptModel.exam_id == exam.id,
+            AttemptModel.student_db_id == student_db_id,
         )
-        .order_by(AttemptModel.attempt_number.asc())
+        .order_by(
+            AttemptModel.attempt_number.asc()
+        )
         .all()
     )
 
-    # ---------------------------------
-    # ENRICH WITH STUDENT DATA (IMPORTANT FIX)
-    # ---------------------------------
     enriched = []
 
     for a in attempts:
         enriched.append({
             "id": a.id,
-            "exam_id": a.exam_id,
+            "exam_uid": exam.exam_uid,
             "attempt_number": a.attempt_number,
 
             "score": a.score,
@@ -420,7 +415,6 @@ def get_student_attempts(exam_id, student_db_id, school_id):
             "violation_count": a.violation_count,
             "auto_submitted_reason": a.auto_submitted_reason,
 
-            # 👇 student from StudentModel (SOURCE OF TRUTH)
             "student": {
                 "id": student.id,
                 "name": f"{student.first_name} {student.last_name}",
@@ -429,7 +423,7 @@ def get_student_attempts(exam_id, student_db_id, school_id):
                 "class": student.class_section,
                 "roll": student.roll_number,
                 "mobile": student.mobile,
-            }
+            },
         })
 
     return enriched

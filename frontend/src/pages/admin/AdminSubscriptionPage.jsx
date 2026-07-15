@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import { useTeacherStore } from "../../store/teacherStore";
+import { useAdminStore } from "../../store/adminStore";
 
 import PageHeader from "../../components/ui/PageHeader";
-import BackButton from "../../components/ui/BackButton";
 import SkeletonCard from "../../components/ui/SkeletonCard";
 import ErrorState from "../../components/ui/ErrorState";
 
@@ -12,34 +11,30 @@ import CurrentPlanCard from "../../components/subscription/CurrentPlanCard";
 import AICreditCard from "../../components/subscription/AICreditCard";
 import PlanLimitsCard from "../../components/subscription/PlanLimitsCard";
 import UpgradeInfoCard from "../../components/subscription/UpgradeInfoCard";
+import ResourceUsageCard from "../../components/subscription/ResourceUsageCard";
 
 export default function SubscriptionPage() {
-
     const { schoolSlug } = useParams();
 
     const {
         subscription,
-        loading,
-        error,
+        subscriptionLoading,
+        subscriptionError,
         fetchSubscription,
-    } = useTeacherStore();
-
-
+    } = useAdminStore();
 
     useEffect(() => {
         fetchSubscription(schoolSlug);
     }, [schoolSlug]);
 
-    
-
-    if (loading && !subscription) {
+    if (subscriptionLoading && !subscription) {
         return <SkeletonCard />;
     }
 
-    if (error && !subscription) {
+    if (subscriptionError && !subscription) {
         return (
             <ErrorState
-                message={error}
+                message={subscriptionError}
                 onRetry={() => fetchSubscription(schoolSlug)}
             />
         );
@@ -50,34 +45,37 @@ export default function SubscriptionPage() {
     }
 
     return (
-        <div className="space-y-6">
-
+        <div className="space-y-4">
             <PageHeader
                 title="Subscription"
-                description="View your subscription plan, AI credits and usage."
-                actions={
-                        <BackButton to={-1} label="Go Back" />
-                      }
+                description="View your school's subscription plan, AI credits, usage and limits."
+                
             />
 
             <div className="grid gap-6 lg:grid-cols-2">
 
-               <CurrentPlanCard
-                    subscription={subscription}
-                />
+            <CurrentPlanCard
+                subscription={subscription}
+            />
 
-                <AICreditCard
-                    usage={subscription.usage}
-                />
+            <AICreditCard
+                usage={subscription.usage}
+            />
 
-            </div>
+            <ResourceUsageCard
+                resources={subscription.resources}
+            />
 
             <PlanLimitsCard
                 limits={subscription.limits}
             />
 
-            <UpgradeInfoCard />
+        </div>
 
+        <UpgradeInfoCard
+            description="Need additional AI credits, more students, or higher subscription limits? Contact the IndiaEduCore team to upgrade your school's subscription plan."
+            buttonText="Upgrade Coming Soon"
+        />
         </div>
     );
 }

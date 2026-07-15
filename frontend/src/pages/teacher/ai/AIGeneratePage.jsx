@@ -11,12 +11,14 @@ import AIExtractedContent from "../../../components/teacher/ai/AIExtractedConten
 import AICreditCard from "../../../components/teacher/ai/AICreditCard";
 import AIQuestionSettings from "../../../components/teacher/ai/AIQuestionSettings";
 import AIGenerateButton from "../../../components/teacher/ai/AIGenerateButton";
+import { useToast } from "../../../components/ui/Toast";
 
 export default function AIGeneratePage() {
   const { schoolSlug } = useParams();
   const extractRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
 
   const { aiConfig, fetchAIConfig, ocrLanguages, fetchOcrLanguages } = useTeacherStore();
 
@@ -105,10 +107,22 @@ export default function AIGeneratePage() {
       setSourceType(res.data.source_type)
       setWordCount(res.data.word_count || 0);
       setCharacterCount(res.data.character_count || 0);
+      showToast("Content extracted successfully.", "success");
 
     } catch (err) {
       console.error(err);
-      setError("Failed to extract content.");
+
+      const message =
+        err.response?.data?.message ||
+        "Failed to extract content.";
+
+      setExtractedContent("");
+      setSourceType("");
+      setWordCount(0);
+      setCharacterCount(0);
+      setError(message);
+
+      showToast(message, "error");
     } finally {
       setExtracting(false);
     }
@@ -133,12 +147,15 @@ export default function AIGeneratePage() {
     const hasContent = extractedContent.trim().length > 0;
 
     if (!hasTopic && !hasFile && !hasContent) {
+
       setError("Please enter a topic or upload a file.");
+      showToast("Please enter a topic or upload a file.", "error");
       return;
     }
 
     if (hasTopic && (hasFile || hasContent)) {
       setError("Please use either Topic or File, not both.");
+      showToast("Please use either Topic or File, not both.", "error");
       return;
     }
 
@@ -146,6 +163,7 @@ export default function AIGeneratePage() {
       setError(
         "Please extract and review the content before generating questions."
       );
+       showToast("Please extract and review the content before generating questions.", "error");
       return;
     }
 
@@ -188,6 +206,7 @@ export default function AIGeneratePage() {
 
       if (!res.data.success || !res.data.request_id) {
           setError(res.data.message || "Failed to generate questions.");
+           showToast(res.data.message || "Failed to generate questions.", "error");
           return;
         }
      
@@ -201,6 +220,7 @@ export default function AIGeneratePage() {
         err?.response?.data?.message ||
           "Failed to generate questions."
       );
+       showToast(err?.response?.data?.message  || "Failed to generate questions.", "error");
     } finally {
  
       setLoading(false);

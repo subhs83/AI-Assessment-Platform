@@ -5,7 +5,7 @@ import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
 
 export default function ReviewQuestionsPage() {
-  const { schoolSlug, examId } = useParams();
+  const { schoolSlug, examUid } = useParams();
    const routes = teacherRoutes(schoolSlug);
 
   const [questions, setQuestions] = useState([]);
@@ -17,7 +17,7 @@ export default function ReviewQuestionsPage() {
       setLoading(true);
 
       const res = await API.get(
-        `/api/teacher/${schoolSlug}/exams/${examId}/questions`
+        `/api/teacher/${schoolSlug}/exams/${examUid}/questions`
       );
 
       setQuestions(res.data.data?.questions || []);
@@ -26,7 +26,7 @@ export default function ReviewQuestionsPage() {
     } finally {
       setLoading(false);
     }
-  },[schoolSlug, examId]);
+  },[schoolSlug, examUid]);
 
   useEffect(() => {
     fetchQuestions();

@@ -17,15 +17,19 @@ import GlobalLoadingOverlay from "./components/common/GlobalLoadingOverlay"
 import LoginPage from "./pages/login/LoginPage";
 import ChangePasswordPage from "./pages/login/ChangePasswordPage";
 
+// Student
+
 import QuizInitPage from "./pages/student/QuizInitPage";
 import RegisterPage from "./pages/student/RegisterPage";
 import Result from "./pages/student/Result";
 import ExamPage from "./pages/student/ExamPage";
 
+// Teacher
+
 import DashboardPage from "./pages/teacher/DashboardPage";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ExamsPage from "./pages/teacher/ExamsPage";
-import CreateExamPage from "./pages/teacher/CreateExamPage"
+import ExamFormPage from "./pages/teacher/ExamFormPage"
 import UploadQuestionsPage from "./pages/teacher/UploadQuestionsPage";
 import ReviewQuestionsPage from "./pages/teacher/ReviewQuestionsPage";
 import ResultsPage from "./pages/teacher/ResultsPage";
@@ -41,6 +45,7 @@ import SectionsPage from "./pages/teacher/SectionsPage";
 import SubscriptionPage  from "./pages/teacher/SubscriptionPage";
 
 
+// Admin
 
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import ViewTeachersPage from "./pages/admin/ViewTeachersPage";
@@ -49,8 +54,10 @@ import TeacherPerformancePage from "./pages/admin/TeacherPerformancePage";
 import ExamPerformancePage from "./pages/admin/ExamPerformancePage";
 import SchoolAnalyticsPage  from "./pages/admin/SchoolAnalyticsPage";
 import DownloadReportPage  from "./pages/admin/DownloadReportPage";
+import AdminSubscriptionPage  from "./pages/admin/AdminSubscriptionPage";
 
 
+// SuperAdmin
 import SuperAdminDashboardPage from "./pages/superAdmin/SuperAdminDashboardPage";
 import SchoolsPage from "./pages/superAdmin/SchoolsPage";
 import CreateSchoolPage from "./pages/superAdmin/CreateSchoolPage";
@@ -114,21 +121,23 @@ function AppContent() {
 
             <Route path="exams" element={<ExamsPage />} />
 
-            <Route path="exams/create" element={<CreateExamPage  />} />
+            <Route path="exams/create" element={<ExamFormPage  />} />
 
-            <Route path="exams/:examId/questions/upload" element={<UploadQuestionsPage />}/>
+            <Route  path="exams/:examUid/edit"  element={<ExamFormPage />}/>
 
-            <Route path="exams/:examId/questions" element={<ReviewQuestionsPage />}/>
+            <Route path="exams/:examUid/questions/upload" element={<UploadQuestionsPage />}/>
 
-            <Route path="exams/:examId/students/:studentDbId/attempts" element={<StudentAttemptsPage />} />
+            <Route path="exams/:examUid/questions" element={<ReviewQuestionsPage />}/>
+
+            <Route path="exams/:examUid/students/:studentDbId/attempts" element={<StudentAttemptsPage />} />
 
             <Route path="attempts/:attemptId" element={<AttemptDetailPage />} />
 
             <Route path="questions/upload" element={<UploadQuestionsPage />}/>
 
-            <Route path="exams/:examId/results" element={<ResultsPage />}/>
+            <Route path="exams/:examUid/results" element={<ResultsPage />}/>
 
-            <Route path="exams/:examId/leaderboard" element={<LeaderboardPage />} />
+            <Route path="exams/:examUid/leaderboard" element={<LeaderboardPage />} />
 
             <Route path="ai/preview/:requestId" element={<AIPreviewPage />} />
 
@@ -165,7 +174,8 @@ function AppContent() {
             <Route path="performance/exams" element={<ExamPerformancePage />} />
             <Route path="reports/analytics" element={<SchoolAnalyticsPage  />} />
             <Route path="reports/download" element={<DownloadReportPage  />} /> 
-            <Route path="performance/exams/:examId/leaderboard" element={<LeaderboardPage />} />
+            <Route path="performance/exams/:examUid/leaderboard" element={<LeaderboardPage />} />
+            <Route path="subscription" element={<AdminSubscriptionPage />}/>
 
          </Route>
 

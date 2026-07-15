@@ -9,7 +9,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { getPageTitle } from "../../config/pageTitles";
 import { useAuthStore } from "../../store/authStore";
-import { useTeacherStore } from "../../store/teacherStore";
+import { useSchoolStore } from "../../store/schoolStore";
 import logo from "../../assets/logo.png";
 
 export default function Navbar({ onToggleSidebar }) {
@@ -18,9 +18,8 @@ export default function Navbar({ onToggleSidebar }) {
 
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
-  const examOptions = useTeacherStore((s) => s.examOptions);
-
-  const aiQuota = examOptions?.ai_quota;
+  const examOptions = useSchoolStore((s) => s.examOptions);
+  const aiQuota = examOptions?.ai_quota 
 
 
   const [openMenu, setOpenMenu] = useState(false);

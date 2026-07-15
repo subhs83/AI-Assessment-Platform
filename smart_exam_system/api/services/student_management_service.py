@@ -12,7 +12,6 @@ from smart_exam_system.api.services.school_section_service import find_section
 
 def validate_student_fields(
     first_name,
-    student_class,
     roll_number,
 ):
     """
@@ -27,9 +26,6 @@ def validate_student_fields(
     if not first_name or not first_name.strip():
         errors["first_name"] = "First Name is required."
 
-    if not student_class or not student_class.strip():
-        errors["student_class"] = "Class is required."
-
     if not roll_number or not roll_number.strip():
         errors["roll_number"] = "Roll Number is required."
 
@@ -38,17 +34,13 @@ def validate_student_fields(
 
 def is_duplicate_roll_number(
     school_id,
-    student_class,
+    school_class_id,
     roll_number,
     exclude_student_id=None,
 ):
-    """
-    Check if a roll number already exists within a class.
-    """
-
     query = StudentModel.query.filter_by(
         school_id=school_id,
-        student_class=student_class.strip(),
+        school_class_id=school_class_id,
         roll_number=roll_number.strip(),
     )
 
@@ -214,7 +206,6 @@ def import_students(school_id, excel_file):
 
         errors = validate_student_fields(
             first_name=first_name,
-            student_class=student_class,
             roll_number=roll_number,
         )
 

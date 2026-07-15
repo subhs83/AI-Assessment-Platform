@@ -3,10 +3,14 @@ from datetime import UTC, date, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from smart_exam_system.extensions import db
-from smart_exam_system.constants.subscription import (
-    BillingCycle,
-    SubscriptionStatus,
+from smart_exam_system.models import(
+    StudentModel,
+    UserModel,
+    SchoolClassModel,
+    SchoolSectionModel
+
 )
+
 
 from smart_exam_system.models import (
     SchoolSubscriptionModel,
@@ -378,4 +382,43 @@ def get_ai_feature_summary():
     return {
         feature.feature_code: feature.credits_required
         for feature in features
+    }
+
+
+def get_school_resource_usage(school_id):
+    """
+    Return current school resource usage against subscription limits.
+    """
+
+    limits = get_school_limits(school_id)
+
+    return {
+        "students": {
+            "used": StudentModel.query.filter_by(
+                school_id=school_id,
+            ).count(),
+            "limit": limits["max_students"],
+        },
+
+        "teachers": {
+            "used": UserModel.query.filter_by(
+                school_id=school_id,
+                role="teacher",
+            ).count(),
+            "limit": limits["max_teachers"],
+        },
+
+        "classes": {
+            "used": SchoolClassModel.query.filter_by(
+                school_id=school_id,
+            ).count(),
+            "limit": limits["max_classes"],
+        },
+
+        "sections": {
+            "used": SchoolSectionModel.query.filter_by(
+                school_id=school_id,
+            ).count(),
+            "limit": limits["max_sections"],
+        },
     }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 
@@ -16,25 +16,8 @@ import ExamSettings from "../../components/teacher/exams/ExamSettings";
 import ExamSchedule from "../../components/teacher/exams/ExamSchedule";
 import ExamOptions from "../../components/teacher/exams/ExamOptions";
 
-export default function CreateExamPage() {
-
-  const { showToast } = useToast();
-
-  const navigate = useNavigate();
-
-  const { schoolSlug } = useParams();
-
-  const routes = teacherRoutes(schoolSlug);
-
-  const createExam = useTeacherStore(
-    (s) => s.createExam
-  );
-
-  const [loading, setLoading] = useState(false);
-
-  const [form, setForm] = useState({
+const INITIAL_FORM = {
     title: "",
-    school_class_id: "",
     targets: [],
     duration_minutes: 30,
     marks: 1,
@@ -44,7 +27,89 @@ export default function CreateExamPage() {
     show_result_review: true,
     start_date: "",
     end_date: "",
-  });
+};
+
+
+export default function ExamFormPage() {
+
+  const { showToast } = useToast();
+
+  const navigate = useNavigate();
+
+  const { schoolSlug, examUid } = useParams();
+
+  const routes = teacherRoutes(schoolSlug);
+
+  //const { fetchExam, updateExam,} = useTeacherStore();
+
+  const createExam = useTeacherStore(
+    (s) => s.createExam
+  );
+  const fetchExam = useTeacherStore(
+    (s) => s.fetchExam
+  );
+
+  const updateExam = useTeacherStore(
+    (s) => s.updateExam
+  );
+
+  const [loading, setLoading] = useState(false);
+
+  const [form, setForm] = useState(INITIAL_FORM);
+
+   const isEdit = Boolean(examUid);
+
+  
+
+
+  const loadExam = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const exam = await fetchExam(
+        schoolSlug,
+        examUid
+      );
+
+      if (!exam) {
+        showToast("Exam not found.", "error");
+        navigate(routes.exams.list);
+        return;
+      }
+
+      setForm(exam);
+
+    } catch (err) {
+
+      console.error(err);
+
+      showToast(
+        "Failed to load exam.",
+        "error"
+      );
+
+      navigate(routes.exams.list);
+
+    } finally {
+      setLoading(false);
+    }
+
+  }, [
+    schoolSlug,
+    examUid,
+    fetchExam,
+    navigate,
+    routes.exams.list,
+    showToast,
+  ]);
+
+  useEffect(() => {
+
+      if (!isEdit) return;
+
+      loadExam();
+
+  }, [loadExam,isEdit]);
 
   const handleChange = (e) => {
 
@@ -73,14 +138,28 @@ export default function CreateExamPage() {
 
       setLoading(true);
 
-      await createExam(
-        schoolSlug,
-        form
+      if (isEdit) {
+
+      await updateExam(
+          schoolSlug,
+          examUid,
+          form
       );
 
+  } else {
+
+      await createExam(
+          schoolSlug,
+          form
+      );
+
+  }
+
       showToast(
-        "Exam created successfully.",
-        "success"
+          isEdit
+              ? "Exam updated successfully."
+              : "Exam created successfully.",
+          "success"
       );
 
       navigate(routes.exams.list);
@@ -91,8 +170,9 @@ export default function CreateExamPage() {
 
       showToast(
         err.response?.data?.message ||
-        "Failed to create exam",
-        "error"
+        isEdit
+    ? "Failed to update exam"
+    : "Failed to create exam"
       );
 
     } finally {
@@ -103,6 +183,7 @@ export default function CreateExamPage() {
 
   };
 
+ 
   return (
 
     <div className="max-w-4xl mx-auto">
@@ -110,8 +191,16 @@ export default function CreateExamPage() {
       <div className="bg-white rounded-lg border shadow-sm p-6">
 
         <PageHeader
-          title="Create Exam"
-          description="Configure exam settings before publishing"
+            title={
+                isEdit
+                    ? "Edit Exam"
+                    : "Create Exam"
+            }
+            description={
+                isEdit
+                    ? "Update your draft exam."
+                    : "Configure exam settings before publishing."
+            }
         />
 
         <form
@@ -171,8 +260,16 @@ export default function CreateExamPage() {
             >
               <Save size={16} />
               {loading
-                ? "Creating..."
-                : "Create Exam"}
+                  ? (
+                      isEdit
+                          ? "Updating..."
+                          : "Creating..."
+                  )
+                  : (
+                      isEdit
+                          ? "Update Exam"
+                          : "Create Exam"
+                  )}
             </Button>
 
           </div>

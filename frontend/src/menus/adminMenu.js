@@ -6,7 +6,8 @@ import {
   ClipboardList,
   PieChart,
   Download,
-  LogOut
+  LogOut,
+  Crown
 } from "lucide-react";
 
 export function getAdminMenu(schoolSlug) {
@@ -81,6 +82,21 @@ export function getAdminMenu(schoolSlug) {
       icon: Download,
       path: `/school/${schoolSlug}/admin/reports/download`,
       end: true,
+    },
+
+
+    // ================= Subscription =================
+
+    {
+    type: "section",
+    label: "Subscription",
+    },
+
+    {
+        label: "Current Plan",
+        icon: Crown,
+        path: `/school/${schoolSlug}/admin/subscription`,
+        end: true,
     },
 
     {

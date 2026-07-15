@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import {
   FileText,
   Languages,
@@ -18,6 +20,16 @@ export default function AIFileSection({
   setWordCount,
   setCharacterCount,
 }) {
+
+  const fileInputRef = useRef(null);
+
+  const resetExtraction = () => {
+      setExtractedContent("");
+      setSourceType("");
+      setWordCount(0);
+      setCharacterCount(0);
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-6">
 
@@ -96,14 +108,12 @@ export default function AIFileSection({
         </p>
 
         <input
+          ref={fileInputRef}
           type="file"
           accept=".pdf,image/*"
           onChange={(e) => {
             setFile(e.target.files[0]);
-            setExtractedContent("");
-            setSourceType("");
-            setWordCount(0);
-            setCharacterCount(0);
+            resetExtraction();
           }}
           className="mx-auto"
         />
@@ -111,17 +121,49 @@ export default function AIFileSection({
       </div>
 
       {file && (
+        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
 
-        <div className="inline-flex items-center gap-2 rounded-full bg-green-100 text-green-700 px-4 py-2 text-sm mb-4">
+          <div className="flex items-center justify-between">
 
-          <CheckCircle2 className="w-4 h-4" />
+            <div className="flex items-center gap-3">
 
-          <span>{file.name}</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+              </div>
+
+              <div>
+
+                <p className="font-medium text-slate-900">
+                  {file.name}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setFile(null);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+
+                resetExtraction();
+              }}
+              className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+            >
+              Remove
+            </button>
+
+          </div>
 
         </div>
-
       )}
-
       <button
         type="button"
         onClick={handleExtract}

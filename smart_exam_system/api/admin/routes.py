@@ -6,9 +6,12 @@ from smart_exam_system.models import UserModel,SchoolModel,ExamModel
 from smart_exam_system.api.services.exam_service import (
     get_teacher_performance_by_school,
     get_exam_performance_by_school,
-    get_school_analytics
+    get_school_analytics,
+    get_exam_by_uid
     
 )
+from smart_exam_system.api.utils.api_response import api_response
+from smart_exam_system.api.services.subscription_management_service import get_school_subscription_summary
 from smart_exam_system.api.services.result_service import generate_leaderboard
 import csv
 from io import StringIO
@@ -291,19 +294,68 @@ def download_summary_report(school_slug):
 
 
 
-@api_admin_bp.route("/<school_slug>/exams/<int:exam_id>/leaderboard")
+@api_admin_bp.route("/<school_slug>/exams/<exam_uid>/leaderboard")
 @login_required
 @school_admin_required
-def get_exam_leaderboard_admin_api(school_slug, exam_id):
+def get_exam_leaderboard_admin_api(school_slug, exam_uid):
+    print("Route exam_uid:", exam_uid)
+    print("Current user school_id:", current_user.school_id)
+
+    exam = ExamModel.query.filter_by(exam_uid=exam_uid).first()
+    print("Exam:", exam)
+
+    if exam:
+        print("Exam school_id:", exam.school_id)
+
+    exam = get_exam_by_uid(
+        school_id=current_user.school_id,
+        exam_uid=exam_uid,
+    )
  
-    leaderboard = generate_leaderboard( exam_id=exam_id, school_id=current_user.school_id )
-    exam = ExamModel.query.filter_by(id=exam_id).first()
-    exam_title =exam.title
+    leaderboard = generate_leaderboard( 
+        exam_uid=exam_uid, 
+        school_id=current_user.school_id 
+        )
+  
+  
     return jsonify({
 
         "data": {
-            "exam_id": exam_id,
-            "exam_title": exam_title,
+            "exam_uid": exam.exam_uid,
+            "exam_title": exam.title,
             "leaderboard": leaderboard
         }
     })
+
+
+@api_admin_bp.route("/<school_slug>/subscription", methods=["GET"],)
+@login_required
+@school_admin_required
+def subscription_api(school_slug):
+
+    school = SchoolModel.query.filter_by(
+        slug=school_slug
+    ).first()
+
+    if not school:
+        return api_response(
+            success=False,
+            message="School not found.",
+            status=404,
+        )
+
+    if school.id != current_user.school_id:
+        return api_response(
+            success=False,
+            message="Invalid school access.",
+            status=403,
+        )
+
+    data = get_school_subscription_summary(
+        school.id
+    )
+    return api_response(
+        success=True,
+        message="Subscription fetched successfully.",
+        data=data,
+    )

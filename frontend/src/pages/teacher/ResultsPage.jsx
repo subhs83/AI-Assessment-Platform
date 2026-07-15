@@ -8,7 +8,7 @@ import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
 
 export default function ResultsPage() {
-  const { schoolSlug, examId } = useParams();
+  const { schoolSlug, examUid } = useParams();
   const routes = teacherRoutes(schoolSlug);
   const navigate = useNavigate();
 
@@ -75,7 +75,7 @@ export default function ResultsPage() {
     setLoading(true);
 
     const res = await API.get(
-      `/api/teacher/${schoolSlug}/exams/${examId}/results`
+      `/api/teacher/${schoolSlug}/exams/${examUid}/results`
     );
 
     setData(res.data.data);
@@ -84,7 +84,7 @@ export default function ResultsPage() {
   } finally {
     setLoading(false);
   }
-}, [schoolSlug, examId]);
+}, [schoolSlug, examUid]);
 
 
 
@@ -219,7 +219,7 @@ export default function ResultsPage() {
                     <td
                       className="p-3 cursor-pointer"
                       onClick={() =>
-                        navigate(routes.exams.studentAttempts(examId,r.student_id))
+                        navigate(routes.exams.studentAttempts(examUid,r.student_id))
                       }
                     >
                       <div className="font-medium text-indigo-600 hover:underline">

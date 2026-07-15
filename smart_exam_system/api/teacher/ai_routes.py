@@ -5,7 +5,7 @@ from flask_login import login_required, current_user
 from smart_exam_system.api.teacher import api_teacher_bp
 from smart_exam_system.models import AIGenerationRequest
 from smart_exam_system.api.utils.api_response import api_response
-from smart_exam_system.api.services.ai.extractor import extract_input
+from smart_exam_system.api.services.ai_input_service import extract_ai_input
 from smart_exam_system.api.utils.decorators import  teacher_required
 from smart_exam_system.api.services.ai.controller import ( generate_ai_questions_controller)
 from smart_exam_system.models import (
@@ -57,7 +57,11 @@ def ai_extract(school_slug):
 
     data = request.form.to_dict()
 
-    extracted = extract_input(data, file)
+    extracted = extract_ai_input(
+        school_id=current_user.school_id,
+        data=data,
+        file=file,
+    )
 
     if not extracted.get("success"):
         return jsonify(extracted), 400

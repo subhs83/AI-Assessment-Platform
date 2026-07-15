@@ -16,8 +16,8 @@ export const adminRoutes = (schoolSlug) => ({
   examPerformance:
     `/school/${schoolSlug}/admin/performance/exams`,
 
-  examLeaderboard: (examId) =>
-    `/school/${schoolSlug}/admin/performance/exams/${examId}/leaderboard`,
+  examLeaderboard: (examUid) =>
+    `/school/${schoolSlug}/admin/performance/exams/${examUid}/leaderboard`,
 
   // Reports
   reports: `/school/${schoolSlug}/admin/report`,
@@ -27,5 +27,8 @@ export const adminRoutes = (schoolSlug) => ({
 
   downloadReports:
     `/school/${schoolSlug}/admin/report/download`,
+
+  subscriptionReports:
+    `/api/admin/${schoolSlug}/subscription`,
 
 });

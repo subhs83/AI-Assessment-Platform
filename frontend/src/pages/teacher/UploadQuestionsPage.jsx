@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { teacherApi } from "../../api/teacherApi";
 import { teacherRoutes } from "../../routes/teacherRoutes";
 import { useTeacherStore } from "../../store/teacherStore";
+import { useSchoolStore } from "../../store/schoolStore";
 import PageHeader from "../../components/ui/PageHeader";
 import { useToast } from "../../components/ui/Toast";
 import  LoadingOverlay  from "../../components/common/LoadingOverlay";
@@ -34,12 +35,11 @@ export default function UploadQuestionsPage() {
 
   const downloadQuestionTemplate =  useTeacherStore((s) => s.downloadQuestionTemplate);
 
-  const examOptions = useTeacherStore((s) => s.examOptions);
+  const examOptions = useSchoolStore((s) => s.examOptions);
+
 
   const exams = examOptions?.exams || [];
-
-  
-
+ 
   // -------------------------
   // Download & UPLOAD
   // -------------------------

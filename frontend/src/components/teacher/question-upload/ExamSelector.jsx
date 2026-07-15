@@ -23,8 +23,8 @@ export default function ExamSelector({
 
         {exams.map((exam) => (
           <option
-            key={exam.id}
-            value={exam.id}
+            key={exam.exam_uid}
+            value={exam.exam_uid}
           >
             {exam.title}
           </option>

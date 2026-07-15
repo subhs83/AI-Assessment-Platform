@@ -6,6 +6,7 @@ from smart_exam_system.models import (
     StudentModel,
     ExamModel
 )
+from smart_exam_system.api.services.exam_service import get_exam_by_uid
 from smart_exam_system.extensions import db
 
 
@@ -39,13 +40,21 @@ def get_attempt_limit_info(
 
 def get_total_granted_attempts(
     school_id,
-    exam_id,
+    exam_uid,
     student_db_id,
 ):
     """
     Returns the total additional attempts granted
     to a student for a specific exam.
     """
+
+    exam = get_exam_by_uid(
+        school_id=school_id,
+        exam_uid=exam_uid,
+    )
+
+    if not exam:
+        return 0
 
     total = (
         db.session.query(
@@ -58,7 +67,7 @@ def get_total_granted_attempts(
         )
         .filter_by(
             school_id=school_id,
-            exam_id=exam_id,
+            exam_id=exam.id,
             student_db_id=student_db_id,
         )
         .scalar()
@@ -73,7 +82,7 @@ def get_total_granted_attempts(
 def grant_additional_attempt(
     *,
     school_id,
-    exam_id,
+    exam_uid,
     student_db_id,
     teacher_id,
     granted_attempts,
@@ -96,10 +105,10 @@ def grant_additional_attempt(
             "message": "Reason is required.",
         }, 400
     
-    exam = ExamModel.query.filter_by(
-         id=exam_id, 
-         school_id=school_id,
-         ).first()
+    exam = get_exam_by_uid(
+        school_id=school_id,
+        exam_uid=exam_uid,
+    )
 
     if not exam:
         return {
@@ -135,7 +144,7 @@ def grant_additional_attempt(
     try:
         grant = AdditionalAttemptGrant(
             school_id=school_id,
-            exam_id=exam_id,
+            exam_id=exam.id,
             student_db_id=student_db_id,
             teacher_id=teacher_id,
             granted_attempts=granted_attempts,
@@ -147,7 +156,7 @@ def grant_additional_attempt(
 
         total_granted_attempts = get_total_granted_attempts(
             school_id=school_id,
-            exam_id=exam_id,
+            exam_uid=exam_uid,
             student_db_id=student_db_id,
         )
 
@@ -168,20 +177,31 @@ def grant_additional_attempt(
             "success": False,
             "message": "Failed to grant additional attempt.",
         }, 500
-    
+        
 
 def get_additional_attempt_grants(
     *,
     school_id,
-    exam_id,
+    exam_uid,
     student_db_id,
 ):
     
+    exam = get_exam_by_uid(
+        school_id=school_id,
+        exam_uid=exam_uid,
+    )
+
+    if not exam:
+        return {
+            "success": False,
+            "message": "Exam not found.",
+        }, 404
+
     grants = (
         AdditionalAttemptGrant.query
         .filter_by(
             school_id=school_id,
-            exam_id=exam_id,
+            exam_id=exam.id,
             student_db_id=student_db_id,
         )
         .order_by(
@@ -196,7 +216,7 @@ def get_additional_attempt_grants(
     "data": {
         "total_granted_attempts": get_total_granted_attempts(
             school_id=school_id,
-            exam_id=exam_id,
+            exam_uid=exam_uid,
             student_db_id=student_db_id,
         ),
         "grants": [

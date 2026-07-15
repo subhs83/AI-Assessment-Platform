@@ -26,14 +26,14 @@ def clean_excel_text(value):
 # Upload Questions
 # ---------------------------------
 
-def upload_questions(exam_id, school_id, excel_file):
+def upload_questions(exam_uid, school_id, excel_file):
 
     try:
         # ---------------------------------
         # SECURITY CHECK (IMPORTANT)
         # ---------------------------------
         exam = ExamModel.query.filter_by(
-            id=exam_id,
+            exam_uid=exam_uid,
             school_id=school_id
         ).first()
 
@@ -95,7 +95,7 @@ def upload_questions(exam_id, school_id, excel_file):
         # DELETE OLD QUESTIONS (SAFE SCOPED)
         # ---------------------------------
         db.session.query(QuestionModel).filter_by(
-            exam_id=exam_id
+            exam_id=exam.id
         ).delete(synchronize_session=False)
 
         # ---------------------------------
@@ -103,7 +103,7 @@ def upload_questions(exam_id, school_id, excel_file):
         # ---------------------------------
         for q in validated_questions:
             db.session.add(QuestionModel(
-                exam_id=exam_id,
+                exam_id=exam.id,
                 question_text=q["question_text"],
                 option_a=q["option_a"],
                 option_b=q["option_b"],
@@ -125,13 +125,13 @@ def upload_questions(exam_id, school_id, excel_file):
 # Get All Questions For Exam
 # ---------------------------------
 
-def get_exam_questions(exam_id, school_id):
+def get_exam_questions(exam_uid, school_id):
 
     # ---------------------------------
     # SECURITY: validate exam belongs to school
     # ---------------------------------
     exam = ExamModel.query.filter_by(
-        id=exam_id,
+        exam_uid=exam_uid,
         school_id=school_id
     ).first()
 
@@ -143,7 +143,7 @@ def get_exam_questions(exam_id, school_id):
     # ---------------------------------
     return (
         QuestionModel.query
-        .filter_by(exam_id=exam_id)
+        .filter_by(exam_id=exam.id)
         .order_by(QuestionModel.id.asc())
         .all()
     )

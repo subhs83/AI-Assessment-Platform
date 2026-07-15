@@ -3,11 +3,20 @@ from smart_exam_system.extensions import db
 from smart_exam_system.models.user import UserModel
 from datetime import datetime
 from sqlalchemy.orm import backref
+import uuid
 
 class ExamModel(db.Model):
     __tablename__ = "exams"
 
     id = db.Column(db.Integer, primary_key=True)
+
+    exam_uid = db.Column(
+    db.String(36),
+    unique=True,
+    nullable=False,
+    default=lambda: str(uuid.uuid4()),
+    index=True,
+)
     title = db.Column(db.String, nullable=False)
     
     duration_minutes = db.Column(db.Integer, nullable=False)
@@ -43,22 +52,46 @@ class ExamModel(db.Model):
     # ✅ Relationship
     school = db.relationship("SchoolModel", backref="exams")
 
-    # questions = db.relationship(
-    #     "QuestionModel",
-    #     backref="exam",
-    #     cascade="all, delete-orphan",
-    #     passive_deletes=True,
-    # )
-
-    # targets = db.relationship(
-    #     "ExamTargetModel",
-    #     backref="exam",
-    #     cascade="all, delete-orphan",
-    #     passive_deletes=True,
-    # )
-
     def __repr__(self):
         return f"<Exam {self.title}>"
+    
+    @property
+    def class_names(self):
+        return sorted({
+            target.school_class.name
+            for target in self.targets
+        })
+
+    @property
+    def section_names(self):
+        return sorted({
+            target.school_section.name
+            for target in self.targets
+            if target.school_section
+        })
+
+    @property
+    def class_sections(self):
+        return [
+            (
+                f"{target.school_class.name} {target.school_section.name}"
+                if target.school_section
+                else target.school_class.name
+            )
+            for target in self.targets
+        ]
+
+    @property
+    def class_name(self):
+        return ", ".join(self.class_names)
+
+    @property
+    def section_name(self):
+        return ", ".join(self.section_names)
+
+    @property
+    def class_section(self):
+        return ", ".join(self.class_sections)
 
 
 
@@ -115,15 +148,7 @@ class ExamTargetModel(db.Model):
     school_section = db.relationship(
         "SchoolSectionModel"
     )
-#     exam_id = db.Column(
-#     db.Integer,
-#     db.ForeignKey(
-#         "exams.id",
-#         ondelete="CASCADE",
-#     ),
-#     nullable=False,
-#     index=True,
-# )
+ 
 
     __table_args__ = (
         db.UniqueConstraint(

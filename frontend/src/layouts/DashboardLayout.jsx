@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useTeacherStore } from "../store/teacherStore";
+import { useSchoolStore } from "../store/schoolStore";
 import { Outlet } from "react-router-dom";
 
 import Sidebar from "../components/layout/Sidebar";
@@ -14,7 +14,7 @@ export default function DashboardLayout() {
 
   const { schoolSlug } = useParams();
 
-  const fetchExamOptions = useTeacherStore(
+  const fetchExamOptions = useSchoolStore(
     (s) => s.fetchExamOptions
   );
 

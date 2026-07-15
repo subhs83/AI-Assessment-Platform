@@ -16,26 +16,41 @@ export const teacherApi = {
   createExam: (schoolSlug, payload) =>
     API.post(`/api/teacher/${schoolSlug}/exams`, payload),
 
-  deleteExam: (schoolSlug, examId) =>
-    API.delete(`/api/teacher/${schoolSlug}/exams/${examId}`),
+  deleteExam: (schoolSlug, examUid) =>
+    API.delete(`/api/teacher/${schoolSlug}/exams/${examUid}`),
 
-  publishExam: (schoolSlug, examId) =>
-    API.post(`/api/teacher/${schoolSlug}/exams/${examId}/publish`),
+  publishExam: (schoolSlug, examUid) =>
+    API.post(`/api/teacher/${schoolSlug}/exams/${examUid}/publish`),
+
+    // -------------------------
+    // Edit Exam
+    // -------------------------
+
+  getExam: (schoolSlug, examUid) =>
+    API.get(
+      `/api/teacher/${schoolSlug}/exams/${examUid}`
+    ),
+
+  updateExam: (schoolSlug, examUid, payload) =>
+    API.put(
+      `/api/teacher/${schoolSlug}/exams/${examUid}`,
+      payload
+    ),
 
   // -------------------------
   // Questions
   // -------------------------
-  uploadQuestions: (schoolSlug, examId, formData) =>
+  uploadQuestions: (schoolSlug, examUid, formData) =>
     API.post(
-      `/api/teacher/${schoolSlug}/exams/${examId}/questions/upload`,
+      `/api/teacher/${schoolSlug}/exams/${examUid}/questions/upload`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
       }
     ),
 
-  getQuestions: (schoolSlug, examId) =>
-    API.get(`/api/teacher/${schoolSlug}/exams/${examId}/questions`),
+  getQuestions: (schoolSlug, examUid) =>
+    API.get(`/api/teacher/${schoolSlug}/exams/${examUid}/questions`),
   
   downloadQuestionTemplate: (schoolSlug) =>
   API.get(
@@ -48,21 +63,21 @@ export const teacherApi = {
   // -------------------------
   // Results
   // -------------------------
-  getResults: (schoolSlug, examId) =>
-    API.get(`/api/teacher/${schoolSlug}/exams/${examId}/results`),
+  getResults: (schoolSlug, examUid) =>
+    API.get(`/api/teacher/${schoolSlug}/exams/${examUid}/results`),
 
   // -------------------------
   // Leaderboard
   // -------------------------
-  getLeaderboard: (schoolSlug, examId) =>
-    API.get(`/api/teacher/${schoolSlug}/exams/${examId}/leaderboard`),
+  getLeaderboard: (schoolSlug, examUid) =>
+    API.get(`/api/teacher/${schoolSlug}/exams/${examUid}/leaderboard`),
 
   // -------------------------
   // Student Attempts (LIST)
   // -------------------------
-  getStudentAttempts: (schoolSlug, examId, studentDbId) =>
+  getStudentAttempts: (schoolSlug, examUid, studentDbId) =>
     API.get(
-      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/grant-attempt`
+      `/api/teacher/${schoolSlug}/exams/${examUid}/students/${studentDbId}/grant-attempt`
     ),
 
   // -------------------------
@@ -78,22 +93,22 @@ export const teacherApi = {
 
   grantAdditionalAttempt: (
     schoolSlug,
-    examId,
+    examUid,
     studentDbId,
     payload,
   ) =>
     API.post(
-      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/grant-attempt`,
+      `/api/teacher/${schoolSlug}/exams/${examUid}/students/${studentDbId}/grant-attempt`,
       payload
     ),
 
   getAdditionalAttemptGrants: (
     schoolSlug,
-    examId,
+    examUid,
     studentDbId,
   ) =>
     API.get(
-      `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/grant-attempts`
+      `/api/teacher/${schoolSlug}/exams/${examUid}/students/${studentDbId}/grant-attempts`
     ),
   // -------------------------
   // Students
@@ -205,11 +220,11 @@ deleteSection: (schoolSlug, classId, sectionId) =>
   getSubscription: (schoolSlug) =>
   API.get(`/api/teacher/${schoolSlug}/subscription`),
 
-  getExamOptions(schoolSlug) {
-  return API.get(
-    `/api/teacher/${schoolSlug}/teacher/exams/options`
-  );
-}
+//   getExamOptions(schoolSlug) {
+//   return API.get(
+//     `/api/teacher/${schoolSlug}/teacher/exams/options`
+//   );
+// }
 
 }
 

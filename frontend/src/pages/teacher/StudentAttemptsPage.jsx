@@ -13,7 +13,7 @@ import BackButton from "../../components/ui/BackButton";
 import { useToast } from "../../components/ui/Toast";
 
 export default function StudentAttemptsPage() {
-  const { schoolSlug, examId, studentDbId } = useParams();
+  const { schoolSlug, examUid, studentDbId } = useParams();
   const routes = teacherRoutes(schoolSlug);
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -47,7 +47,7 @@ export default function StudentAttemptsPage() {
       setLoading(true);
 
       const res = await API.get(
-        `/api/teacher/${schoolSlug}/exams/${examId}/students/${studentDbId}/attempts`
+        `/api/teacher/${schoolSlug}/exams/${examUid}/students/${studentDbId}/attempts`
       );
 
       setData(res.data.data);
@@ -56,7 +56,7 @@ export default function StudentAttemptsPage() {
     } finally {
       setLoading(false);
     }
-  },[schoolSlug, examId, studentDbId]);
+  },[schoolSlug, examUid, studentDbId]);
 
   useEffect(() => {
     fetchAttempts();
@@ -70,7 +70,7 @@ export default function StudentAttemptsPage() {
     try {
       const res = await getAdditionalAttemptGrants(
         schoolSlug,
-        examId,
+        examUid,
         studentDbId,
       );
 
@@ -90,7 +90,7 @@ export default function StudentAttemptsPage() {
 
         const res = await grantAdditionalAttempt(
           schoolSlug,
-          examId,
+          examUid,
           studentDbId,
           payload,
         );
@@ -127,7 +127,7 @@ export default function StudentAttemptsPage() {
       <PageHeader
         title="Student Attempts"
         description="View attempt history and performance analysis"
-        actions={<BackButton to={routes.exams.results(examId)} label="Go Back" /> }
+        actions={<BackButton to={routes.exams.results(examUid)} label="Go Back" /> }
       />
 
     {/* Student Summary */}
