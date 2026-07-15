@@ -8,6 +8,7 @@ import {
   Trophy,
   Target,
 } from "lucide-react";
+import logo from "../../../assets/logo.png"
 
 const ResultHeader = ({
   result,
@@ -32,9 +33,11 @@ const ResultHeader = ({
         {/* LEFT */}
         <div className="flex items-center gap-4">
 
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm">
-            <GraduationCap className="w-6 h-6 text-white" />
-          </div>
+          <img
+            src={logo}
+            alt="INDIAEDUCORE"
+            className="h-16 w-auto object-contain"
+          />
 
           <div>
             <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
