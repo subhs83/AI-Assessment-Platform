@@ -13,6 +13,8 @@ from smart_exam_system.models import (
     SchoolSectionModel
 )
 
+from smart_exam_system.api.utils.randomization_service import generate_balanced_option_orders
+
 from smart_exam_system.api.services.additional_attempt_service import (
     get_attempt_limit_info
 )
@@ -462,10 +464,7 @@ def _create_attempt(
 
     option_order_map = {}
 
-    for q in questions:
-        options = ["A", "B", "C", "D"]
-        random.shuffle(options)
-        option_order_map[str(q.id)] = options
+    option_order_map = generate_balanced_option_orders( questions)
 
     option_order = json.dumps(option_order_map)
 
@@ -746,10 +745,7 @@ def start_next_attempt(previous_attempt_id):
 
     option_order_map = {}
 
-    for q in questions:
-        options = ["A", "B", "C", "D"]
-        random.shuffle(options)
-        option_order_map[str(q.id)] = options
+    option_order_map = generate_balanced_option_orders( questions)
 
     option_order = json.dumps(option_order_map)
 
