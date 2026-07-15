@@ -58,15 +58,8 @@ export default function StudentAttemptsPage() {
     }
   },[schoolSlug, examUid, studentDbId]);
 
-  useEffect(() => {
-    fetchAttempts();
-    loadAdditionalAttemptGrants();
-  }, [fetchAttempts]);
 
- 
-
-
-  const loadAdditionalAttemptGrants = async () => {
+  const loadAdditionalAttemptGrants = useCallback (async () => {
     try {
       const res = await getAdditionalAttemptGrants(
         schoolSlug,
@@ -82,7 +75,13 @@ export default function StudentAttemptsPage() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[schoolSlug, examUid, studentDbId,getAdditionalAttemptGrants]);
+
+
+    useEffect(() => {
+    fetchAttempts();
+    loadAdditionalAttemptGrants();
+  }, [fetchAttempts, loadAdditionalAttemptGrants]);
 
   const handleGrantAttempt = async (payload) => {
       try {

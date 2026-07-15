@@ -1,38 +1,45 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+
 import API from "../../api/client";
+import { teacherRoutes } from "../../routes/teacherRoutes";
+
 import SkeletonCard from "../../components/ui/SkeletonCard";
 import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
-import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
+
+import ResultsSummary from "../../components/teacher/results/ResultsSummary";
+import ResultTable from "../../components/teacher/results/ResultTable";
 
 export default function ResultsPage() {
   const { schoolSlug, examUid } = useParams();
+
   const routes = teacherRoutes(schoolSlug);
-  const navigate = useNavigate();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  // -----------------------------
-  // SAFE DERIVED DATA
-  // -----------------------------
-  const results = useMemo(() => {
-  return data?.results || [];
-}, [data]);
+  const results = useMemo(
+    () => data?.results || [],
+    [data]
+  );
 
   const filteredResults = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const query = search.trim().toLowerCase();
 
-    if (!q) return results;
+    if (!query) {
+      return results;
+    }
 
-    return results.filter((r) =>
-      `${r.first_name ?? ""} ${r.last_name ?? ""}`
+    return results.filter((result) =>
+      `${result.first_name ?? ""} ${result.last_name ?? ""}`
         .toLowerCase()
-        .includes(q) ||
-      (r.roll_number ?? "").toString().includes(q)
+        .includes(query) ||
+      (result.roll_number ?? "")
+        .toString()
+        .includes(query)
     );
   }, [search, results]);
 
@@ -47,17 +54,20 @@ export default function ResultsPage() {
     }
 
     const highestScore = Math.max(
-      ...results.map((r) => r.percentage || 0)
+      ...results.map(
+        (result) => result.percentage || 0
+      )
     );
 
     const averagePercentage =
       results.reduce(
-        (sum, r) => sum + (r.percentage || 0),
+        (sum, result) =>
+          sum + (result.percentage || 0),
         0
       ) / results.length;
 
     const autoSubmitted = results.filter(
-      (r) => r.auto_submitted_reason
+      (result) => result.auto_submitted_reason
     ).length;
 
     return {
@@ -67,236 +77,89 @@ export default function ResultsPage() {
       autoSubmitted,
     };
   }, [results]);
-  // -----------------------------
-  // API CALL
-  // -----------------------------
+
   const fetchResults = useCallback(async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await API.get(
-      `/api/teacher/${schoolSlug}/exams/${examUid}/results`
-    );
+      const response = await API.get(
+        `/api/teacher/${schoolSlug}/exams/${examUid}/results`
+      );
 
-    setData(res.data.data);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
+      setData(response.data.data);
+
+    } catch (error) {
+      console.error(error);
+
+    } finally {
+      setLoading(false);
+    }
+  }, [schoolSlug, examUid]);
+
+  useEffect(() => {
+    fetchResults();
+  }, [fetchResults]);
+
+  if (loading) {
+    return <SkeletonCard />;
   }
-}, [schoolSlug, examUid]);
-
-
-
- useEffect(() => {
-  fetchResults();
-}, [fetchResults]);
-
-
-
-  if (loading) return <SkeletonCard />;
 
   return (
-  <div className="space-y-6">
+    <div className="space-y-6">
 
-    {/* Header */}
-    <PageHeader
-      title="Exam Results"
-      description={`Exam Title: ${data?.exam_title}`}
-      actions={<>
-        <div className="w-full md:w-72 px-4">
-          <input
-            type="text"
-            placeholder="Search student or roll..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <BackButton to={routes.exams.list} label="Go Back" />
-        </>
-        
-      }
-      
-    />
+      <PageHeader
+        title="Exam Results"
+        description={`Exam Title: ${data?.exam_title}`}
+        actions={
+          <>
+            <div className="w-full px-4 md:w-72">
+              <input
+                type="text"
+                placeholder="Search student or roll..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
 
-    {/* Summary Cards */}
-    <div className="grid gap-4 md:grid-cols-4">
-
-      <div className="bg-white border rounded-lg p-4">
-        <p className="text-sm text-gray-500">
-          Students Appeared
-        </p>
-        <p className="text-2xl font-bold mt-2">
-          {summary.students}
-        </p>
-      </div>
-
-      <div className="bg-white border rounded-lg p-4">
-        <p className="text-sm text-gray-500">
-          Average Score
-        </p>
-        <p className="text-2xl font-bold mt-2">
-          {summary.averagePercentage.toFixed(1)}%
-        </p>
-      </div>
-
-      <div className="bg-white border rounded-lg p-4">
-        <p className="text-sm text-gray-500">
-          Highest Score
-        </p>
-        <p className="text-2xl font-bold mt-2">
-          {summary.highestScore.toFixed(1)}%
-        </p>
-      </div>
-
-      <div className="bg-white border rounded-lg p-4">
-        <p className="text-sm text-gray-500">
-          Auto Submitted
-        </p>
-        <p className="text-2xl font-bold mt-2">
-          {summary.autoSubmitted}
-        </p>
-      </div>
-
-    </div>
-
-    {/* Empty Exam State */}
-    {results.length === 0 ? (
-      <EmptyState
-        title="No results found"
-        description="No student has attempted this exam yet."
-      />
-    ) : filteredResults.length === 0 ? (
-
-      /* Empty Search State */
-      <EmptyState
-        title="No matching students"
-        description="Try a different search term."
+            <BackButton
+              to={routes.exams.list}
+              label="Go Back"
+            />
+          </>
+        }
       />
 
-    ) : (
+      <ResultsSummary
+        summary={summary}
+      />
 
-      <>
-        {/* Count */}
-        <div className="text-sm text-gray-500">
-          Showing {filteredResults.length} of {results.length} students
-        </div>
-
-        {/* Table */}
-        <div className="bg-white border rounded-lg overflow-hidden">
-
-          <div className="overflow-x-auto">
-
-            <table className="w-full text-sm min-w-[900px]">
-
-              <thead className="bg-gray-50 text-left">
-                <tr>
-                  <th className="p-3">#</th>
-                  <th className="p-3">Student</th>
-                  <th className="p-3">Class</th>
-                  <th className="p-3">Roll</th>
-                  <th className="p-3">Score</th>
-                  <th className="p-3">%</th>
-                  <th className="p-3">Attempts</th>
-                  <th className="p-3">Violation</th>
-                  <th className="p-3">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-
-                {filteredResults.map((r, index) => (
-                  <tr
-                    key={r.id}
-                    className="border-t hover:bg-gray-50"
-                  >
-
-                    <td className="p-3 font-semibold text-gray-500">
-                      {index + 1}
-                    </td>
-
-                    <td
-                      className="p-3 cursor-pointer"
-                      onClick={() =>
-                        navigate(routes.exams.studentAttempts(examUid,r.student_id))
-                      }
-                    >
-                      <div className="font-medium text-indigo-600 hover:underline">
-                        {r.first_name} {r.last_name}
-                      </div>
-
-                      <div className="text-xs text-gray-400 mt-1">
-                        View Attempts →
-                      </div>
-                    </td>
-
-                    <td className="p-3">
-                      {r.class_section || "-"}
-                    </td>
-
-                    <td className="p-3">
-                      {r.roll_number || "-"}
-                    </td>
-
-                    <td className="p-3 font-semibold">
-                      {r.score} / {r.total_marks}
-                    </td>
-
-                    <td className="p-3">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                        {(r.percentage || 0).toFixed(2)}%
-                      </span>
-                    </td>
-
-                    <td className="p-3 text-center font-semibold">
-                      {r.attempts_count}
-                    </td>
-
-                    <td className="p-3">
-                      {r.violation_count ? (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
-                          {r.violation_count}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">
-                          0
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="p-3">
-                      {r.auto_submitted_reason ? (
-                        <div>
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
-                            Auto Submitted
-                          </span>
-
-                          <div className="text-xs text-gray-500 mt-1">
-                            {r.auto_submitted_reason}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                          Completed
-                        </span>
-                      )}
-                    </td>
-
-                  </tr>
-                ))}
-
-              </tbody>
-
-            </table>
-
+      {results.length === 0 ? (
+        <EmptyState
+          title="No results found"
+          description="No student has attempted this exam yet."
+        />
+      ) : filteredResults.length === 0 ? (
+        <EmptyState
+          title="No matching students"
+          description="Try a different search term."
+        />
+      ) : (
+        <>
+          <div className="text-sm text-gray-500">
+            Showing {filteredResults.length} of {results.length} students
           </div>
 
-        </div>
+          <ResultTable
+            results={filteredResults}
+            examUid={examUid}
+            routes={routes}
+          />
+        </>
+      )}
 
-      </>
-    )}
-
-  </div>
-);
+    </div>
+  );
 }
