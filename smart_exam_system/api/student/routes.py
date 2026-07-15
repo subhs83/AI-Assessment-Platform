@@ -450,8 +450,24 @@ def save_answer(school_slug, attempt_id):
         # -------------------------
         # Determine correctness
         # -------------------------
+        option_order = json.loads(attempt.option_order or "{}")
+
+        order = option_order.get(
+            str(question.id),
+            ["A", "B", "C", "D"]
+        )
+
+        display_to_original = {
+            "A": order[0],
+            "B": order[1],
+            "C": order[2],
+            "D": order[3],
+        }
+
+        original_option = display_to_original[selected_option]
+
         is_correct = (
-            selected_option == question.correct_option
+            original_option == question.correct_option
         )
 
         # -------------------------
