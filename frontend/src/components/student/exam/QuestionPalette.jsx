@@ -39,11 +39,31 @@ export default function QuestionPalette({
       : Math.round((answeredCount / palette.length) * 100);
 
   return (
-  <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+  <div
+    className="
+      flex
+      max-h-[calc(100vh-2rem)]
+      flex-col
+      overflow-hidden
+      rounded-3xl
+      border
+      border-slate-200
+      bg-white
+      shadow-sm
+    "
+  >
 
     {/* Header */}
 
-    <div className="border-b border-slate-100 p-4">
+    <div
+    className="
+      flex-1
+      overflow-y-auto
+      border-t
+      border-slate-100
+      p-4
+    "
+  >
 
       <div className="flex items-center gap-3">
 

@@ -18,9 +18,6 @@ export default function QuizInitPage() {
 
         const data = res.data?.data;
 
-        console.log("STATE RESPONSE:", res.data);
-        console.log("STATE DATA:", data);
-
         if (!data) {
           navigate(`/school/${schoolSlug}/quiz/${quizCode}/register`);
           return;

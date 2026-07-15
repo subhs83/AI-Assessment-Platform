@@ -4,20 +4,21 @@ import API from "../../api/client";
 import BrandHeader from "../../components/student/BrandHeader"
 import { useToast } from "../../components/ui/Toast";
 
-
+const initialInput =
+  {
+      first_name: "",
+      last_name: "",
+      school_class_id: "",
+      school_section_id: "",
+      roll_number: "",
+      mobile: "",
+    }
 const RegisterPage = () => {
   const { schoolSlug, quizCode } = useParams();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    first_name: "",
-    last_name: "",
-    school_class_id: "",
-    school_section_id: "",
-    roll_number: "",
-    mobile: "",
-  });
+  const [form, setForm] = useState(initialInput);
 
   const [schoolClasses, setSchoolClasses] = useState([]);
   const [sections, setSections] = useState([]);
@@ -52,7 +53,7 @@ const RegisterPage = () => {
 
   loadAcademicStructure();
 
-}, [schoolSlug]);
+}, [schoolSlug, showToast]);
 
 
   const handleChange = (e) => {

@@ -217,9 +217,9 @@ export default function ExamPage() {
             </div>
 
             {/* ================= DESKTOP PALETTE ================= */}
-            <aside className="hidden w-[290px] shrink-0 lg:block">
+            <aside className="hidden w-[240px] shrink-0 lg:block">
 
-              <div className="sticky top-4 h-fit">
+              <div className="sticky top-4 max-h-[calc(100vh-2rem)]">
 
                 <QuestionPalette
                   schoolSlug={schoolSlug}
