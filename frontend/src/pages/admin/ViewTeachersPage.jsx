@@ -6,15 +6,15 @@ import { useAdminStore } from "../../store/adminStore";
 import SkeletonCard from "../../components/ui/SkeletonCard";
 import ErrorState from "../../components/ui/ErrorState";
 import EmptyState from "../../components/ui/EmptyState";
+import PageHeader from "../../components/ui/PageHeader"
 import { useToast } from "../../components/ui/Toast";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import TeacherTable from "../../components/admin/teachers/TeacherTable";
+
+
 import {
   Users,
   UserPlus,
-  Mail,
-  ShieldCheck,
-  ShieldAlert,
-  LockKeyhole,
 } from "lucide-react";
 
 export default function ViewTeachersPage() {
@@ -146,217 +146,30 @@ export default function ViewTeachersPage() {
   <div className="space-y-6">
 
     {/* Header */}
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-
-      <div className="flex items-center gap-4">
-
-        <div className="rounded-2xl bg-indigo-100 p-3">
-
-          <Users
-            size={24}
-            className="text-indigo-600"
-          />
-
-        </div>
-
-        <div>
-
-          <h1 className="text-3xl font-bold text-gray-900">
-            Teachers
-          </h1>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Manage teachers in your school and control account access.
-          </p>
-
-        </div>
-
-      </div>
-
-      <Link
-        to={`/school/${schoolSlug}/admin/teachers/add`}
-        className="inline-flex items-center gap-2 justify-center rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-indigo-700"
-      >
-
-        <UserPlus size={18} />
-
-        Add Teacher
-
-      </Link>
-
-    </div>
+     <PageHeader
+        title="Teachers"
+        description="Manage teachers in your school and control account access."
+        icon={Users}
+        iconColor="text-indigo-600"
+        iconBackground="bg-indigo-100"
+        actions={
+          <Link
+            to={`/school/${schoolSlug}/admin/teachers/add`}
+            className="inline-flex items-center gap-2 justify-center rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            <UserPlus size={18} />
+            Add Teacher
+          </Link>
+        }
+      />
 
 
     {/* Table */}
-    <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-
-      <div className="overflow-x-auto">
-
-        <table className="min-w-full">
-
-          <thead className="border-b bg-gray-50">
-
-            <tr className="text-left text-sm font-semibold text-gray-700">
-
-              <th className="px-6 py-4">
-                Teacher
-              </th>
-
-              <th className="px-6 py-4">
-                Email
-              </th>
-
-              <th className="px-6 py-4">
-                Status
-              </th>
-
-              <th className="px-6 py-4">
-                Password Change
-              </th>
-
-              <th className="px-6 py-4">
-                Actions
-              </th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody className="divide-y divide-gray-100">
-
-            {teachers.map((teacher) => (
-
-              <tr
-                key={teacher.id}
-                className="hover:bg-gray-50 transition"
-              >
-
-                <td className="px-6 py-4">
-
-                  <div>
-                    <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-indigo-100 p-2">
-
-                      <Users
-                        size={16}
-                        className="text-indigo-600"
-                      />
-
-                    </div>
-
-                    <div className="font-semibold text-gray-900 whitespace-nowrap">
-                      {teacher.name}
-                    </div>
-
-                  </div>
-
-                  </div>
-                </td>
-
-                <td className="px-6 py-4">
-
-                  <div className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
-
-                    <Mail
-                      size={16}
-                      className="text-blue-500"
-                    />
-
-                    {teacher.email}
-
-                  </div>
-
-                </td>
-
-
-                <td className="px-6 py-4">
-
-                  <span
-                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                      teacher.is_active
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {teacher.is_active
-                      ? "Active"
-                      : "Inactive"}
-                  </span>
-
-                </td>
-
-
-                <td className="px-6 py-4">
-
-                  {teacher.force_password_change ? (
-
-                    <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
-                      Required
-                    </span>
-
-                  ) : (
-
-                    <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                      Completed
-                    </span>
-
-                  )}
-
-                </td>
-
-
-                <td className="px-6 py-4">
-
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-
-                    <button
-                      onClick={() =>  setTeacherToToggle(teacher)}
-                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition ${
-                        teacher.is_active
-                          ? "bg-red-600 hover:bg-red-700"
-                          : "bg-green-600 hover:bg-green-700"
-                      }`}
-                    >
-
-                      {teacher.is_active ? (
-                        <ShieldAlert size={18} />
-                      ) : (
-                        <ShieldCheck size={18} />
-                      )}
-
-                      {teacher.is_active ? "Deactivate" : "Activate"}
-
-                    </button>
-
-
-                    <button
-                      onClick={() =>  setTeacherToReset(teacher)}
-                      className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-amber-600"
-                      
-                    >
-
-                      <LockKeyhole size={18} />
-
-                      Reset
-
-                    </button>
-
-                  </div>
-
-                </td>
-
-              </tr>
-
-            ))}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
+    <TeacherTable
+      teachers={teachers}
+      onToggle={setTeacherToToggle}
+      onReset={setTeacherToReset}
+    />
 
   </div>
   <ConfirmModal

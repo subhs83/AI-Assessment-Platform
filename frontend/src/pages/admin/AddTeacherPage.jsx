@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { useAdminStore } from "../../store/adminStore";
 import { useToast } from "../../components/ui/Toast";
+import PageHeader from "../../components/ui/PageHeader"
 
 import {
   UserPlus,
@@ -78,30 +79,14 @@ export default function AddTeacherPage() {
   <div className="mx-auto max-w-3xl space-y-6">
 
     {/* Header */}
-    <div className="flex items-center gap-4">
-
-      <div className="rounded-2xl bg-indigo-100 p-3">
-
-        <UserPlus
-          size={24}
-          className="text-indigo-600"
-        />
-
-      </div>
-
-      <div>
-
-        <h1 className="text-3xl font-bold text-gray-900">
-          Add Teacher
-        </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
-          Create a new teacher account for your school.
-        </p>
-
-      </div>
-
-    </div>
+    
+    <PageHeader
+        title="Add Teacher"
+        description="Create a new teacher account for your school."
+        icon={UserPlus}
+        iconClassName="bg-indigo-100 ring-1 ring-indigo-100 text-indigo-600"
+      />
+    
 
 
     {/* Form Card */}

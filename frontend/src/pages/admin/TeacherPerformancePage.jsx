@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 
 import SkeletonCard from "../../components/ui/SkeletonCard";
 import ErrorState from "../../components/ui/ErrorState";
+import PageHeader from "../../components/ui/PageHeader"
 
 import { useAdminStore } from "../../store/adminStore";
 import {
@@ -49,32 +50,13 @@ export default function TeacherPerformancePage() {
   <div className="space-y-6">
 
     {/* Header */}
-    <div>
-
-      <div className="flex items-center gap-3">
-
-        <div className="rounded-xl bg-blue-100 p-3">
-          <Users
-            size={22}
-            className="text-blue-600"
-          />
-        </div>
-
-        <div>
-
-          <h1 className="text-3xl font-bold text-gray-900">
-            Teacher Performance
-          </h1>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Compare teacher activity and student outcomes.
-          </p>
-
-        </div>
-
-      </div>
-
-    </div>
+    
+    <PageHeader
+      title="Teacher Performance"
+      description="Compare teacher activity and student outcomes."
+      icon={Users}
+      iconClassName="bg-violet-100 ring-1 ring-violet-100 text-violet-600"
+    />
 
 
     {/* Table */}

@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import { adminApi } from "../../api/adminApi";
+import PageHeader from "../../components/ui/PageHeader"
 
 import {
   Download,
@@ -51,30 +52,12 @@ export default function DownloadReportPage() {
   <div className="space-y-8">
 
     {/* Header */}
-    <div className="flex items-center gap-4">
-
-      <div className="rounded-2xl bg-green-100 p-3">
-
-        <Download
-          size={24}
-          className="text-green-600"
-        />
-
-      </div>
-
-      <div>
-
-        <h1 className="text-3xl font-bold text-gray-900">
-          Download Reports
-        </h1>
-
-        <p className="mt-1 text-sm text-gray-500">
-          Export school reports and performance data as CSV files.
-        </p>
-
-      </div>
-
-    </div>
+    <PageHeader
+        title="Download Reports"
+        description="Export school reports and performance data as CSV files."
+        icon={Download}
+        iconClassName="bg-green-100 ring-1 ring-green-100 text-green-600"
+      />
 
 
     {/* Cards */}

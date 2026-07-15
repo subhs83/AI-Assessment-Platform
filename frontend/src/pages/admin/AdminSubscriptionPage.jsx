@@ -25,7 +25,7 @@ export default function SubscriptionPage() {
 
     useEffect(() => {
         fetchSubscription(schoolSlug);
-    }, [schoolSlug]);
+    }, [schoolSlug, fetchSubscription]);
 
     if (subscriptionLoading && !subscription) {
         return <SkeletonCard />;
