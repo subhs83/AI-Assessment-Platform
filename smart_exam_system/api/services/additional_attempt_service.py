@@ -13,16 +13,22 @@ from smart_exam_system.extensions import db
 def get_attempt_limit_info(
     *,
     school_id,
-    exam_id,
+    exam_uid,
     student_db_id,
 ):
-    exam = db.session.get(ExamModel, exam_id)
+    exam = ExamModel.query.filter_by(
+        exam_uid=exam_uid,
+        school_id=school_id,
+    ).first()
+
+    if not exam:
+        raise ValueError("Exam not found")
 
     base_attempts = exam.max_attempts_per_student or 0
 
     granted_attempts = get_total_granted_attempts(
         school_id=school_id,
-        exam_id=exam_id,
+        exam_uid=exam_uid,
         student_db_id=student_db_id,
     )
 

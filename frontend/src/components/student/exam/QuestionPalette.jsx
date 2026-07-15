@@ -56,14 +56,14 @@ export default function QuestionPalette({
     {/* Header */}
 
     <div
-    className="
-      flex-1
-      overflow-y-auto
-      border-t
-      border-slate-100
-      p-4
-    "
-  >
+      className="
+        flex-1
+        overflow-y-auto
+        border-t
+        border-slate-100
+        p-4
+      "
+    >
 
       <div className="flex items-center gap-3">
 
