@@ -42,7 +42,7 @@ export default function QuestionPalette({
   <div
     className="
       flex
-      h-[calc(100vh-2rem)]
+      h-full
       flex-col
       overflow-hidden
       rounded-3xl

@@ -217,7 +217,7 @@ export default function ExamPage() {
             </div>
 
             {/* ================= DESKTOP PALETTE ================= */}
-            <aside className="hidden w-[320px] shrink-0 lg:block">
+            <aside className="hidden w-[340px] shrink-0 lg:block">
 
               <div className="h-full">
 
