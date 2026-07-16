@@ -56,8 +56,20 @@ export default function PaletteDrawer({
 
       {/* Drawer */}
 
-      <div className="absolute bottom-0 left-0 right-0 max-h-[82vh] rounded-t-3xl bg-white shadow-2xl">
-
+      <div
+        className="
+          absolute
+          bottom-0
+          left-0
+          right-0
+          flex
+          h-[82vh]
+          flex-col
+          rounded-t-3xl
+          bg-white
+          shadow-2xl
+        "
+      >
         {/* Drag Handle */}
 
         <div className="flex justify-center py-3">
@@ -68,7 +80,19 @@ export default function PaletteDrawer({
 
         {/* Header */}
 
-        <div className="sticky top-0 border-b border-slate-100 bg-white px-5 pb-4">
+        <div
+          className="
+            sticky
+            top-0
+            z-10
+            flex-shrink-0
+            border-b
+            border-slate-100
+            bg-white
+            px-5
+            pb-4
+          "
+        >
 
           <div className="flex items-center justify-between">
 
@@ -178,7 +202,7 @@ export default function PaletteDrawer({
 
         {/* Question Grid */}
 
-        <div className="overflow-y-auto px-5 py-5">
+        <div  className=" flex-1 overflow-y-auto px-5 py-5">
 
           <div className="grid grid-cols-6 gap-3">
 
