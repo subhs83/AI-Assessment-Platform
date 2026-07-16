@@ -27,7 +27,7 @@ const HeroSection = ({
         <div className="flex-1 space-y-6">
 
           {/* Exam Header */}
-         <header className="space-y-3">
+         <header className="hidden md: space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-2xl font-bold text-slate-900">
                 {result.exam_title}
@@ -57,6 +57,7 @@ const HeroSection = ({
           {/* Percentage */}
           <h1
             className={`
+              hidden md:
               text-5xl md:text-7xl
               font-extrabold
               tracking-tight
@@ -68,10 +69,10 @@ const HeroSection = ({
           </h1>
 
           {/* Student + Rank */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             {/* Student */}
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="hidden md:flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
 
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-bold text-indigo-700">
                 {result.student_name?.charAt(0).toUpperCase()}
