@@ -52,10 +52,7 @@ export default function ExamPage() {
   const fullscreenRequired = useExamStore((state) => state.fullscreenRequired);
   const saveStatus = useExamStore((state) => state.saveStatus);
   const saving = useExamStore((state) => state.saving);
-  const questionCache = useExamStore((s) => s.questionCache);
-
-  console.log("questionCache :", questionCache);
-
+  
   useEffect(() => {
     
     useExamStore.setState({

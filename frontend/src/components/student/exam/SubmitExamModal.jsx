@@ -12,6 +12,18 @@ export default function SubmitExamModal({
 }) {
   const show = useExamStore((s) => s.showSubmitModal);
   const setShow = useExamStore((s) => s.setShowSubmitModal);
+  const questionCache = useExamStore((s) => s.questionCache);
+    const totalQuestions = useExamStore((s) => s.totalQuestions);
+  
+    const unansweredQuestions = [];
+  
+    for (let i = 0; i < totalQuestions; i++) {
+        const question = questionCache[i];
+  
+        if (!question || question.selected_option == null) {
+            unansweredQuestions.push(i + 1);
+        }
+  
 
   const { submitExam } = useSubmitExam(
     schoolSlug,
@@ -86,6 +98,24 @@ export default function SubmitExamModal({
             </div>
 
           </div>
+          {unansweredQuestions.length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <h3 className="mb-3 text-sm font-semibold text-amber-800">
+                Review Unanswered Questions
+              </h3>
+
+              <div className="flex flex-wrap gap-2">
+                {unansweredQuestions.map((number) => (
+                  <span
+                    key={number}
+                    className="rounded-lg border border-amber-300 bg-white px-3 py-1 text-sm font-medium text-amber-700"
+                  >
+                    Q{number}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
 
