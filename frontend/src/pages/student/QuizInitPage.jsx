@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/client";
 import { useExamStore } from "../../store/examStore";
+import BrandLoading from "../../components/loading/BrandLoading";
 
 export default function QuizInitPage() {
   const { schoolSlug, quizCode } = useParams();
@@ -85,5 +86,5 @@ export default function QuizInitPage() {
     fetchState();
   }, [schoolSlug, quizCode, navigate, initSession]);
 
-  return <h3>Loading Quiz...</h3>;
+ return <BrandLoading />;
 }

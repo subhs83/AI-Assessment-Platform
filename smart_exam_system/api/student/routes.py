@@ -1054,6 +1054,10 @@ def get_academic_structure_api(school_slug):
         "success": True,
         "message": "Academic structure fetched successfully.",
         "data": {
+            "school": {
+                "name": school.name,
+                "logo": school.logo,
+            },
             "classes": classes,
         },
     })

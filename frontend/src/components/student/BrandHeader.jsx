@@ -1,3 +1,4 @@
+import ImageWithFallback from "../common/ImageWithFallback"
 const BrandHeader = ({ schoolName = "School", logo }) => {
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
@@ -15,7 +16,12 @@ const BrandHeader = ({ schoolName = "School", logo }) => {
             />
           ) : (
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-base font-bold text-indigo-600">
-              {schoolName.charAt(0).toUpperCase()}
+              <ImageWithFallback
+                  src={logo}
+                  alt={schoolName}
+                  className="h-10 w-10 rounded-xl border border-border"
+                  iconClassName="h-5 w-5"
+              />
             </div>
           )}
 
@@ -36,6 +42,7 @@ const BrandHeader = ({ schoolName = "School", logo }) => {
         {/* Right */}
 
         <div className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-medium text-indigo-700">
+          Powered by 
           IndiaEduCore
         </div>
 

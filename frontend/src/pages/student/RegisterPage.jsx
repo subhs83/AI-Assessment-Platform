@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import API from "../../api/client";
 import BrandHeader from "../../components/student/BrandHeader"
 import { useToast } from "../../components/ui/Toast";
+import SchoolLoading from "../../components/loading/SchoolLoading"
 
 const initialInput =
   {
@@ -22,34 +23,34 @@ const RegisterPage = () => {
 
   const [schoolClasses, setSchoolClasses] = useState([]);
   const [sections, setSections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [school, setSchool] = useState(null);
+  const [startingExam, setStartingExam] = useState(false);
 
 
   useEffect(() => {
 
   const loadAcademicStructure = async () => {
-
     try {
+        const res = await API.get(
+            `/api/student/${schoolSlug}/academic-structure`
+        );
 
-      const res = await API.get(
-        `/api/student/${schoolSlug}/academic-structure`
-      );
-
-      setSchoolClasses(
-        res.data.data.classes
-      );
+        setSchool(res.data.data.school);
+        setSchoolClasses(res.data.data.classes);
 
     } catch (err) {
+        console.error(err);
 
-      console.error(err);
+        showToast(
+            "Failed to load classes.",
+            "error"
+        );
 
-      showToast(
-        "Failed to load classes.",
-        "error"
-      );
-
+    } finally {
+        setLoading(false);
     }
-
-  };
+};
 
   loadAcademicStructure();
 
@@ -87,6 +88,7 @@ const RegisterPage = () => {
 };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setStartingExam(true);
 
     try {
       const res = await API.post(
@@ -135,11 +137,38 @@ const RegisterPage = () => {
         "error"
       );
     }
+    finally {
+      setStartingExam(false);
+  }
   };
+
+  if (loading) {
+      return (
+          <SchoolLoading
+              name={school?.name}
+              logo={school?.logo}
+              message="Preparing your exam..."
+          />
+      );
+  }
+
+  if (startingExam) {
+      return (
+          <SchoolLoading
+              name={school?.name}
+              logo={school?.logo}
+              message="Starting your exam..."
+          />
+      );
+  }
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-indigo-50 via-white to-sky-50 flex flex-col">
       
-      <BrandHeader schoolName="ABC School" />
+      <BrandHeader
+          schoolName={school.name}
+          schoolLogo={school.logo}
+      />
 
       <main className="flex-1 px-4 py-6 sm:flex sm:items-center sm:justify-center pb-safe">
         
