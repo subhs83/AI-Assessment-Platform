@@ -33,6 +33,7 @@ export default function ExamPage() {
    useExamSecurity(); 
   const { schoolSlug, attemptId, index } = useParams();
   const [openPalette, setOpenPalette] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const safeIndex = Number(index ?? 0);
 
   useExamQuestion({ schoolSlug, attemptId, index: safeIndex });
@@ -51,6 +52,9 @@ export default function ExamPage() {
   const fullscreenRequired = useExamStore((state) => state.fullscreenRequired);
   const saveStatus = useExamStore((state) => state.saveStatus);
   const saving = useExamStore((state) => state.saving);
+  const questionCache = useExamStore((s) => s.questionCache);
+
+  console.log("questionCache :", questionCache);
 
   useEffect(() => {
     
@@ -117,17 +121,37 @@ export default function ExamPage() {
   // NAVIGATION
   // =====================
   const goNext = () => {
+    if (isNavigating) return;
+
+    setIsNavigating(true);
+
     const next = Number(currentIndex) + 1;
-    if (next < currentQuestion.total_questions) {
-      navigate(`/school/${schoolSlug}/attempt/${attemptId}/${next}`);
+
+    if (next >= currentQuestion.total_questions) {
+      setIsNavigating(false);
+      return;
     }
+
+    navigate(
+      `/school/${schoolSlug}/attempt/${attemptId}/${next}`
+    );
   };
 
   const goPrev = () => {
+    if (isNavigating) return;
+
+    setIsNavigating(true);
+
     const prev = Number(currentIndex) - 1;
-    if (prev >= 0) {
-      navigate(`/school/${schoolSlug}/attempt/${attemptId}/${prev}`);
+
+    if (prev < 0) {
+      setIsNavigating(false);
+      return;
     }
+
+    navigate(
+      `/school/${schoolSlug}/attempt/${attemptId}/${prev}`
+    );
   };
 
   const selectedOption =
@@ -206,6 +230,7 @@ export default function ExamPage() {
                 <ExamFooter
                   currentIndex={currentIndex}
                   totalQuestions={currentQuestion.total_questions}
+                  isNavigating={isNavigating}
                   isOffline={isOffline}
                   onPrev={goPrev}
                   onNext={goNext}

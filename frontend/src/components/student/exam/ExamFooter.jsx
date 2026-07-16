@@ -10,6 +10,7 @@ import { useExamStore } from "../../../store/examStore";
 export default function ExamFooter({
   currentIndex,
   totalQuestions,
+  isNavigating,
   isOffline,
   onPrev,
   onNext,
@@ -30,7 +31,7 @@ export default function ExamFooter({
       {/* Previous */}
       <button
         onClick={onPrev}
-        disabled={isOffline || currentIndex === 0}
+        disabled={isOffline || isNavigating || currentIndex === 0}
         className="
           flex h-11 items-center justify-center gap-2
           rounded-2xl
@@ -78,7 +79,7 @@ export default function ExamFooter({
       {!isLastQuestion ? (
         <button
           onClick={onNext}
-          disabled={isOffline}
+          disabled={isOffline ||  isNavigating}
           className="
             flex h-11 items-center justify-center gap-2
             rounded-2xl

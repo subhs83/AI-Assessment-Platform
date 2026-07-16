@@ -29,7 +29,7 @@ export default function QuestionOptions({
             py-3
             text-left
             transition-all
-            duration-200
+            duration-150
             flex
             items-center
             gap-3
@@ -39,7 +39,7 @@ export default function QuestionOptions({
                 ? `
                   border-indigo-500
                   bg-indigo-50
-                  shadow-md
+                  shadow-lg
                   ring-2
                   ring-indigo-100
                 `
@@ -47,7 +47,7 @@ export default function QuestionOptions({
                   border-slate-200
                   bg-white
                   hover:border-indigo-300
-                  hover:bg-slate-50
+                  hover:bg-indigo-50/40
                   hover:shadow-sm
                 `
             }
@@ -64,7 +64,7 @@ export default function QuestionOptions({
 
         <div
           className={`
-            flex h-10 w-10 shrink-0
+            flex h-11 w-11 shrink-0
             items-center justify-center
             rounded-full border-2
             text-sm font-bold
@@ -72,7 +72,7 @@ export default function QuestionOptions({
 
             ${
               isSelected
-                ? "border-indigo-600 bg-indigo-600 text-white"
+                ? "border-indigo-600 bg-indigo-600 shadow-sm text-white"
                 : "border-slate-300 bg-white text-slate-700 group-hover:border-indigo-400"
             }
           `}
@@ -88,7 +88,7 @@ export default function QuestionOptions({
                 whitespace-pre-wrap
                 break-words
                 text-[15px]
-                leading-7
+                leading-6
                 md:text-base
 
                 ${
@@ -106,13 +106,14 @@ export default function QuestionOptions({
 
           <div className="flex items-center">
             {isSelected && (
-              <Check
-                size={22}
-                className="text-indigo-700"
-              />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
+                <Check
+                  size={18}
+                  className="text-indigo-700"
+                />
+              </div>
             )}
           </div>
-
         </button>
       );
     })}
