@@ -226,11 +226,11 @@ useEffect(() => {
 />
     <div className="max-w-6xl mx-auto px-4">
       {/* GLASS GRADIENT HEADER */}
-      <div className="animate-fade-up">
-     <ResultHeader
-        result={result}
-        currentAttempt={currentAttempt}
-      />
+      <div className="sticky top-0 z-50 animate-fade-up">
+        <ResultHeader
+          result={result}
+          currentAttempt={currentAttempt}
+        />
       </div>
 
       

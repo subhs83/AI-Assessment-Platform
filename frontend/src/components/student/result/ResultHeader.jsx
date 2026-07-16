@@ -35,20 +35,15 @@ const ResultHeader = ({
   return (
     <div
       className="
-        sticky
-        top-0
-        z-50
         mb-6
-        rounded-b-3xl
+        rounded-3xl
         border
         border-indigo-100
         bg-gradient-to-r
         from-indigo-50
         via-white
         to-purple-50
-        bg-white/90
-        backdrop-blur-xl
-        shadow-md
+        shadow-sm
       "
     >
       <div className="p-4 md:p-5">
