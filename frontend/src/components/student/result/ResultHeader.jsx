@@ -35,18 +35,23 @@ const ResultHeader = ({
   return (
     <div
       className="
+        sticky
+        top-0
+        z-50
         mb-6
-        rounded-3xl
+        rounded-b-3xl
         border
         border-indigo-100
         bg-gradient-to-r
         from-indigo-50
         via-white
         to-purple-50
-        shadow-sm
+        bg-white/90
+        backdrop-blur-xl
+        shadow-md
       "
     >
-      <div className="p-5">
+      <div className="p-4 md:p-5">
 
         {/* Desktop */}
         <div className="hidden lg:flex items-center justify-between gap-6">
