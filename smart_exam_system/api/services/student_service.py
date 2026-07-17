@@ -14,6 +14,11 @@ from smart_exam_system.models import (
 )
 
 from smart_exam_system.api.utils.randomization_service import generate_balanced_option_orders
+from smart_exam_system.api.services.display_option_mapper import (
+    build_display_options,
+     original_to_display,
+)
+
 
 from smart_exam_system.api.services.additional_attempt_service import (
     get_attempt_limit_info
@@ -1050,17 +1055,45 @@ def get_attempt_detailed_report(attempt_id):
             question_id=q_id
         ).first()
 
-        selected = answer.selected_option if answer else None
-        correct = question.correct_option
+        option_order_map = json.loads(attempt.option_order or "{}")
 
-        option_map = {
+        order = option_order_map.get(
+            str(question.id),
+            ["A", "B", "C", "D"],
+)
+
+
+        raw_options = {
             "A": question.option_a,
             "B": question.option_b,
             "C": question.option_c,
-            "D": question.option_d
+            "D": question.option_d,
         }
 
-        selected_text = option_map.get(selected) if selected else None
+        options = build_display_options(
+            raw_options,
+            order,
+        )
+
+        selected = (
+            original_to_display(
+                answer.selected_option,
+                order,
+            )
+            if answer
+            else None
+        )
+
+        correct = original_to_display(
+            question.correct_option,
+            order,
+        )
+
+        selected_text = (
+            options.get(selected)
+            if selected
+            else None
+        )
 
         if selected is None:
             remark = "Not Attempted"
@@ -1077,8 +1110,8 @@ def get_attempt_detailed_report(attempt_id):
             "question_text": question.question_text,
             "selected_option": selected if selected else "NA",
             "selected_text": selected_text if selected else "Not Attempted",
-            "options": option_map,
-            "is_correct": is_correct,
+            "options": options,
+            "correct_option": correct,
             "remark": remark
         })
 

@@ -10,6 +10,12 @@ from smart_exam_system.models import (
     AttemptModel,
     SchoolModel
 )
+
+from smart_exam_system.api.services.display_option_mapper import (
+    build_display_options,
+     original_to_display,
+     display_to_original,
+)
 from smart_exam_system.api.services.student_service import (
     start_student_attempt,
     resolve_attempt,
@@ -291,31 +297,9 @@ def get_question(school_slug, attempt_id, q_index):
                 "error": "not_found"
             }), 404
 
-        # 5. Get saved answer
-        answer = StudentAnswerModel.query.filter_by(
-            attempt_id=attempt_id,
-            question_id=question_id
-        ).first()
-
-        selected_option = answer.selected_option if answer else None
-        
-
-        deadline = (
-            attempt.start_time +
-            timedelta(
-                minutes=attempt.exam.duration_minutes
-            )
-        )
-
-        remaining_seconds = max(
-            0,
-            int(
-                (deadline - datetime.utcnow())
-                .total_seconds()
-            )
-        )
-        # 6. Build response
-
+        # --------------------------------------------------
+        # Build randomized options (Display A/B/C/D)
+        # --------------------------------------------------
         option_order_map = json.loads(attempt.option_order or "{}")
 
         order = option_order_map.get(
@@ -327,35 +311,42 @@ def get_question(school_slug, attempt_id, q_index):
             "A": question.option_a,
             "B": question.option_b,
             "C": question.option_c,
-            "D": question.option_d
+            "D": question.option_d,
         }
 
-        priority_keywords = [
-            "none of the above",
-            "all of the above",
-            "none of these",
-            "all of these",
-        ]
+        options = build_display_options(
+            raw_options,
+            order,
+        )
 
-        def is_special_option(text):
-            if not text:
-                return False
-            return any(k in text.lower() for k in priority_keywords)
+        # --------------------------------------------------
+        # Get saved answer
+        # --------------------------------------------------
+        answer = StudentAnswerModel.query.filter_by(
+            attempt_id=attempt_id,
+            question_id=question_id,
+        ).first()
 
-        normal_keys = []
-        special_keys = []
+        selected_option = None
 
-        for k in order:
-            val = raw_options.get(k)
+        if answer:
+            selected_option = original_to_display(
+                answer.selected_option,
+                order,
+            )
 
-            if is_special_option(val):
-                special_keys.append(k)
-            else:
-                normal_keys.append(k)
+        # --------------------------------------------------
+        # Remaining time
+        # --------------------------------------------------
+        deadline = (
+            attempt.start_time +
+            timedelta(minutes=attempt.exam.duration_minutes)
+        )
 
-        final_order = normal_keys + special_keys
-
-        options = {k: raw_options[k] for k in final_order}
+        remaining_seconds = max(
+            0,
+            int((deadline - datetime.utcnow()).total_seconds())
+        )
         return jsonify({
             "success": True,
             "message": "Question fetched successfully",
@@ -457,14 +448,10 @@ def save_answer(school_slug, attempt_id):
             ["A", "B", "C", "D"]
         )
 
-        display_to_original = {
-            "A": order[0],
-            "B": order[1],
-            "C": order[2],
-            "D": order[3],
-        }
-
-        original_option = display_to_original[selected_option]
+        original_option = display_to_original(
+            selected_option,
+            order,
+        )
 
         is_correct = (
             original_option == question.correct_option
@@ -473,15 +460,18 @@ def save_answer(school_slug, attempt_id):
         # -------------------------
         # Update OR Insert
         # -------------------------
+
+        # print("===================================")
+        # print("===================================")
         if answer:
-            answer.selected_option = selected_option
+            answer.selected_option = original_option
             answer.is_correct = is_correct
         else:
             answer = StudentAnswerModel(
                 attempt_id=attempt_id,
                 question_id=question_id,
-                selected_option=selected_option,
-                is_correct=is_correct
+                selected_option=original_option,
+                is_correct=is_correct,
             )
             db.session.add(answer)
 

@@ -6,7 +6,7 @@ def create_exam_targets(
     exam_id,
     targets,
 ):
-    print(targets)
+    # print(targets)
     created_targets = []
 
     for target in targets:

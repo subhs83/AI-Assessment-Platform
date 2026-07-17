@@ -1,12 +1,18 @@
  
 from smart_exam_system.extensions import db
 from smart_exam_system.models import (
-ExamModel,  
-QuestionModel,
-AttemptModel,
-StudentAnswerModel,
-StudentModel
+    ExamModel,  
+    QuestionModel,
+    AttemptModel,
+    StudentAnswerModel,
+    StudentModel
 )
+
+from smart_exam_system.api.services.display_option_mapper import (
+    build_display_options,
+     original_to_display,
+)
+
 from smart_exam_system.api.services.exam_service import get_exam_by_uid
 import json
 from openpyxl import Workbook
@@ -58,15 +64,44 @@ def get_attempt_detailed_report(attempt_id, school_id):
             question_id=q_id
         ).first()
 
-        selected = answer.selected_option if answer else None
-        correct = question.correct_option
+        option_order_map = json.loads(attempt.option_order or "{}")
 
-        option_map = {
+        order = option_order_map.get(
+            str(question.id),
+            ["A", "B", "C", "D"],
+)
+
+        raw_options = {
             "A": question.option_a,
             "B": question.option_b,
             "C": question.option_c,
-            "D": question.option_d
+            "D": question.option_d,
         }
+
+        options = build_display_options(
+            raw_options,
+            order,
+        )
+
+        selected = (
+            original_to_display(
+                answer.selected_option,
+                order,
+            )
+            if answer
+            else None
+        )
+
+        correct = original_to_display(
+            question.correct_option,
+            order,
+        )
+
+        selected_text = (
+            options.get(selected)
+            if selected
+            else None
+        )
 
         if selected is None:
             remark = "Not Attempted"
@@ -76,12 +111,12 @@ def get_attempt_detailed_report(attempt_id, school_id):
         elif selected == correct:
             remark = "Correct"
             is_correct = True
-            selected_text = option_map.get(selected)
+            selected_text = options.get(selected)
 
         else:
             remark = "Incorrect"
             is_correct = False
-            selected_text = option_map.get(selected)
+            selected_text = options.get(selected)
 
         report.append({
             "question_id": question.id,
@@ -90,7 +125,7 @@ def get_attempt_detailed_report(attempt_id, school_id):
             "selected_option": selected or "NA",
             "selected_text": selected_text,
 
-            "options": option_map,
+            "options": options,
 
             "is_correct": is_correct,
             "remark": remark
@@ -200,7 +235,7 @@ def get_results(exam_uid, school_id):
             "violation_count": a.violation_count,
             "auto_submitted_reason": a.auto_submitted_reason
         })
-        print("results:", results)
+        # print("results:", results)
 
     return results
 

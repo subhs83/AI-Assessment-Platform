@@ -7,6 +7,11 @@ export function useAnswerActions(schoolSlug, attemptId) {
   const setSaveStatus = useExamStore((state) => state.setSaveStatus);
 
   const saveAnswer = async (questionId, option, index) => {
+    console.log({
+    questionId,
+    option,
+    index,
+  });
     // 🔥 instantly reset UI (prevents old state sticking)
     setSaving(true);
     setSaveStatus("saving");

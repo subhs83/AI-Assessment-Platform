@@ -12,17 +12,17 @@ export default function SubmitExamModal({
 }) {
   const show = useExamStore((s) => s.showSubmitModal);
   const setShow = useExamStore((s) => s.setShowSubmitModal);
-  const questionCache = useExamStore((s) => s.questionCache);
   const totalQuestions = useExamStore((s) => s.totalQuestions);
+  const answers = useExamStore((s) => s.answers);
 
   const unansweredQuestions = [];
 
   for (let i = 0; i < totalQuestions; i++) {
-    const question = questionCache[i];
+      const answer = answers?.[`${attemptId}_${i}`];
 
-    if (!question || question.selected_option == null) {
-      unansweredQuestions.push(i + 1);
-    }
+      if (answer == null) {
+          unansweredQuestions.push(i + 1);
+      }
   }
   
 
