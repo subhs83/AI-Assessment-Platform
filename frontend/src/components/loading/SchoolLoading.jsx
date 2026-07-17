@@ -1,11 +1,26 @@
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 import LoadingDots from "./LoadingDots";
 import ImageWithFallback from "../common/ImageWithFallback";
+import { useSchoolStore } from "../store/schoolStore";
 
 export default function SchoolLoading({
     name = "School",
     logo,
     message = "Preparing your exam...",
 }) {
+
+    const { schoolSlug } = useParams();
+    const fetchSchoolBrand = useSchoolStore(
+        (s) => s.fetchSchoolBrand
+      );
+
+    useEffect(() => {
+        if (schoolSlug) {
+        fetchSchoolBrand(schoolSlug);
+        }
+    }, [schoolSlug, fetchSchoolBrand]);
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-background px-6">
             <div className="w-full max-w-sm text-center">

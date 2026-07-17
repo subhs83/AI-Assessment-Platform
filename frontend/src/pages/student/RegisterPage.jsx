@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import API from "../../api/client";
 import BrandHeader from "../../components/student/BrandHeader"
 import { useToast } from "../../components/ui/Toast";
+import { useSchoolStore } from "../store/schoolStore";
 import SchoolLoading from "../../components/loading/SchoolLoading"
 
 const initialInput =
@@ -24,8 +25,8 @@ const RegisterPage = () => {
   const [schoolClasses, setSchoolClasses] = useState([]);
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [school, setSchool] = useState(null);
   const [startingExam, setStartingExam] = useState(false);
+  const branding = useSchoolStore((s) => s.fetchSchoolBrand);
 
 
   useEffect(() => {
@@ -36,7 +37,6 @@ const RegisterPage = () => {
             `/api/student/${schoolSlug}/academic-structure`
         );
 
-        setSchool(res.data.data.school);
         setSchoolClasses(res.data.data.classes);
 
     } catch (err) {
@@ -145,8 +145,8 @@ const RegisterPage = () => {
   if (loading) {
       return (
           <SchoolLoading
-              name={school?.name}
-              logo={school?.logo}
+              name={branding?.name}
+              logo={branding?.logo}
               message="Preparing your exam..."
           />
       );
@@ -155,8 +155,8 @@ const RegisterPage = () => {
   if (startingExam) {
       return (
           <SchoolLoading
-              name={school?.name}
-              logo={school?.logo}
+              name={branding?.name}
+              logo={branding?.logo}
               message="Starting your exam..."
           />
       );
@@ -166,8 +166,8 @@ const RegisterPage = () => {
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-indigo-50 via-white to-sky-50 flex flex-col">
       
       <BrandHeader
-          schoolName={school.name}
-          schoolLogo={school.logo}
+          schoolName={branding.name}
+          schoolLogo={branding.logo}
       />
 
       <main className="flex-1 px-4 py-6 sm:flex sm:items-center sm:justify-center pb-safe">

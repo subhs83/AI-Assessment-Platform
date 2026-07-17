@@ -1028,7 +1028,7 @@ def get_academic_structure_api(school_slug):
 
     school = SchoolModel.query.filter_by(
         slug=school_slug,
-    ).first()
+    ).first() 
 
     if not school:
         return jsonify({

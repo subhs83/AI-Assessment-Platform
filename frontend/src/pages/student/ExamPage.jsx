@@ -66,6 +66,10 @@ export default function ExamPage() {
     useExamStore.setState({
       saveStatus: "",
     });
+
+     // Unlock navigation
+      setIsNavigating(false);
+      
   }, [safeIndex]);
   // =====================
   // HOOKS

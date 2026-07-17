@@ -2,17 +2,20 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../../api/client";
 import { ArrowRightCircle, UserPlus, BookOpen,Target, EyeOff  } from "lucide-react";
+
 import HeroSection from "../../components/student/result/HeroSection";
 import QuestionReviewCard from "../../components/student/result/QuestionReviewCard";
 import ResultHeader from "../../components/student/result/ResultHeader";
 import ResultSkeleton from "../../components/student/result/ResultSkeleton";
-import {  getPerformanceTheme,  getAchievementText,} from "../../utils/resultUtils";
+import SchoolLoading from "../../components/loading/SchoolLoading"
+import {getPerformanceTheme,  getAchievementText,} from "../../utils/resultUtils";
 import ResultConfetti from "../../components/common/ResultConfetti";
 
 import PerformanceSummary from "../../components/student/result/PerformanceSummary";
 import QuestionNavigator from "../../components/student/result/QuestionNavigator"
 import WarningBanner from "../../components/student/result/WarningBanner";
 import { useToast } from "../../components/ui/Toast";
+import { useSchoolStore } from "../store/schoolStore";
 
 
 export default function Result() {
@@ -32,6 +35,9 @@ export default function Result() {
   const [quizCode, setQuizCode] = useState(null);
   const reviewSectionRef = useRef(null);
   const questionRefs = useRef({});
+
+  const branding = useSchoolStore((s) => s.fetchSchoolBrand);
+  
  // const [canTakeNextAttempt, setCanTakeNextAttempt] = useState(null);
 
   // ✅ First effect: load result
@@ -63,10 +69,8 @@ export default function Result() {
         //   console.log("canTakeNextAttempt (from API):", data.can_take_next_attempt);
         // }
 
-        console.log("Final result data:", data);
-
       } catch (err) {
-        console.log("RESULT ERROR:", err.response?.data || err.message);
+        showToast(err.response?.data || err.message, "error")
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -77,7 +81,7 @@ export default function Result() {
     return () => {
       ignore = true;
     };
-  }, [schoolSlug, selectedAttempt]);
+  }, [schoolSlug, selectedAttempt,showToast]);
 
 
 
@@ -100,17 +104,18 @@ useEffect(() => {
       setAttempts(attemptsData);
       
       // ✅ NEW: set selectedAttempt to the latest attempt
-      if (attemptsData.length > 0) {
-        const maxAttempt = attemptsData[attemptsData.length - 1]; 
-        console.log("maxAttempt :", maxAttempt);
+      // if (attemptsData.length > 0) {
+      //   const maxAttempt = attemptsData[attemptsData.length - 1]; 
+      //   console.log("maxAttempt :", maxAttempt);
         //setSelectedAttempt(maxAttempt.attempt_id); 
         // setCanTakeNextAttempt(null);
         // ✅ persist across refresh
         
-      }
+      // }
        
     } catch (err) {
       console.log(err);
+       showToast(err, "error")
     }
   };
 
@@ -119,7 +124,7 @@ useEffect(() => {
   return () => {
     ignore = true;
   };
-}, [schoolSlug, quizCode]);       // ✅ correct dependency
+}, [schoolSlug, quizCode, showToast]);       // ✅ correct dependency
 
 
  
@@ -139,10 +144,6 @@ useEffect(() => {
         `/school/${schoolSlug}/attempt/${newAttemptId}/0`
       );
     } catch (err) {
-      console.log(
-        "NEXT ATTEMPT ERROR:",
-        err.response?.data || err.message
-      );
        showToast(err.response?.data?.message || "Unable to start next attempt", "error");
        
     }
@@ -159,7 +160,7 @@ useEffect(() => {
         `/school/${schoolSlug}/quiz/${result.quiz_code}`
       );
     } catch (err) {
-      console.log("RESET ERROR:", err.response?.data || err.message);
+       showToast(err.response?.data || err.message, "error");
     }
   };
 
@@ -214,8 +215,18 @@ useEffect(() => {
     // =========================
 
     if (loading) {
-    return <ResultSkeleton />;
-  }
+      return <ResultSkeleton />;
+    }
+    if (loading) {
+          return (
+              <SchoolLoading
+                  name={branding?.name}
+                  logo={branding?.logo}
+                  message="Preparing your result..."
+              />
+          );
+      }
+
     if (!result) return <h3>No result found</h3>;
  
 
