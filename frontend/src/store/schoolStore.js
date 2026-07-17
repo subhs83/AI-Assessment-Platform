@@ -12,7 +12,7 @@ export const useSchoolStore = create((set) => ({
 
   fetchExamOptions: async (schoolSlug) => {
 
-    const res = await schoolApi.getBranding(schoolSlug);
+    const res = await schoolApi.getExamOptions(schoolSlug);
 
     set({
         examOptions: res.data.data,
@@ -23,7 +23,7 @@ export const useSchoolStore = create((set) => ({
 
 
 fetchSchoolBrand: async (schoolSlug) => {
-    const res = await schoolApi.getExamOptions(schoolSlug);
+    const res = await schoolApi.getBranding(schoolSlug);
     set({
         branding: res.data.data,
     });

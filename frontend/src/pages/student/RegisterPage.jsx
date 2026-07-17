@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import API from "../../api/client";
 import BrandHeader from "../../components/student/BrandHeader"
 import { useToast } from "../../components/ui/Toast";
-import { useSchoolStore } from "../store/schoolStore";
+import { useSchoolStore } from "../../store/schoolStore";
 import SchoolLoading from "../../components/loading/SchoolLoading"
 
 const initialInput =
@@ -26,7 +26,7 @@ const RegisterPage = () => {
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [startingExam, setStartingExam] = useState(false);
-  const branding = useSchoolStore((s) => s.fetchSchoolBrand);
+  const branding = useSchoolStore((s) => s.branding);
 
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import LoadingDots from "./LoadingDots";
 import ImageWithFallback from "../common/ImageWithFallback";
-import { useSchoolStore } from "../store/schoolStore";
+import { useSchoolStore } from "../../store/schoolStore";
 
 export default function SchoolLoading({
     name = "School",

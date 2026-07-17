@@ -15,7 +15,7 @@ import PerformanceSummary from "../../components/student/result/PerformanceSumma
 import QuestionNavigator from "../../components/student/result/QuestionNavigator"
 import WarningBanner from "../../components/student/result/WarningBanner";
 import { useToast } from "../../components/ui/Toast";
-import { useSchoolStore } from "../store/schoolStore";
+import { useSchoolStore } from "../../store/schoolStore";
 
 
 export default function Result() {
@@ -36,7 +36,7 @@ export default function Result() {
   const reviewSectionRef = useRef(null);
   const questionRefs = useRef({});
 
-  const branding = useSchoolStore((s) => s.fetchSchoolBrand);
+  const branding = useSchoolStore((s) => s.branding);
   
  // const [canTakeNextAttempt, setCanTakeNextAttempt] = useState(null);
 
