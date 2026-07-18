@@ -22,5 +22,11 @@ export const examApi = {
       `/api/student/${schoolSlug}/attempt/${attemptId}/violation`,
       { reason }
     ),
+
+    getQuizInfo(schoolSlug, quizCode) {
+      return API.get(
+        `/api/student/${schoolSlug}/quiz/${quizCode}/info`
+      );
+    },
  
 };

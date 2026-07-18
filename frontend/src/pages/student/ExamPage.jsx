@@ -58,7 +58,6 @@ export default function ExamPage() {
 
   const setShowStartOverlay = useExamStore((s) => s.setShowStartOverlay );
 
-  const examStarted = useExamStore((s) => s.examStarted);
   
   // useEffect(() => {
     

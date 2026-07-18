@@ -8,7 +8,8 @@ from smart_exam_system.models import (
     QuestionModel,
     StudentAnswerModel,
     AttemptModel,
-    SchoolModel
+    SchoolModel,
+    ExamModel
 )
 
 from smart_exam_system.api.services.display_option_mapper import (
@@ -16,6 +17,7 @@ from smart_exam_system.api.services.display_option_mapper import (
      original_to_display,
      display_to_original,
 )
+from smart_exam_system.api.services.exam_service import get_teacher_exam_detail
 from smart_exam_system.api.services.student_service import (
     start_student_attempt,
     resolve_attempt,
@@ -1051,3 +1053,90 @@ def get_academic_structure_api(school_slug):
             "classes": classes,
         },
     })
+
+
+
+
+@api_student_bp.route("/<school_slug>/quiz/<quiz_code>/info", methods=["GET"],)
+def get_quiz_info( school_slug,  quiz_code,):
+
+    try:
+        # ==========================================
+        # 1. Resolve School
+        # ==========================================
+        school = SchoolModel.query.filter_by(
+            slug=school_slug
+        ).first()
+
+        if not school:
+            return jsonify({
+                "success": False,
+                "message": "School not found",
+                "data": None,
+                "error": "school_not_found",
+            }), 404
+
+        # ==========================================
+        # 2. Resolve Exam
+        # ==========================================
+        exam = ExamModel.query.filter_by(
+            school_id=school.id,
+            quiz_code=quiz_code,
+        ).first()
+
+        if not exam:
+            return jsonify({
+                "success": False,
+                "message": "Exam not found",
+                "data": None,
+                "error": "exam_not_found",
+            }), 404
+
+        # ==========================================
+        # 3. Get Exam Detail
+        # ==========================================
+        exam_data = get_teacher_exam_detail(
+            school.id,
+            exam.exam_uid,
+        )
+
+        if not exam_data:
+            return jsonify({
+                "success": False,
+                "message": "Exam not found",
+                "data": None,
+                "error": "exam_not_found",
+            }), 404
+
+        # ==========================================
+        # 4. Response
+        # ==========================================
+        return jsonify({
+            "success": True,
+            "message": "Exam information fetched successfully",
+            "data": {
+                "title": exam_data["title"],
+                "duration_minutes": exam_data["duration_minutes"],
+                "total_questions": exam_data["total_questions"],
+                "marks_per_question": exam_data["marks"],
+                "negative_marks": exam_data["negative"],
+                "total_marks": (
+                    exam_data["total_questions"]
+                    * exam_data["marks"]
+                ),
+            },
+            "error": None,
+        }), 200
+
+    except Exception:
+
+        logger.exception(
+            "Failed to fetch exam information"
+        )
+
+        return jsonify({
+            "success": False,
+            "message": "Server error",
+            "data": None,
+            "error": "server_error",
+        }), 500

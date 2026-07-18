@@ -770,8 +770,13 @@ def get_teacher_exam_detail(
     exam = get_exam_by_uid( school_id, exam_uid)
     if not exam:
         return None
+    
 
+    total_questions = QuestionModel.query.filter_by(
+        exam_id=exam.id
+    ).count()
 
+    
     targets = []
 
     for target in exam.targets:
@@ -790,6 +795,8 @@ def get_teacher_exam_detail(
         "marks": exam.marks_per_question,
 
         "negative": exam.negative_marks,
+
+        "total_questions": total_questions,
 
         "max_attempts": exam.max_attempts_per_student,
 
