@@ -185,7 +185,7 @@ const RegisterPage = () => {
 
       <main className="flex-1 px-4 py-6 sm:flex sm:items-center sm:justify-center pb-safe">
 
-        <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[530px_550px] lg:items-start">
+        <div className="mx-auto grid w-full max-w-5xl gap-10 lg:grid-cols-[450px_1fr] lg:items-start">
 
           {/* Desktop Exam Info */}
           <div className="hidden lg:block">
@@ -203,7 +203,7 @@ const RegisterPage = () => {
             <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-xl backdrop-blur sm:p-6">
 
               {/* Header */}
-              <div className="mb-7 text-center">
+              <div className="mb-5 text-center">
                 <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">
                   Student Registration
                 </h2>

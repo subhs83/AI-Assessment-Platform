@@ -15,7 +15,7 @@ export default function ExamInfoCard({ exam }) {
       label: "Title",
       value: exam.title,
     },
-    
+
     {
       icon: Clock3,
       label: "Duration",
@@ -43,7 +43,7 @@ export default function ExamInfoCard({ exam }) {
   ];
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl text-center">
 
       <h2 className="text-2xl font-bold text-slate-900">
         Exam Information
@@ -53,7 +53,7 @@ export default function ExamInfoCard({ exam }) {
         Please review the exam details before starting.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-4 space-y-2">
 
         {items.map((item) => {
           const Icon = item.icon;
@@ -61,7 +61,7 @@ export default function ExamInfoCard({ exam }) {
           return (
             <div
               key={item.label}
-              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4"
+              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-3"
             >
               <div className="flex items-center gap-3">
 
