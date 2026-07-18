@@ -34,7 +34,6 @@ export default function ExamPage() {
   const { schoolSlug, attemptId, index } = useParams();
   const [openPalette, setOpenPalette] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [showStartOverlay, setShowStartOverlay] = useState(true);
   const safeIndex = Number(index ?? 0);
 
   useExamQuestion({ schoolSlug, attemptId, index: safeIndex });
@@ -54,6 +53,10 @@ export default function ExamPage() {
   
   const saveStatus = useExamStore((state) => state.saveStatus);
   const saving = useExamStore((state) => state.saving);
+
+  const showStartOverlay = useExamStore((s) => s.showStartOverlay);
+
+  const setShowStartOverlay = useExamStore((s) => s.setShowStartOverlay );
   
   useEffect(() => {
     

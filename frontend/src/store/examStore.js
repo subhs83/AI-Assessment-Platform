@@ -39,6 +39,7 @@ export const useExamStore = create((set) => ({
   saving: false,
   isOffline: false,
   fullscreenRequired: false,
+  showStartOverlay: true,
   saveStatus: "",
 
   // ======================
@@ -61,7 +62,8 @@ initSession: (payload) => {
     violationCount: 0,
     isSubmittingExam: false,
     submitModalOpen: false,
-    showSubmitModal: false
+    showSubmitModal: false,
+    showStartOverlay: true,
     
   });
 },
@@ -156,6 +158,11 @@ initSession: (payload) => {
   setSaveStatus: (saveStatus) => {
     set({ saveStatus });
   },
+
+
+
+setShowStartOverlay: (value) =>
+    set({ showStartOverlay: value }),
 
   // ======================
   // RESET EXAM
