@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import {
   ShieldAlert,
   Maximize,
@@ -10,6 +12,27 @@ export default function FullscreenOverlay({
   violationCount = 0,
   onResume,
 }) {
+
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    if (!isStart) return;
+
+    setCountdown(5);
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isStart]);
+
   const remaining = Math.max(0, 3 - violationCount);
 
   const isStart = mode === "start";
@@ -67,15 +90,35 @@ export default function FullscreenOverlay({
               </div>
 
               <button
-                onClick={onResume}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-3.5 font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.99]"
-              >
+                  onClick={onResume}
+                  className={`
+                    flex w-full items-center justify-center gap-2
+                    rounded-2xl py-3.5 font-semibold text-white
+                    transition-all duration-300 active:scale-[0.98]
 
-                <Play size={20} />
+                    ${
+                      countdown === 0
+                        ? `
+                          bg-indigo-600
+                          hover:bg-indigo-700
+                          shadow-xl
+                          ring-4 ring-indigo-200
+                          animate-pulse
+                        `
+                        : `
+                          bg-slate-400
+                          cursor-not-allowed
+                        `
+                    }
+                  `}
+                  disabled={countdown !== 0}
+                >
+                  <Play size={20} />
 
-                Start Exam
-
-              </button>
+                  {countdown === 0
+                    ? "Tap to Start Exam"
+                    : `Starting in ${countdown}s`}
+                </button>
             </>
 
           ) : (
