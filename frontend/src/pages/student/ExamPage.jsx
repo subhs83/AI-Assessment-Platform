@@ -34,6 +34,7 @@ export default function ExamPage() {
   const { schoolSlug, attemptId, index } = useParams();
   const [openPalette, setOpenPalette] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showStartOverlay, setShowStartOverlay] = useState(true);
   const safeIndex = Number(index ?? 0);
 
   useExamQuestion({ schoolSlug, attemptId, index: safeIndex });
@@ -50,6 +51,7 @@ export default function ExamPage() {
   const violationCount = useExamStore((state) => state.violationCount);
   const isOffline = useExamStore((state) => state.isOffline);
   const fullscreenRequired = useExamStore((state) => state.fullscreenRequired);
+  
   const saveStatus = useExamStore((state) => state.saveStatus);
   const saving = useExamStore((state) => state.saving);
   
@@ -170,12 +172,23 @@ export default function ExamPage() {
       {/* OVERLAYS */}
       {isOffline && <OfflineBanner />}
 
-      {fullscreenRequired && (
+      {showStartOverlay && (
         <FullscreenOverlay
-          violationCount={violationCount}
-          onResume={resumeFullscreen}
+            mode="start"
+            onResume={() => {
+                resumeFullscreen();
+                setShowStartOverlay(false);
+            }}
         />
-      )}
+    )}
+
+    {!showStartOverlay && fullscreenRequired && (
+        <FullscreenOverlay
+            mode="violation"
+            violationCount={violationCount}
+            onResume={resumeFullscreen}
+        />
+    )}
 
       <SubmitExamModal
         schoolSlug={schoolSlug}
