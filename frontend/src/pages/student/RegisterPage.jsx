@@ -200,7 +200,7 @@ const RegisterPage = () => {
               <ExamInfoCard exam={exam} />
             </div>
 
-            <div className="w-full rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-xl backdrop-blur sm:p-6">
+            <div className="w-full rounded-3xl border border-slate-200 bg-slate-100 p-5 shadow-2xl backdrop-blur sm:p-6">
 
               {/* Header */}
               <div className="mb-5 text-center">
@@ -227,7 +227,7 @@ const RegisterPage = () => {
                     autoCapitalize="words"
                     autoComplete="given-name"
                     required
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                    className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
 
                   <input
@@ -239,7 +239,7 @@ const RegisterPage = () => {
                     autoCapitalize="words"
                     autoComplete="family-name"
                     required
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                    className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
 
                 </div>
@@ -251,7 +251,7 @@ const RegisterPage = () => {
                     value={form.school_class_id}
                     onChange={handleChange}
                     required
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                    className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   >
                     <option value="">
                       Select Class
@@ -271,7 +271,7 @@ const RegisterPage = () => {
                       value={form.school_section_id}
                       onChange={handleChange}
                       disabled={!form.school_class_id || sections.length === 0}
-                      className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100"
+                      className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100"
                     >
                       <option value="">
                         {sections.length
@@ -299,7 +299,7 @@ const RegisterPage = () => {
                     placeholder="Roll Number"
                     autoComplete="off"
                     required
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                    className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
 
                   {/* Mobile */}
@@ -315,7 +315,7 @@ const RegisterPage = () => {
                     autoComplete="tel"
                     maxLength={10}
                     required
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                    className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
 
                   {/* Button */}
