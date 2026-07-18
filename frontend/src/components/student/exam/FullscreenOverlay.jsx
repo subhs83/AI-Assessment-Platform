@@ -14,6 +14,7 @@ export default function FullscreenOverlay({
 }) {
 
   const [countdown, setCountdown] = useState(5);
+   const isStart = mode === "start";
 
   useEffect(() => {
     if (!isStart) return;
@@ -35,7 +36,7 @@ export default function FullscreenOverlay({
 
   const remaining = Math.max(0, 3 - violationCount);
 
-  const isStart = mode === "start";
+ 
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-5">
