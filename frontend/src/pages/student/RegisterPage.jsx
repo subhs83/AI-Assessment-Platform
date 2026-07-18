@@ -156,16 +156,21 @@ const RegisterPage = () => {
 
   if (loading) {
       return (
-          <BrandLoading />
+          <SchoolLoading
+              name={branding?.name}
+              logo={branding?.logo}
+              message="Preparing your exam..."
+          />
       );
   }
+
 
   if (startingExam) {
       return (
           <SchoolLoading
               name={branding?.name}
               logo={branding?.logo}
-              message="StartinPreparing your exam..."
+              message="Starting your exam..."
           />
       );
   }
@@ -180,7 +185,7 @@ const RegisterPage = () => {
 
       <main className="flex-1 px-4 py-6 sm:flex sm:items-center sm:justify-center pb-safe">
 
-        <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[520px_550px] lg:items-start">
+        <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[530px_550px] lg:items-start">
 
           {/* Desktop Exam Info */}
           <div className="hidden lg:block">
