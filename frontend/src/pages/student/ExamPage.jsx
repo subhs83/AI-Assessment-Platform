@@ -57,13 +57,15 @@ export default function ExamPage() {
   const showStartOverlay = useExamStore((s) => s.showStartOverlay);
 
   const setShowStartOverlay = useExamStore((s) => s.setShowStartOverlay );
+
+  const examStarted = useExamStore((s) => s.examStarted);
   
-  useEffect(() => {
+  // useEffect(() => {
     
-    useExamStore.setState({
-      currentIndex: Number(index),
-    });
-  }, [index]);
+  //   useExamStore.setState({
+  //     currentIndex: Number(index),
+  //   });
+  // }, [index]);
 
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function ExamPage() {
     useExamStore.setState({
       saveStatus: "",
     });
-
+     console.log("ROUTE CHANGED", safeIndex);
      // Unlock navigation
       setIsNavigating(false);
       
@@ -127,11 +129,15 @@ export default function ExamPage() {
   // NAVIGATION
   // =====================
   const goNext = () => {
+    console.log("NEXT CLICK", {
+    isNavigating,
+    currentIndex,
+  });
     if (isNavigating) return;
 
     setIsNavigating(true);
 
-    const next = Number(currentIndex) + 1;
+    const next = safeIndex + 1;
 
     if (next >= currentQuestion.total_questions) {
       setIsNavigating(false);
@@ -148,7 +154,7 @@ export default function ExamPage() {
 
     setIsNavigating(true);
 
-    const prev = Number(currentIndex) - 1;
+    const prev = safeIndex - 1;
 
     if (prev < 0) {
       setIsNavigating(false);
@@ -180,12 +186,13 @@ export default function ExamPage() {
             mode="start"
             onResume={() => {
                 resumeFullscreen();
+
                 setShowStartOverlay(false);
             }}
         />
     )}
 
-    {!showStartOverlay && fullscreenRequired && (
+    {!showStartOverlay  && fullscreenRequired && (
         <FullscreenOverlay
             mode="violation"
             violationCount={violationCount}

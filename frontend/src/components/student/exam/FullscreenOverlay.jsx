@@ -29,7 +29,7 @@ export default function FullscreenOverlay({
         }
         return prev - 1;
       });
-    }, 1000);
+    }, 800);
 
     return () => clearInterval(timer);
   }, [isStart]);

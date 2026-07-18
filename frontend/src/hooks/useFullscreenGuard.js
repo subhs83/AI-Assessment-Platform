@@ -3,31 +3,44 @@ import { useExamStore } from "../store/examStore";
 
 export function useFullscreenGuard(reportViolation) {
 
-  const setFullscreenRequired =
-    useExamStore((state) => state.setFullscreenRequired);
+  const showStartOverlay = useExamStore(
+    (state) => state.showStartOverlay
+  );
 
+  const setFullscreenRequired = useExamStore(
+    (state) => state.setFullscreenRequired
+  );
 
-  // 🚨 FIX 1: initial check (block during submit)
+  // Initial check
   useEffect(() => {
 
+    // Ignore until the student starts the exam
+    if (showStartOverlay) return;
 
     if (!document.fullscreenElement) {
       setFullscreenRequired(true);
     }
-  }, [setFullscreenRequired]);
 
-  // 🚨 FIX 2: fullscreen change listener
+  }, [showStartOverlay, setFullscreenRequired]);
+
+  // Listen for fullscreen changes
   useEffect(() => {
 
     const handleFullscreenChange = async () => {
 
-      // 🔥 IMPORTANT: BLOCK DURING SUBMIT
+      // Ignore startup
+      if (showStartOverlay) return;
+
       if (!document.fullscreenElement) {
+
         setFullscreenRequired(true);
 
         await reportViolation("fullscreen_exit");
+
       } else {
+
         setFullscreenRequired(false);
+
       }
     };
 
@@ -42,6 +55,10 @@ export function useFullscreenGuard(reportViolation) {
         handleFullscreenChange
       );
     };
-  }, [reportViolation,setFullscreenRequired]
-);
+
+  }, [
+    showStartOverlay,
+    reportViolation,
+    setFullscreenRequired,
+  ]);
 }
