@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import BrandLoading from "../components/loading/BrandLoading";
 
 export default function ProtectedRoute({ children }) {
 
@@ -12,7 +13,7 @@ export default function ProtectedRoute({ children }) {
   );
 
   if (authLoading) {
-    return <div>Loading...</div>;
+    return <BrandLoading />;
   }
 
   if (!isAuthenticated) {

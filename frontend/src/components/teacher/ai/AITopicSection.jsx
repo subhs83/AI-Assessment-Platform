@@ -5,7 +5,7 @@ export default function AITopicSection({
   setTopic,
 }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 mb-5">
+    <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-5 m-5">
 
       <div className="flex items-center gap-3 mb-3">
 

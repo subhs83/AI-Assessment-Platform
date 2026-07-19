@@ -18,6 +18,7 @@ import {
   CheckSquare,
   Square,
 } from "lucide-react";
+import LoadingOverlay from "../../../components/common/LoadingOverlay";
 
 export default function AIPreviewPage() {
 
@@ -224,11 +225,7 @@ export default function AIPreviewPage() {
 
   if (loading) {
 
-    return (
-      <div className="p-6 text-gray-600">
-        Loading...
-      </div>
-    );
+    return <LoadingOverlay />
 
   }
 

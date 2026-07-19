@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import BrandLoading from "../components/loading/BrandLoading";
 
 export default function RoleProtectedRoute({
   allowedRoles,
@@ -15,7 +16,7 @@ export default function RoleProtectedRoute({
   );
 
   if (authLoading) {
-    return <div>Loading...</div>;
+    return <BrandLoading />;
   }
 
   if (!user) {

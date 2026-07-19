@@ -5,6 +5,7 @@ import {
   Languages,
   Upload,
   CheckCircle2,
+  UploadCloud
 } from "lucide-react";
 
 export default function AIFileSection({
@@ -45,14 +46,20 @@ export default function AIFileSection({
             Generate from PDF or Image
           </h2>
 
-          <p className="text-sm text-gray-500">
+          <p className="mt-1 text-sm text-slate-500">
             Upload teaching material and generate questions using AI.
           </p>
 
-          <p className="text-sm text-blue-600 mb-4">
-            Recommended: PDF files usually provide the most accurate
-            results.
-          </p>
+          <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+
+            <p className="text-sm text-blue-700">
+
+                <span className="font-semibold">💡 Best Results:</span>{" "}
+                PDF files preserve formatting and usually produce the most accurate AI-generated questions.
+
+            </p>
+
+        </div>
 
         </div>
 
@@ -77,7 +84,7 @@ export default function AIFileSection({
         </p>
 
         <select
-          className="w-full border border-slate-300 rounded-lg px-3 py-2.5"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
         >
@@ -95,33 +102,48 @@ export default function AIFileSection({
 
       {/* Upload */}
 
-      <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center mb-4 hover:border-indigo-400 transition">
+      <div className="border-2 border-dashed border-green-300 bg-gradient-to-br from-blue-40 to-white rounded-2xl p-4 text-center mb-5 transition hover:border-green-500 hover:bg-indigo-50/70">
 
-        <Upload className="mx-auto w-8 h-8 text-indigo-500 mb-2" />
+        <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100">
+          <UploadCloud className="h-7 w-7 text-indigo-600" />
+        </div>
 
-        <p className="font-medium">
+        <h3 className="text-lg font-semibold text-slate-900">
           Upload PDF or Image
+        </h3>
+
+        <p className="mt-1 text-sm text-slate-500">
+          Drag & drop your file here or choose from your device.
         </p>
 
-        <p className="text-sm text-gray-500 mb-4">
-          PDF • JPG • PNG
+        <p className="mt-1 text-xs text-slate-400">
+          Supports PDF, JPG and PNG
         </p>
 
         <input
           ref={fileInputRef}
           type="file"
           accept=".pdf,image/*"
+          className="hidden"
           onChange={(e) => {
             setFile(e.target.files[0]);
             resetExtraction();
           }}
-          className="mx-auto"
         />
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md"
+        >
+          <Upload className="h-4 w-4" />
+          Choose File
+        </button>
 
       </div>
 
       {file && (
-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <div className="mb-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4">
 
           <div className="flex items-center justify-between">
 
@@ -168,7 +190,7 @@ export default function AIFileSection({
         type="button"
         onClick={handleExtract}
         disabled={!file || extracting}
-        className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 font-medium transition disabled:opacity-50"
+        className="w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 py-3.5 font-semibold text-white shadow-sm transition hover:shadow-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
       >
         {extracting
           ? "Extracting..."

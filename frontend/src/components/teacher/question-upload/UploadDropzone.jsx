@@ -12,7 +12,7 @@ export default function UploadDropzone({
         border-dashed
         border-blue-300
         bg-blue-50/70
-        p-10
+        p-5
         transition-all
         duration-200
         hover:border-blue-500
@@ -23,7 +23,7 @@ export default function UploadDropzone({
       {!file ? (
         <div className="flex flex-col items-center text-center">
 
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm border border-blue-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm border border-blue-100">
             <UploadCloud
               size={38}
               className="text-blue-600"
