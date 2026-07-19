@@ -6,7 +6,6 @@ import { useToast } from "../../components/ui/Toast";
 import { useSchoolStore } from "../../store/schoolStore";
 import { examApi } from "../../api/examApi";
 import SchoolLoading from "../../components/loading/SchoolLoading"
-import BrandLoading from "../../components/loading/BrandLoading";
 import ExamInfoCard from "../../components/student/registration/ExamInfoCard"
 
 const initialInput =

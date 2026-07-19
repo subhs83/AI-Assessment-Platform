@@ -40,7 +40,7 @@ export default function UploadQuestionsPage() {
 
   const exams = examOptions?.exams || [];
 
- 
+  console.log("Uploadexams :", exams)
   // -------------------------
   // Download & UPLOAD
   // -------------------------

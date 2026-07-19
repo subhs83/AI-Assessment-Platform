@@ -50,7 +50,7 @@ def extract_pdf_text( file, language,):
                     **kwargs,
                 )[0]
                 # print(f"Render: {time.perf_counter() - render_start:.2f}s")
-                ocr_start = time.perf_counter()
+                # ocr_start = time.perf_counter()
 
                 text += (
                     extract_text_from_image(
@@ -59,7 +59,7 @@ def extract_pdf_text( file, language,):
                     )
                     + "\n\n"
                 )
-                print(f"OCR: {time.perf_counter() - ocr_start:.2f}s")
+                # print(f"OCR: {time.perf_counter() - ocr_start:.2f}s")
                 # print("image.size :", image.size)
 
                 print(f"Total page: {time.perf_counter() - start:.2f}s")
