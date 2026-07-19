@@ -20,45 +20,40 @@ logger = logging.getLogger(__name__)
 
 
 
-@api_school_bp.route( "/<school_slug>/options", methods=["GET"],)
+@api_school_bp.route(
+    "/<school_slug>/options",
+    methods=["GET"],
+)
 @school_access_required
 def exam_options_api(school_slug):
-
-    import time
-
-    start = time.perf_counter()
 
     result, status = get_exam_options_api(
         school_id=g.school.id,
         teacher_id=current_user.id,
     )
 
-
-
-    subscription = get_school_subscription_summary(
-        school_id=g.school.id,
-    )
-
-    
-
-    
-
-
     result["data"] = {
         "exams": result["data"],
-        "ai_quota": {
-            "plan": subscription["plan"]["name"],
-            "total_ai_credits": subscription["usage"]["total_ai_credits"],
-            "used_ai_credits": subscription["usage"]["used_ai_credits"],
-            "remaining_ai_credits": subscription["usage"]["remaining_ai_credits"],
-        },
     }
-
-    print("TOTAL ROUTE:", time.perf_counter() - start)
 
     return api_response(
         **result,
         status=status,
+    )
+
+
+@api_school_bp.route("/<school_slug>/subscription-summary", methods=["GET"],)
+@school_access_required
+def subscription_summary_api(school_slug):
+
+    data = get_school_subscription_summary(
+        school_id=g.school.id,
+    )
+
+    return api_response(
+        success=True,
+        data=data,
+        status=200,
     )
 
 

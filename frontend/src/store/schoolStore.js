@@ -10,17 +10,46 @@ export const useSchoolStore = create((set) => ({
       error: null,
       examOptions: null,
       branding: null,
+      subscriptionSummary:null,
 
   fetchExamOptions: async (schoolSlug) => {
+    try {
+        const res = await schoolApi.getExamOptions(schoolSlug);
 
-    const res = await schoolApi.getExamOptions(schoolSlug);
+        set({
+            examOptions: res.data.data,
+        });
 
-    set({
-        examOptions: res.data.data,
-    });
+        return res.data.data;
 
-    return res.data.data;
+    } catch (error) {
+        set({
+            error: error.response?.data?.message || "Failed to load options",
+        });
+
+        throw error;
+    }
 },
+
+    fetchSubscriptionSummary: async (schoolSlug) => {
+        try {
+        const res = await schoolApi.getSubscriptionSummary(schoolSlug);
+
+        set({
+            subscriptionSummary: res.data.data, 
+        });
+
+        return res.data.data;
+    } 
+
+    catch (error) {
+            set({
+                error: error.response?.data?.message || "Failed to load subscriptionSummary",
+            });
+
+            throw error;
+        }
+    },
 
 
 fetchSchoolBrand: async (schoolSlug) => {
@@ -47,12 +76,15 @@ fetchSchoolBrand: async (schoolSlug) => {
 // -------------------------
   // Reset
   // -------------------------
-  resetExamOptions: () =>
+  reset: () =>
     set({
       dashboard: null,
       loading: false,
       error: null,
       subscription: null,
       examOptions: null,
+      subscriptionSummary:null,
+      branding: null,
+
     }),
 }));

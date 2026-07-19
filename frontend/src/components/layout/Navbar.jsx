@@ -18,13 +18,19 @@ export default function Navbar({ onToggleSidebar }) {
 
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
-  const examOptions = useSchoolStore((s) => s.examOptions);
-  const aiQuota = examOptions?.ai_quota 
-
+  const subscriptionSummary = useSchoolStore( (s) => s.subscriptionSummary);
 
   const [openMenu, setOpenMenu] = useState(false);
 
   const menuRef = useRef(null);
+  const aiQuota = subscriptionSummary
+  ? {
+      ai_plan_name: subscriptionSummary.plan?.name,
+      total_ai_credits: subscriptionSummary.usage?.total_ai_credits,
+      used_ai_credits: subscriptionSummary.usage?.used_ai_credits,
+      remaining_ai_credits: subscriptionSummary.usage?.remaining_ai_credits,
+    }
+  : null;
 
   const roleLabel = {
     teacher: "Teacher",
@@ -140,7 +146,7 @@ export default function Navbar({ onToggleSidebar }) {
                 <div>
 
                   <div className="text-xs text-slate-500">
-                    {aiQuota.ai_features_name}
+                    {aiQuota.ai_plan_name}
                   </div>
 
                   <div className="text-sm font-semibold text-emerald-700">

@@ -18,11 +18,38 @@ export default function DashboardLayout() {
     (s) => s.fetchExamOptions
   );
 
+  const examOptions = useSchoolStore(
+    (s) => s.examOptions
+  );
+
+  const fetchSubscriptionSummary = useSchoolStore(
+    (s) => s.fetchSubscriptionSummary
+  );
+
+  const subscriptionSummary = useSchoolStore(
+    (s) => s.subscriptionSummary
+  );
+
+
   useEffect(() => {
-    if (schoolSlug) {
+
+    if (!schoolSlug) return;
+
+    if (!examOptions) {
       fetchExamOptions(schoolSlug);
     }
-  }, [schoolSlug, fetchExamOptions]);
+
+    if (!subscriptionSummary) {
+      fetchSubscriptionSummary(schoolSlug);
+    }
+
+  }, [
+    schoolSlug,
+    examOptions,
+    subscriptionSummary,
+    fetchExamOptions,
+    fetchSubscriptionSummary,
+  ]);
 
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
