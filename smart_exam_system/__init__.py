@@ -22,8 +22,25 @@ def create_app():
     base_dir = os.path.dirname(os.path.dirname(__file__))
 
     app = Flask(__name__)
+
     # Config
     app.config.from_object(Config)
+
+    # Ensure upload directories exists
+    os.makedirs(
+        os.path.join(app.static_folder, "uploads", "schools"),
+        exist_ok=True,
+    )
+
+    os.makedirs(
+        os.path.join(app.static_folder, "uploads", "teachers"),
+        exist_ok=True,
+    )
+
+    os.makedirs(
+        os.path.join(app.static_folder, "uploads", "students"),
+        exist_ok=True,
+    )
 
     # Session backend
     app.config["SESSION_TYPE"] = "filesystem"

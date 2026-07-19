@@ -24,14 +24,22 @@ logger = logging.getLogger(__name__)
 @school_access_required
 def exam_options_api(school_slug):
 
+    import time
+
+    start = time.perf_counter()
+
     result, status = get_exam_options_api(
         school_id=g.school.id,
         teacher_id=current_user.id,
     )
 
+
+
     subscription = get_school_subscription_summary(
         school_id=g.school.id,
     )
+
+    
 
     
 
@@ -45,6 +53,8 @@ def exam_options_api(school_slug):
             "remaining_ai_credits": subscription["usage"]["remaining_ai_credits"],
         },
     }
+
+    print("TOTAL ROUTE:", time.perf_counter() - start)
 
     return api_response(
         **result,

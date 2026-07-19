@@ -1,4 +1,5 @@
 from sqlalchemy import func
+from flask import current_app
 from smart_exam_system.extensions import db
 from smart_exam_system.models.user import UserModel
 from smart_exam_system.models.school import SchoolModel
@@ -47,7 +48,17 @@ def create_school_service(data, files):
 
     if logo_file and logo_file.filename:
         logo_filename = secure_filename(logo_file.filename)
-        logo_path = os.path.join("static/uploads/schools", logo_filename)
+
+        upload_folder = os.path.join(
+            current_app.static_folder,
+            "uploads",
+            "schools",
+        )
+
+        os.makedirs(upload_folder, exist_ok=True)
+
+        logo_path = os.path.join(upload_folder, logo_filename)
+
         logo_file.save(logo_path)
 
     # create school

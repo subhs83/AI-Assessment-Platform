@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { schoolApi } from "../api/schoolApi";
+import API from "../api/client";
 
 
 export const useSchoolStore = create((set) => ({
@@ -24,12 +25,21 @@ export const useSchoolStore = create((set) => ({
 
 fetchSchoolBrand: async (schoolSlug) => {
     const res = await schoolApi.getBranding(schoolSlug);
+
+    const branding = res.data.data;
+
     set({
-        branding: res.data.data,
+        branding: {
+            ...branding,
+            logo: branding.logo
+                ? `${API.defaults.baseURL}/static/uploads/schools/${branding.logo}`
+                : null,
+        },
     });
 
-    return res.data.data;
+    return branding;
 },
+
 
  
 

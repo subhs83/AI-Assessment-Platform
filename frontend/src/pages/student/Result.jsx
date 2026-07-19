@@ -37,6 +37,7 @@ export default function Result() {
   const questionRefs = useRef({});
 
   const branding = useSchoolStore((s) => s.branding);
+  console.log("branding :", branding)
   
  // const [canTakeNextAttempt, setCanTakeNextAttempt] = useState(null);
 
@@ -215,17 +216,19 @@ useEffect(() => {
     // =========================
 
     if (loading) {
-      return <ResultSkeleton />;
-    }
-    if (loading) {
-          return (
-              <SchoolLoading
+      return (
+        <>
+      {/* <ResultSkeleton /> */}
+      <SchoolLoading
                   name={branding?.name}
                   logo={branding?.logo}
                   message="Preparing your result..."
               />
-          );
-      }
+        </>
+      )
+       
+    }
+     
 
     if (!result) return <h3>No result found</h3>;
  
