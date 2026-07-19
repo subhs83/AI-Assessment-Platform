@@ -23,7 +23,7 @@ const INITIAL_FORM = {
     marks: 1,
     negative: 0,
     max_attempts: 1,
-    registration_mode: "open",
+    registration_mode: "verified",
     show_result_review: true,
     start_date: "",
     end_date: "",

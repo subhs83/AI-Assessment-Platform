@@ -143,7 +143,7 @@ export default function Footer() {
                 />
 
                 <span>
-                  info@indiaeducore.com
+                  indiaeducore@gmail.com
                 </span>
 
               </div>
@@ -156,7 +156,7 @@ export default function Footer() {
                 />
 
                 <span>
-                  +91 XXXXX XXXXX
+                  +91 9318306080
                 </span>
 
               </div>

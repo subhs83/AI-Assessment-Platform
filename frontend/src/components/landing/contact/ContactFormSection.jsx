@@ -142,7 +142,7 @@ export default function ContactFormSection() {
                   </h3>
 
                   <p className="mt-1 text-gray-600">
-                    info@indiaeducore.com
+                    indiaeducore@gmail.com
                   </p>
 
                 </div>
@@ -172,7 +172,7 @@ export default function ContactFormSection() {
                   </h3>
 
                   <p className="mt-1 text-gray-600">
-                    +91 XXXXX XXXXX
+                    +91 9318306080
                   </p>
 
                 </div>

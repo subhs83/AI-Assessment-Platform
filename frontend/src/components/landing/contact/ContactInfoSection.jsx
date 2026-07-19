@@ -14,13 +14,13 @@ export default function ContactInfoSection() {
       icon: Mail,
       title: "Email",
       value: "info@indiaeducore.com",
-      href: "mailto:info@indiaeducore.com",
+      href: "mailto:indiaeducore@gmail.com",
       description: "Send us your questions anytime."
     },
     {
       icon: Phone,
       title: "Phone",
-      value: "+91 XXXXX XXXXX",
+      value: "+91 9318306080",
       href: "tel:+91XXXXXXXXXX",
       description: "Speak with our team directly."
     },
