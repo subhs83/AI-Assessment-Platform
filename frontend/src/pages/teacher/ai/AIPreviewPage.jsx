@@ -74,8 +74,8 @@ export default function AIPreviewPage() {
       const res =
         await teacherApi.getDashboard(schoolSlug);
 
-      const exams =
-        res.data?.data?.ai_exams || [];
+      const exams =  res.data?.data?.ai_exams || [];
+
 
       setExams(
         exams.filter(

@@ -66,8 +66,8 @@ export default function AISaveBar({
               {exams.map((exam) => (
 
                 <option
-                  key={exam.id}
-                  value={exam.id}
+                  key={exam.exam_uid}
+                  value={exam.exam_id}
                 >
                   {exam.title}
                 </option>

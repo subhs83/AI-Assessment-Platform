@@ -381,6 +381,7 @@ def get_teacher_exams(teacher_id, school_id):
 
         data = {
             "exam_uid": exam.exam_uid,
+            "exam_id": exam.id,
             "title": exam.title,
             "duration_minutes": exam.duration_minutes,
             "status": exam.status,
