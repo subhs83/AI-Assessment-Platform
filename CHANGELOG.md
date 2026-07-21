@@ -1,11 +1,24 @@
 # Changelog
 
-## v1.0.0
+## v1.0.0 - Initial Public Release
 
-- Migrated frontend from Jinja to React
-- REST API architecture
-- Premium Result Page
-- Role-based authentication
-- AI-powered question generation
-- School isolation
-- Analytics dashboard
+### Added
+- AI Question Generation
+- OCR PDF/Image extraction
+- Online Exam Engine
+- Student Management
+- Teacher Management
+- School Dashboard
+- Subscription & AI Credits
+
+### Improved
+- Backend performance
+- Mobile responsiveness
+- UI polish
+- Production deployment
+
+### Infrastructure
+- Vercel frontend
+- Render backend
+- Neon PostgreSQL
+- Custom domain & SSL
