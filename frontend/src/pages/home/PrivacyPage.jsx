@@ -62,6 +62,7 @@ export default function PrivacyPage() {
 
     <SEO
       title="Privacy Policy | IndiaEduCore"
+      description="Read the IndiaEduCore Privacy Policy to understand how we collect, use, and protect your information."
       url="/privacy"
     />
       <Navbar />

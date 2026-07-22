@@ -62,6 +62,7 @@ export default function TermsPage() {
 
       <SEO
         title="Terms of Service | IndiaEduCore"
+        description="Read the IndiaEduCore Terms & Conditions governing the use of our AI-powered assessment platform."
         url="/terms"
       />
 

@@ -7,39 +7,13 @@ import ContactFormSection from "../../components/landing/contact/ContactFormSect
 
 export default function ContactPage() {
 
-  const contactPageSchema = {
-
-  "@context": "https://schema.org",
-
-  "@type": "ContactPage",
-
-  name: "Contact Us | IndiaEduCore",
-
-  url: "https://indiaeducore.com/contact",
-
-  description:
-    "Contact IndiaEduCore for product information, support, and demo requests.",
-
-  publisher: {
-
-    "@type": "Organization",
-
-    name: "IndiaEduCore",
-
-    url: "https://indiaeducore.com"
-
-  }
-
-};
-
   return (
     <>
 
       <SEO
-        title="Contact Us | IndiaEduCore"
-        description="Contact IndiaEduCore for demo requests and support."
+        title="Contact IndiaEduCore"
+        description="Get in touch with the IndiaEduCore team for product demos, sales inquiries, partnerships, or technical support."
         url="/contact"
-        structuredData={contactPageSchema}
       />
 
       <Navbar />

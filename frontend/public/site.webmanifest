@@ -2,11 +2,12 @@
   "name": "INDIAEDUCORE",
   "short_name": "INDIAEDUCORE",
   "description": "AI Powered Assessment Platform",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
   "icons": [
     {

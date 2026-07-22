@@ -1,65 +1,77 @@
 import { Helmet } from "react-helmet-async";
 
+const SITE_URL = "https://indiaeducore.com";
+const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`;
+
 export default function SEO({
   title,
   description,
-  keywords,
   url = "/",
-  image = "https://indiaeducore.com/og-image.png",
+  image = DEFAULT_IMAGE,
 }) {
+  const fullUrl = `${SITE_URL}${url}`;
 
-  const fullUrl = `https://indiaeducore.com${url}`;
-  const structuredData = {
+  const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
+    name: "IndiaEduCore",
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+    sameAs: [
+      "https://linkedin.com/company/indiaeducore",
+    ],
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
     name: "IndiaEduCore",
     applicationCategory: "EducationalApplication",
     operatingSystem: "Web",
     description,
-    url: "https://indiaeducore.com",
-    logo: "https://indiaeducore.com/logo.png",
-    sameAs: [
-      "https://linkedin.com/company/indiaeducore"
-    ],
+    url: SITE_URL,
+    image,
     offers: {
       "@type": "Offer",
       price: "0",
-      priceCurrency: "INR"
-    }
+      priceCurrency: "INR",
+    },
   };
 
   return (
-
     <Helmet>
-
+      <html lang="en" />
       {/* Primary SEO */}
-
       <title>{title}</title>
 
       <meta
         name="description"
         content={description}
       />
-
       <meta
-        name="keywords"
-        content={keywords}
+        name="robots"
+        content="index,follow"
       />
 
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
-        <meta property="og:url" content={`https://indiaeducore.com${url}`} />
-        <meta
-          property="og:image"
-          content="https://indiaeducore.com/og-image.png"
-        />
+      <link
+        rel="canonical"
+        href={fullUrl}
+      />
 
       {/* Open Graph */}
-
       <meta
         property="og:type"
         content="website"
+      />
+
+      <meta
+        property="og:site_name"
+        content="IndiaEduCore"
+      />
+
+      <meta
+        property="og:locale"
+        content="en_IN"
       />
 
       <meta
@@ -82,8 +94,17 @@ export default function SEO({
         content={image}
       />
 
-      {/* Twitter */}
+      <meta
+        property="og:image:width"
+        content="1200"
+      />
 
+      <meta
+        property="og:image:height"
+        content="630"
+      />
+
+      {/* Twitter */}
       <meta
         name="twitter:card"
         content="summary_large_image"
@@ -104,18 +125,19 @@ export default function SEO({
         content={image}
       />
 
+      <meta
+        name="twitter:url"
+        content={fullUrl}
+      />
+
       {/* Structured Data */}
+      <script type="application/ld+json">
+        {JSON.stringify(organizationSchema)}
+      </script>
 
-      {
-  structuredData && (
-    <script type="application/ld+json">
-      {JSON.stringify(structuredData)}
-    </script>
-  )
-}
-
+      <script type="application/ld+json">
+        {JSON.stringify(softwareSchema)}
+      </script>
     </Helmet>
-
   );
-
 }

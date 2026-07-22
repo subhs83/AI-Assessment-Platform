@@ -12,30 +12,15 @@ import SEO from "../../components/common/SEO"
 
 export default function FeaturesPage() {
 
-  const webPageSchema = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Features | IndiaEduCore",
-    url: "https://indiaeducore.com/features",
-    description:
-      "Explore AI-powered question generation, online exams, analytics, and assessment workflows.",
-    isPartOf: {
-      "@type": "WebSite",
-      name: "IndiaEduCore",
-      url: "https://indiaeducore.com"
-    }
-  };
+  
   return (
     <>
 
       <SEO
-        title="Features | IndiaEduCore"
-        description="Explore AI-powered question generation, analytics and assessment workflows."
-        keywords="AI question generation, online exams, assessment platform"
+        title="AI Assessment Platform Features | IndiaEduCore"
+        description="Explore AI-powered exam creation, assessment, analytics, and school management features."
         url="/features"
-        structuredData={webPageSchema}
       />
-
       <Navbar />
 
       <FeatureHeroSection />

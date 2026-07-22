@@ -12,8 +12,8 @@ export default function AboutPage() {
     <>
 
       <SEO
-        title="About Us | IndiaEduCore"
-        description="Learn about our mission and vision to transform assessments using AI."
+        title="About IndiaEduCore"
+        description="Learn about IndiaEduCore, our mission to simplify school assessments with AI, and our commitment to empowering teachers through technology."
         url="/about"
       />
 

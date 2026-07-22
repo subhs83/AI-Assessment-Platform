@@ -51,7 +51,9 @@ export default function TeacherDashboardPreview() {
 
     </div>
 
-    <div className="w-3 h-3 rounded-full bg-green-500" />
+    <div 
+    className="w-3 h-3 rounded-full bg-green-500"
+    aria-hidden="true" />
 
   </div>
 

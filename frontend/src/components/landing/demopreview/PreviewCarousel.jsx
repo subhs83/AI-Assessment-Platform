@@ -88,6 +88,8 @@ return (
       <button
         key={index}
         onClick={() => setCurrent(index)}
+        aria-label={`Show ${previews[index].title} preview`}
+        aria-current={current === index}
         className={`
           h-3
           rounded-full

@@ -7,50 +7,13 @@ import PricingFAQSection from "../../components/landing/pricing/PricingFAQSectio
 
 export default function PricingPage() {
 
- const softwareApplicationSchema = {
-
-  "@context": "https://schema.org",
-
-  "@type": "SoftwareApplication",
-
-  name: "IndiaEduCore",
-
-  applicationCategory: "EducationalApplication",
-
-  operatingSystem: "Web",
-
-  url: "https://indiaeducore.com",
-
-  description:
-    "AI-powered assessment platform for schools and institutions.",
-
-  offers: {
-
-    "@type": "Offer",
-
-    price: "0",
-
-    priceCurrency: "INR"
-
-  },
-
-  publisher: {
-
-    "@type": "Organization",
-
-    name: "IndiaEduCore"
-
-  }
-
-};
   return (
     <>
 
       <SEO
         title="Pricing | IndiaEduCore"
-        description="Flexible pricing plans for schools and institutions."
+        description="Explore simple and affordable pricing plans for schools. Start with a free trial and scale with AI-powered assessment tools designed for educators."
         url="/pricing"
-        structuredData={softwareApplicationSchema}
       />
 
       <Navbar />

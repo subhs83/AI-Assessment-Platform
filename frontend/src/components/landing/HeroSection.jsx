@@ -65,15 +65,17 @@ return (
             leading-tight
           "
         >
-          AI-Powered
+          IndiaEduCore 
+
 
           <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
 
-            Assessment Platform
+          AI-Powered Assessment 
+
 
           </span>
 
-          for Schools and Educators
+          Platform for Schools
 
         </h1>
 
@@ -88,8 +90,7 @@ return (
             max-w-xl
           "
         >
-          Generate questions, conduct exams, and analyze student performance
-          with one intelligent platform built for modern educators.
+          Generate AI-powered questions from PDFs, images, topics, and text, conduct secure online exams, and analyze student performance with one intelligent assessment platform built for schools.
         </p>
 
         {/* CTA */}
