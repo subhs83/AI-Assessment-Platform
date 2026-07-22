@@ -9,6 +9,7 @@ import {
 
 import FeaturePreviewCard from "./FeaturePreviewCard";
 import Reveal from "../../common/Reveal";
+import { trackEvent } from "../../utils/analytics";
 
 export default function FeatureHeroSection() {
   return (
@@ -82,6 +83,11 @@ export default function FeatureHeroSection() {
 
               <Link
                 to="/demo"
+                  onClick={() =>
+                    trackEvent("demo_click", {
+                      location: "features_hero"
+                    })
+                  }
                 className="
                 px-8
                 py-4

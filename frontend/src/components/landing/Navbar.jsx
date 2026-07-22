@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import logo from "../../assets/logo.png";
 import { motion  } from "framer-motion";
+import { trackEvent } from "../../utils/analytics";
 
 
 
@@ -144,6 +145,11 @@ return (
 
         <Link
           to="/demo"
+          onClick={() =>
+            trackEvent("demo_click", {
+              location: "navbar"
+            })
+          }
           className="
             px-5 py-2.5
             rounded-xl

@@ -6,6 +6,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import Reveal from "../common/Reveal"
+import { trackEvent } from "../../utils/analytics";
 
 export default function CTASection() {
   return (
@@ -103,6 +104,11 @@ export default function CTASection() {
 
               <Link
                 to="/demo"
+                onClick={() =>
+                  trackEvent("demo_click", {
+                    location: "cta_section"
+                  })
+                }
                 className="
                 inline-flex
                 items-center
