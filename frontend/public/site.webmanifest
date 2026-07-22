@@ -22,7 +22,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "%PUBLIC_URL%/apple-touch-icon.png",
+      "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
     }
