@@ -39,7 +39,7 @@ export default function HomePage() {
 
       <FAQSection />
 
-      <CTASection />
+     <CTASection location="home_cta" />
 
       <Footer />
 

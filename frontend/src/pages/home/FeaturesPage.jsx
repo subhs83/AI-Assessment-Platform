@@ -37,7 +37,7 @@ export default function FeaturesPage() {
 
       <AcademicImpactSection />
 
-      <CTASection />
+      <CTASection location="features_cta" />
 
       <Footer />
     </>

@@ -8,7 +8,9 @@ import {
 import Reveal from "../common/Reveal"
 import { trackEvent } from "../../utils/analytics";
 
-export default function CTASection() {
+export default function CTASection({
+  location = "cta_section"
+}) {
   return (
     <section className="py-10">
       <Reveal>
@@ -106,7 +108,7 @@ export default function CTASection() {
                 to="/demo"
                 onClick={() =>
                   trackEvent("demo_click", {
-                    location: "cta_section"
+                    location
                   })
                 }
                 className="
