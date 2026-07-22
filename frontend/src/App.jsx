@@ -1,8 +1,11 @@
 //App.js
 
+
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+
+import AnalyticsTracker from "./components/common/AnalyticsTracker";
 
 
 import { ToastProvider } from "./components/ui/Toast";
@@ -82,6 +85,8 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
+
+      <AnalyticsTracker />
 
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>

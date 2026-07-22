@@ -10,6 +10,7 @@ CheckCircle
 import PreviewCarousel from "./demopreview/PreviewCarousel";
 import Reveal from "../common/Reveal";
 import FloatingBlobs from "../common/FloatingBlobs";
+import { trackEvent } from "../../utils/analytics";
 
 export default function HeroSection() {
 return ( 
@@ -99,6 +100,11 @@ return (
 
           <Link
             to="/demo"
+            onClick={() =>
+              trackEvent("demo_click", {
+                location: "hero"
+              })
+            }
             className="
               px-8 py-4
               rounded-2xl
