@@ -9,7 +9,7 @@ import {
 
 import FeaturePreviewCard from "./FeaturePreviewCard";
 import Reveal from "../../common/Reveal";
-import { trackEvent } from "../../utils/analytics";
+import { trackEvent } from "../../../utils/analytics";
 
 export default function FeatureHeroSection() {
   return (
