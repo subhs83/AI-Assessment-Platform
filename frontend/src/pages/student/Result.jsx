@@ -6,7 +6,7 @@ import { ArrowRightCircle, UserPlus, BookOpen,Target, EyeOff  } from "lucide-rea
 import HeroSection from "../../components/student/result/HeroSection";
 import QuestionReviewCard from "../../components/student/result/QuestionReviewCard";
 import ResultHeader from "../../components/student/result/ResultHeader";
-import ResultSkeleton from "../../components/student/result/ResultSkeleton";
+// import ResultSkeleton from "../../components/student/result/ResultSkeleton";
 import SchoolLoading from "../../components/loading/SchoolLoading"
 import {getPerformanceTheme,  getAchievementText,} from "../../utils/resultUtils";
 import ResultConfetti from "../../components/common/ResultConfetti";

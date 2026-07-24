@@ -1,5 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useReactToPrint } from "react-to-print";
 
 import API from "../../../api/client";
 import aiApi from "../../../api/aiApi";
@@ -13,6 +14,7 @@ import { useToast } from "../../../components/ui/Toast";
 import AISourceCard from "../../../components/teacher/ai/AISourceCard";
 import AIQuestionList from "../../../components/teacher/ai/AIQuestionList";
 import AISaveBar from "../../../components/teacher/ai/AISaveBar";
+import AIPrintLayout from "../../../components/teacher/ai/AIPrintLayout";
 
 import {
   CheckSquare,
@@ -30,6 +32,9 @@ export default function AIPreviewPage() {
 
   const { showToast } = useToast();
 
+  const printRef = useRef(null);
+
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -45,6 +50,15 @@ export default function AIPreviewPage() {
   const [showSource, setShowSource] = useState(false);
 
   const [questions, setQuestions] = useState([]);
+
+  const [showAnswers, setShowAnswers] = useState(false);
+
+  const handleReactPrint = useReactToPrint({
+  contentRef: printRef,
+  documentTitle: "Question Paper",
+});
+
+  
 
 
   const fetchRequest = useCallback(async () => {
@@ -236,6 +250,18 @@ export default function AIPreviewPage() {
 
 };
 
+
+const handlePrint = (withAnswers) => {
+  // console.log("handlePrint called", withAnswers);
+  // console.log(printRef.current);
+
+  setShowAnswers(withAnswers);
+
+  setTimeout(() => {
+    // console.log("Printing...");
+    handleReactPrint();
+  }, 100);
+};
  
 
   if (loading) {
@@ -255,7 +281,7 @@ export default function AIPreviewPage() {
   }
 
   return (
-
+    <>
     <div className="mx-auto max-w-5xl">
 
       <PageHeader
@@ -318,9 +344,23 @@ export default function AIPreviewPage() {
         exams={exams}
         onGenerateNewSet={handleGenerateNewSet}
         onSave={handleSaveToExam}
+        onPrint={handlePrint}
       />
 
     </div>
+
+    <div className="fixed -left-[9999px] top-0">
+      <div ref={printRef}>
+        <AIPrintLayout
+          questions={questions}
+          showAnswers={showAnswers}
+        />
+      </div>
+    </div>
+
+  </>
+
+
 
   );
 

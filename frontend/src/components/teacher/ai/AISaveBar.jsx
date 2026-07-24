@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 
 import Button from "../../ui/Button";
+import AIPrintButton from "./AIPrintButton";
 
 export default function AISaveBar({
   selected,
@@ -14,6 +15,7 @@ export default function AISaveBar({
   exams,
   onGenerateNewSet,
   onSave,
+  onPrint
 }) {
   return (
     <div
@@ -90,6 +92,13 @@ export default function AISaveBar({
               Generate New Set
 
             </Button>
+
+            <AIPrintButton
+              onPrint={(value) => {
+                // console.log("AISaveBar", value);
+                onPrint(value);
+              }}
+            />
 
             <Button
               variant="success"

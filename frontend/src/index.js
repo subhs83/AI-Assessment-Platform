@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import "@fontsource/inter";
 import "@fontsource/plus-jakarta-sans";
+import "./styles/print.css";
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { HelmetProvider } from "react-helmet-async";
