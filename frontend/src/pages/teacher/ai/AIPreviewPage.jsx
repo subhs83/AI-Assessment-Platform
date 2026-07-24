@@ -44,6 +44,9 @@ export default function AIPreviewPage() {
 
   const [showSource, setShowSource] = useState(false);
 
+  const [questions, setQuestions] = useState([]);
+
+
   const fetchRequest = useCallback(async () => {
 
     try {
@@ -53,8 +56,9 @@ export default function AIPreviewPage() {
       const res = await API.get(
         `/api/teacher/${schoolSlug}/ai/request/${requestId}`
       );
-
-      setData(res.data.request);
+      const request = res.data.request;
+      setData(request);
+      setQuestions(request.questions || []);
 
     } catch {
 
@@ -223,6 +227,17 @@ export default function AIPreviewPage() {
 
   };
 
+  const handleQuestionUpdated = (index, updatedQuestion) => {
+  setQuestions((prev) =>
+    prev.map((question, i) =>
+      i === index ? updatedQuestion : question
+    )
+  );
+
+};
+
+ 
+
   if (loading) {
 
     return <LoadingOverlay />
@@ -286,9 +301,13 @@ export default function AIPreviewPage() {
       </div>
 
       <AIQuestionList
-        questions={data?.questions || []}
+        questions={questions}
         selected={selected}
         toggleSelect={toggleSelect}
+        requestId={requestId}
+        schoolSlug={schoolSlug}
+        onQuestionUpdated={handleQuestionUpdated}
+        
       />
 
       <AISaveBar

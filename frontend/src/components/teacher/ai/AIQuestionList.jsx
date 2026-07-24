@@ -6,6 +6,10 @@ export default function AIQuestionList({
   questions = [],
   selected,
   toggleSelect,
+
+  requestId,
+  schoolSlug,
+  onQuestionUpdated
 }) {
 
     console.log("AIQuestionList props:", { questions });
@@ -31,6 +35,9 @@ export default function AIQuestionList({
             index={index}
             selected={selected.includes(index)}
             onToggle={() => toggleSelect(index)}
+            requestId={requestId}
+            schoolSlug={schoolSlug}
+            onQuestionUpdated={onQuestionUpdated}
           />
 
         ))}

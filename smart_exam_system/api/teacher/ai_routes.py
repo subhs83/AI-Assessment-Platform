@@ -15,6 +15,10 @@ from smart_exam_system.models import (
 
 from smart_exam_system.api.services.ai_config_service import get_ai_configuration
 from smart_exam_system.extensions import db
+from smart_exam_system.config import Config
+
+from copy import deepcopy
+from sqlalchemy.orm.attributes import flag_modified
 
 
 @api_teacher_bp.route("/<school_slug>/ai/generate", methods=["POST"])
@@ -223,7 +227,92 @@ def ai_history(school_slug):
     })
 
 
-from smart_exam_system.config import Config
+@api_teacher_bp.route(
+    "/<school_slug>/ai/request/<int:request_id>/question/<int:question_index>",
+    methods=["PATCH"],
+)
+@login_required
+@teacher_required
+def update_ai_question(school_slug, request_id, question_index):
+
+    data = request.get_json() or {}
+
+    ai_request = db.session.get(AIGenerationRequest, request_id)
+
+    if not ai_request:
+        return jsonify({
+            "success": False,
+            "message": "AI request not found"
+        }), 404
+
+    questions = deepcopy(ai_request.generated_questions or [])
+
+    if question_index < 0 or question_index >= len(questions):
+        return jsonify({
+            "success": False,
+            "message": "Invalid question index"
+        }), 400
+
+    # Validate required fields
+    required_fields = [
+        "question_text",
+        "option_a",
+        "option_b",
+        "option_c",
+        "option_d",
+        "correct_answer",
+    ]
+
+    for field in required_fields:
+        value = str(data.get(field, "")).strip()
+
+        if not value:
+            return jsonify({
+                "success": False,
+                "message": f"{field.replace('_', ' ').title()} is required"
+            }), 400
+
+    # Validate correct answer
+    if data["correct_answer"] not in ["A", "B", "C", "D"]:
+        return jsonify({
+            "success": False,
+            "message": "Correct answer must be A, B, C or D"
+        }), 400
+
+    updated_question = {
+        "question_text": data["question_text"].strip(),
+        "option_a": data["option_a"].strip(),
+        "option_b": data["option_b"].strip(),
+        "option_c": data["option_c"].strip(),
+        "option_d": data["option_d"].strip(),
+        "correct_answer": data["correct_answer"],
+        "is_edited": True,
+    }
+
+    questions[question_index] = updated_question
+
+    # Important: assign back so SQLAlchemy detects the JSON change
+    ai_request.generated_questions = questions
+
+    flag_modified( ai_request, "generated_questions")
+
+    db.session.commit()
+
+    # Debug only
+    # db.session.refresh(ai_request)
+    # print(
+    #     "Saved Question:",
+    #     ai_request.generated_questions[question_index]
+    # )
+
+    return jsonify({
+        "success": True,
+        "message": "Question updated successfully",
+        "question": updated_question,
+    }), 200
+
+
+
 
 @api_teacher_bp.route("/<school_slug>/ai/options", methods=["GET"])
 @login_required
@@ -238,10 +327,7 @@ def ai_options(school_slug):
 
 
 
-@api_teacher_bp.route(
-    "/<school_slug>/ai/config",
-    methods=["GET"],
-)
+@api_teacher_bp.route( "/<school_slug>/ai/config",  methods=["GET"],)
 @login_required
 @teacher_required
 def ai_config(school_slug):

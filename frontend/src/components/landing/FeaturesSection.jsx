@@ -5,7 +5,6 @@ import {
   Users,
   Cloud,
   Building2,
-  ArrowRight
 } from "lucide-react";
 import Reveal from "../common/Reveal";
 import StaggerContainer from "../common/StaggerContainer";

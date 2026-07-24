@@ -33,6 +33,17 @@ getHistory: (schoolSlug, params = {}) =>
     getAIConfig: (schoolSlug) =>
     API.get(`/api/teacher/${schoolSlug}/ai/config`),
 
+    updateQuestion: (
+    schoolSlug,
+    requestId,
+    questionIndex,
+    payload
+) =>
+    API.patch(
+        `/api/teacher/${schoolSlug}/ai/request/${requestId}/question/${questionIndex}`,
+        payload
+    ),
+
 };
 
 export default aiApi
