@@ -5,19 +5,23 @@ export default function MobileStatsGrid({
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const Icon = item.icon;
 
         return (
           <MobileCard
-            key={item.title}
+            key={index}
             className="p-3"
           >
             <div className="flex items-start justify-between">
 
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
 
-                <div className="text-xl font-bold text-slate-900">
+                <div
+                  className={`text-xl font-bold ${
+                    item.valueClassName || "text-slate-900"
+                  }`}
+                >
                   {item.value}
                 </div>
 
@@ -27,14 +31,20 @@ export default function MobileStatsGrid({
 
               </div>
 
-              <div
-                className={`rounded-xl p-2 ${item.iconBg}`}
-              >
-                <Icon
-                  size={18}
-                  className={item.iconColor}
-                />
-              </div>
+              {Icon && (
+                <div
+                  className={`rounded-xl p-2 ${
+                    item.iconBg || "bg-slate-100"
+                  }`}
+                >
+                  <Icon
+                    size={18}
+                    className={
+                      item.iconColor || "text-slate-600"
+                    }
+                  />
+                </div>
+              )}
 
             </div>
           </MobileCard>
