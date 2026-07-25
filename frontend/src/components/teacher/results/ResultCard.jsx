@@ -1,5 +1,5 @@
-import { ChevronRight, ShieldAlert } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ShieldAlert } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import MobileCard from "../../ui/mobile/MobileCard";
 import MobileStatusBadge from "../../ui/mobile/MobileStatusBadge";
@@ -9,17 +9,21 @@ export default function ResultCard({
   examUid,
   routes,
 }) {
-  const statusColor = result.auto_submitted_reason
-    ? "yellow"
-    : "green";
+  const navigate = useNavigate();
 
-  const statusText = result.auto_submitted_reason
-    ? "Auto Submitted"
-    : "Submitted";
+  const completed = !result.auto_submitted_reason;
 
   return (
-    <MobileCard>
-
+    <MobileCard
+      onClick={() =>
+        navigate(
+          routes.exams.studentAttempts(
+            examUid,
+            result.student_id
+          )
+        )
+      }
+    >
       {/* Header */}
 
       <div className="flex items-start justify-between gap-3">
@@ -31,93 +35,79 @@ export default function ResultCard({
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            {result.class_name}
-            {result.section_name
-              ? ` - ${result.section_name}`
-              : ""}
+            {result.class_section || "-"}
             {" • "}
             Roll {result.roll_number || "-"}
           </p>
 
         </div>
 
-        <MobileStatusBadge color={statusColor}>
-          {statusText}
+        <MobileStatusBadge
+          color={completed ? "green" : "red"}
+        >
+          {completed
+            ? "Completed"
+            : "Auto Submitted"}
         </MobileStatusBadge>
 
       </div>
 
       {/* Score */}
 
-      <div className="mt-4 grid grid-cols-2 gap-4">
+      <div className="mt-4 flex items-end justify-between">
 
         <div>
 
-          <div className="text-xs uppercase tracking-wide text-slate-500">
+          <div className="text-2xl font-bold text-slate-900">
+            {result.score} / {result.total_marks}
+          </div>
+
+          <div className="text-xs text-slate-500">
             Score
           </div>
 
-          <div className="mt-1 text-lg font-bold text-slate-900">
-            {result.score ?? 0}
-          </div>
-
         </div>
 
-        <div>
+        <div className="text-right">
 
-          <div className="text-xs uppercase tracking-wide text-slate-500">
+          <div className="text-2xl font-bold text-indigo-600">
+            {(result.percentage || 0).toFixed(2)}%
+          </div>
+
+          <div className="text-xs text-slate-500">
             Percentage
           </div>
 
-          <div className="mt-1 text-lg font-bold text-indigo-600">
-            {(result.percentage ?? 0).toFixed(1)}%
-          </div>
-
         </div>
 
       </div>
 
-      {/* Bottom */}
+      {/* Footer */}
 
       <div className="mt-4 flex items-center justify-between border-t pt-3">
 
-        <div className="flex items-center gap-4 text-sm text-slate-600">
-
-          <span>
-            Attempt {result.attempt_number}
+        <div className="text-sm text-slate-600">
+          Attempts:
+          <span className="ml-1 font-semibold">
+            {result.attempts_count}
           </span>
+        </div>
 
-          <span className="flex items-center gap-1">
+        <div className="flex items-center gap-1 text-sm text-slate-600">
 
-            <ShieldAlert size={15} />
+          <ShieldAlert size={16} />
 
-            {result.violation_count}
-
+          <span className="font-semibold">
+            {result.violation_count || 0}
           </span>
 
         </div>
 
-        <Link
-          to={routes.results.review(
-            examUid,
-            result.attempt_uid
-          )}
-          className="
-            inline-flex
-            items-center
-            gap-1
-            font-medium
-            text-indigo-600
-          "
-        >
-          View
-
-          <ChevronRight size={16} />
-
-        </Link>
-
       </div>
 
+      <div className="mt-3 text-center text-xs font-medium text-indigo-600">
+        Tap to view attempts
+      </div>
     </MobileCard>
   );
 }
