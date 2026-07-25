@@ -8,8 +8,7 @@ export default function AdditionalAttemptCard({
   return (
     <div className="bg-white border rounded-xl shadow-sm p-5">
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
 
           <h2 className="text-lg font-semibold">
@@ -22,17 +21,17 @@ export default function AdditionalAttemptCard({
 
         </div>
 
-        <div className="text-center">
+        <div className="rounded-xl bg-indigo-50 px-4 py-3 text-center">
 
-          <p className="text-xs text-gray-500">
-            Total Granted
-          </p>
+        <p className="text-xs text-gray-500">
+          Total Granted
+        </p>
 
-          <p className="text-3xl font-bold text-indigo-600">
-            {totalGrantedAttempts}
-          </p>
+        <p className="mt-1 text-2xl font-bold text-indigo-600">
+          {totalGrantedAttempts}
+        </p>
 
-        </div>
+      </div>
 
       </div>
 

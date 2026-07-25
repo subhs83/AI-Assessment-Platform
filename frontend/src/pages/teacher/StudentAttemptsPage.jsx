@@ -119,7 +119,6 @@ export default function StudentAttemptsPage() {
   if (!data) return <EmptyState message="No attempts found" />;
 
   const student = attempts?.[0]?.student;// optional if backend adds later
-  console.log(" student :",student)
 
 
  return (
@@ -147,29 +146,34 @@ export default function StudentAttemptsPage() {
           </p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="grid grid-cols-2 gap-3">
 
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Attempts
-            </p>
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-center">
 
-            <p className="text-xl font-bold">
-              {attempts.length}
-            </p>
-          </div>
+          <p className="text-xs text-gray-500">
+            Attempts
+          </p>
 
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Best Attempt
-            </p>
-
-            <p className="text-xl font-bold text-green-600">
-              #{attempts.find(a => a.is_best)?.attempt_number || "-"}
-            </p>
-          </div>
+          <p className="mt-1 text-xl font-bold">
+            {attempts.length}
+          </p>
 
         </div>
+
+
+        <div className="rounded-xl bg-green-50 px-4 py-3 text-center">
+
+          <p className="text-xs text-gray-500">
+            Best Attempt
+          </p>
+
+          <p className="mt-1 text-xl font-bold text-green-600">
+            #{attempts.find(a => a.is_best)?.attempt_number || "-"}
+          </p>
+
+        </div>
+
+      </div>
 
       </div>
 
@@ -196,8 +200,8 @@ export default function StudentAttemptsPage() {
           className={`px-4 py-2 rounded-lg text-sm border transition
           ${
             filter === item.value
-              ? "bg-indigo-600 text-white border-indigo-600"
-              : "bg-white hover:bg-gray-50"
+            ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+            : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
           }`}
         >
           {item.label}
