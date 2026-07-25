@@ -2,6 +2,7 @@ import { PlusCircle } from "lucide-react";
 
 export default function AdditionalAttemptCard({
   totalGrantedAttempts = 0,
+  grantHistory = [],  
   onGrant,
 }) {
   return (
@@ -47,6 +48,34 @@ export default function AdditionalAttemptCard({
         </button>
 
       </div>
+      {grantHistory.length > 0 && (
+        <div className="mt-5 border-t pt-4">
+
+          <p className="mb-3 text-sm font-semibold text-gray-700">
+            Grant History
+          </p>
+
+          <div className="space-y-2">
+
+            {grantHistory.map((grant) => (
+              <div
+                key={grant.id}
+                className="rounded-lg bg-gray-50 px-3 py-2 text-sm"
+              >
+                <div className="font-medium text-gray-800">
+                  +{grant.attempts_granted || 1} Attempt
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  {grant.reason || "No reason provided"}
+                </div>
+              </div>
+            ))}
+
+          </div>
+
+        </div>
+      )}
 
     </div>
   );

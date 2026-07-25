@@ -174,6 +174,7 @@ export default function StudentAttemptsPage() {
     {/* Additional Attempt */}
     <AdditionalAttemptCard
       totalGrantedAttempts={totalGrantedAttempts}
+       grantHistory={grantHistory}
       onGrant={() => setGrantModalOpen(true)}
   />
 
