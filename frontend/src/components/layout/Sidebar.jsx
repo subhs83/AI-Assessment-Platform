@@ -12,15 +12,27 @@ export default function Sidebar({ open }) {
   return (
     <aside
       className={`
-        flex flex-col
-        bg-zinc-900
-        border-r border-zinc-800
-        text-white
-        transition-all
-        duration-300
-        ease-in-out
-        ${open ? "w-64" : "w-15"}
-      `}
+          fixed
+          left-0
+          top-0
+          z-40
+          h-screen
+          bg-zinc-900
+          border-r
+          border-zinc-800
+          text-white
+          transition-all
+          duration-300
+          ease-in-out
+
+          lg:static
+
+          ${
+            open
+              ? "translate-x-0 w-64"
+              : "-translate-x-full lg:translate-x-0 lg:w-16"
+          }
+        `}
     >
       <nav className="flex-1 overflow-y-auto px-3 py-5">
 
@@ -88,7 +100,7 @@ export default function Sidebar({ open }) {
               {open && (
                 <span className="truncate">
                   {item.label}
-                </span>
+                </span> 
               )}
             </NavLink>
           );

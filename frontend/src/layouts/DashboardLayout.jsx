@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Outlet, useLocation, useParams } from "react-router-dom";
+
 import { useSchoolStore } from "../store/schoolStore";
-import { Outlet } from "react-router-dom";
 
 import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar"; // rename Navbar.jsx -> Navbar.jsx
+import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 
 import PageTransition from "../components/common/PageTransition";
 
 export default function DashboardLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
   const { schoolSlug } = useParams();
+
+  const location = useLocation();
+
+  const [sidebarOpen, setSidebarOpen] = useState(
+    window.innerWidth >= 1024
+  );
 
   const fetchExamOptions = useSchoolStore(
     (s) => s.fetchExamOptions
@@ -30,9 +34,9 @@ export default function DashboardLayout() {
     (s) => s.subscriptionSummary
   );
 
+  const isDesktop = window.innerWidth >= 1024;
 
   useEffect(() => {
-
     if (!schoolSlug) return;
 
     if (!examOptions) {
@@ -42,7 +46,6 @@ export default function DashboardLayout() {
     if (!subscriptionSummary) {
       fetchSubscriptionSummary(schoolSlug);
     }
-
   }, [
     schoolSlug,
     examOptions,
@@ -51,32 +54,48 @@ export default function DashboardLayout() {
     fetchSubscriptionSummary,
   ]);
 
+  // Auto close drawer after navigation on mobile
+  useEffect(() => {
+    if (!isDesktop) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname,isDesktop]);
+
   return (
     <div className="flex h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
 
-      {/* ================= NAVBAR ================= */}
       <Navbar
-        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        onToggleSidebar={() =>
+          setSidebarOpen((prev) => !prev)
+        }
       />
 
-      {/* ================= APPLICATION ================= */}
+      <div className="relative flex flex-1 overflow-hidden">
 
-      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Overlay */}
 
-        {/* Sidebar */}
+        {sidebarOpen && !isDesktop && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="
+              fixed
+              inset-0
+              z-30
+              bg-black/40
+              lg:hidden
+            "
+          />
+        )}
 
         <Sidebar
           open={sidebarOpen}
-          setOpen={setSidebarOpen}
         />
-
-        {/* Workspace */}
 
         <div className="flex min-w-0 flex-1 flex-col">
 
           <main className="flex-1 overflow-y-auto">
 
-            <div className="w-full px-6 lg:px-8 py-6">
+            <div className="w-full px-4 py-4 lg:px-8 lg:py-6">
 
               <PageTransition>
 
@@ -91,8 +110,6 @@ export default function DashboardLayout() {
         </div>
 
       </div>
-
-      {/* Footer */}
 
       <Footer />
 
