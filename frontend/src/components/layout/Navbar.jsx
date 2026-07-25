@@ -83,31 +83,7 @@ export default function Navbar({ onToggleSidebar }) {
 
         {/* LEFT */}
 
-        <div className="flex items-center gap-6">
-
-          {/* Logo */}
-
-          <div className="flex items-center gap-3 select-none h-20">
-
-            <img
-              src={logo}
-              alt="IndiaEduCore"
-              className="h-14 w-auto object-contain"
-            />
-
-            <div className="hidden lg:block leading-tight">
-              <div className="text-xl font-extrabold tracking-tight">
-                <span className="text-slate-900">INDIA</span>
-                <span className="text-teal-600">EDU</span>
-                <span className="text-orange-600">CORE</span>
-              </div>
-
-              <div className="text-xs text-gray-600">
-                AI Powered Assessment Platform
-              </div>
-            </div>
-
-          </div>
+        <div className="flex items-center gap-3 lg:gap-6">
 
           {/* Sidebar Toggle */}
 
@@ -118,12 +94,39 @@ export default function Navbar({ onToggleSidebar }) {
               p-2.5
               transition
               hover:bg-slate-100
+              hover:shadow-sm
             "
           >
             <Menu size={20} />
           </button>
 
-          {/* Breadcrumb */}
+          {/* Logo */}
+
+          <div className="flex items-center gap-3 select-none">
+
+            <img
+              src={logo}
+              alt="IndiaEduCore"
+              className="h-12 w-auto object-contain"
+            />
+
+            <div className="hidden lg:block leading-tight">
+
+              <div className="text-xl font-extrabold tracking-tight">
+                <span className="text-slate-900">INDIA</span>
+                <span className="text-teal-600">EDU</span>
+                <span className="text-orange-600">CORE</span>
+              </div>
+
+              <div className="text-xs text-gray-600">
+                AI Powered Assessment Platform
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Desktop Breadcrumb */}
 
           <div className="hidden md:flex items-center gap-2">
 
@@ -145,9 +148,11 @@ export default function Navbar({ onToggleSidebar }) {
           {/* Mobile Title */}
 
           <div className="md:hidden">
+
             <h1 className="text-base font-semibold text-slate-900 truncate">
               {title}
             </h1>
+
           </div>
 
         </div>
