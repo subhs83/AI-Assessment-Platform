@@ -53,6 +53,19 @@ const wrongCount =
   correctCount -
   notAttemptedCount;
 
+  
+
+  if (loading) return <SkeletonCard />;
+
+  if (!report) {
+    return (
+      <EmptyState
+        title="Report not found"
+        description="Attempt data is missing"
+      />
+    );
+  }
+
   const stats = [
     {
       label: "Score",
@@ -83,17 +96,6 @@ const wrongCount =
       valueClassName: "text-yellow-600",
     },
   ];
-
-  if (loading) return <SkeletonCard />;
-
-  if (!report) {
-    return (
-      <EmptyState
-        title="Report not found"
-        description="Attempt data is missing"
-      />
-    );
-  }
 
   return (
   <div className="space-y-6">
