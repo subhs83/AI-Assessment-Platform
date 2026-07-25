@@ -9,6 +9,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
 import BackButton from "../../components/ui/BackButton";
 
+
 import ResultsSummary from "../../components/teacher/results/ResultsSummary";
 import ResultTable from "../../components/teacher/results/ResultTable";
 import ResultCardList from "../../components/teacher/results/ResultCardList";
@@ -108,30 +109,90 @@ export default function ResultsPage() {
   return (
     <div className="space-y-6">
 
-      <PageHeader
-        title="Exam Results"
-        description={`Exam Title: ${data?.exam_title}`}
-        actions={
-          <>
-           <div className="flex-1 min-w-0 md:w-72 md:flex-none">
-              <input
-                type="text"
-                placeholder="Search student or roll..."
-                value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
-                className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+    {/* ================= DESKTOP HEADER ================= */}
 
-            <BackButton
-              to={routes.exams.list}
-              label="Go Back"
-            />
-          </>
-        }
-      />
+      <div className="hidden lg:block">
+
+        <PageHeader
+          title="Exam Results"
+          description={`Exam Title: ${data?.exam_title}`}
+          actions={
+            <>
+              <div className="w-72">
+
+                <input
+                  type="text"
+                  placeholder="Search student or roll..."
+                  value={search}
+                  onChange={(e) =>
+                    setSearch(e.target.value)
+                  }
+                  className="
+                    w-full
+                    rounded-lg
+                    border
+                    px-3
+                    py-2
+                    text-sm
+                    focus:outline-none
+                    focus:ring-2
+                    focus:ring-indigo-500
+                  "
+                />
+
+              </div>
+
+              <BackButton
+                to={routes.exams.list}
+                label="Go Back"
+              />
+
+            </>
+          }
+        />
+
+      </div>
+
+
+      {/* ================= MOBILE HEADER ================= */}
+
+      <div className="space-y-3 lg:hidden">
+
+        <PageHeader
+          title="Exam Results"
+          description={`Exam Title: ${data?.exam_title}`}
+        />
+
+
+        <BackButton
+          to={routes.exams.list}
+          label="Back"
+        />
+
+
+        <input
+          type="text"
+          placeholder="Search student or roll..."
+          value={search}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
+          className="
+            w-full
+            rounded-xl
+            border
+            border-slate-200
+            bg-white
+            px-4
+            py-2.5
+            text-sm
+            focus:outline-none
+            focus:ring-2
+            focus:ring-indigo-500
+          "
+        />
+
+      </div>
 
       <ResultsSummary
         summary={summary}

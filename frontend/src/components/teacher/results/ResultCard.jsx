@@ -1,4 +1,7 @@
-import { ShieldAlert } from "lucide-react";
+import {
+  ShieldAlert,
+  ChevronRight,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import MobileCard from "../../ui/mobile/MobileCard";
@@ -24,6 +27,7 @@ export default function ResultCard({
         )
       }
     >
+
       {/* Header */}
 
       <div className="flex items-start justify-between gap-3">
@@ -34,13 +38,14 @@ export default function ResultCard({
             {result.first_name} {result.last_name}
           </h3>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-0.5 text-sm text-slate-500">
             {result.class_section || "-"}
             {" • "}
             Roll {result.roll_number || "-"}
           </p>
 
         </div>
+
 
         <MobileStatusBadge
           color={completed ? "green" : "red"}
@@ -52,9 +57,10 @@ export default function ResultCard({
 
       </div>
 
+
       {/* Score */}
 
-      <div className="mt-4 flex items-end justify-between">
+      <div className="mt-3 flex items-center justify-between">
 
         <div>
 
@@ -67,6 +73,7 @@ export default function ResultCard({
           </div>
 
         </div>
+
 
         <div className="text-right">
 
@@ -82,32 +89,41 @@ export default function ResultCard({
 
       </div>
 
+
       {/* Footer */}
 
-      <div className="mt-4 flex items-center justify-between border-t pt-3">
+      <div className="mt-3 flex items-center justify-between border-t pt-3">
 
-        <div className="text-sm text-slate-600">
-          Attempts:
-          <span className="ml-1 font-semibold">
-            {result.attempts_count}
-          </span>
-        </div>
+        <div className="flex items-center gap-4 text-sm text-slate-600">
 
-        <div className="flex items-center gap-1 text-sm text-slate-600">
-
-          <ShieldAlert size={16} />
-
-          <span className="font-semibold">
-            {result.violation_count || 0}
+          <span>
+            Attempts:
+            <strong className="ml-1 text-slate-900">
+              {result.attempts_count}
+            </strong>
           </span>
 
+
+          <span className="flex items-center gap-1">
+
+            <ShieldAlert size={15} />
+
+            <strong className="text-slate-900">
+              {result.violation_count || 0}
+            </strong>
+
+          </span>
+
         </div>
+
+
+        <ChevronRight
+          size={18}
+          className="text-slate-400"
+        />
 
       </div>
 
-      <div className="mt-3 text-center text-xs font-medium text-indigo-600">
-        Tap to view attempts
-      </div>
     </MobileCard>
   );
 }

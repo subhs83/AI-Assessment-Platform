@@ -18,6 +18,7 @@ export default function MobileCard({
         shadow-sm
         transition-all
         duration-200
+        hover:border-indigo-200
         hover:shadow-md
         active:scale-[0.99]
         ${onClick ? "cursor-pointer text-left" : ""}

@@ -6,7 +6,7 @@ export default function ResultCardList({
   routes,
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 pb-4">
       {results.map((result) => (
         <ResultCard
           key={result.id}
