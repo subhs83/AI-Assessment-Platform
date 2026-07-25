@@ -5,7 +5,7 @@ import SkeletonCard from "../../components/ui/SkeletonCard";
 import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
 import BackButton from "../../components/ui/BackButton";
-import MobileStatGrid from "../../components/ui/mobile/MobileStatGrid";
+import MobileStatsGrid from "../../components/ui/mobile/MobileStatsGrid";
 
 
 export default function AttemptDetailPage() {
@@ -175,7 +175,7 @@ const wrongCount =
     {/* Mobile Summary */}
 
     <div className="md:hidden">
-      <MobileStatGrid stats={stats} />
+      <MobileStatsGrid stats={stats} />
     </div>
 
     {/* Questions */}
