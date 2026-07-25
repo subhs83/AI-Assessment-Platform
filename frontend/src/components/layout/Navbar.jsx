@@ -66,9 +66,20 @@ export default function Navbar({ onToggleSidebar }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 h-16 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
-
-      <div className="flex h-full items-center justify-between px-6">
+    <header
+      className="
+        sticky
+        top-0
+        z-50
+        h-16
+        border-b
+        border-slate-200
+        bg-white/95
+        shadow-sm
+        backdrop-blur-xl
+      "
+    >
+      <div className="flex h-full items-center justify-between px-4 lg:px-6">
 
         {/* LEFT */}
 
@@ -78,36 +89,36 @@ export default function Navbar({ onToggleSidebar }) {
 
           <div className="flex items-center gap-3 select-none h-20">
 
-            
-             
-                      <img
-                        src={logo}
-                        alt="IndiaEduCore"
-                        className="h-14 w-auto object-contain"
-                      />
-            
-                      {/* Uncomment if desired */}
-            
-                      <div className="hidden lg:block leading-tight">
-                        <div className="text-xl font-extrabold tracking-tight">
-                          <span className="text-slate-900">INDIA</span>
-                          <span className="text-teal-600">EDU</span>
-                          <span className="text-orange-600">CORE</span>
-                        </div>
-            
-                        <div className="text-xs text-gray-600">
-                          AI Powered Assessment Platform
-                        </div>
-                      </div>
-            
-                      
-                  </div>
+            <img
+              src={logo}
+              alt="IndiaEduCore"
+              className="h-14 w-auto object-contain"
+            />
+
+            <div className="hidden lg:block leading-tight">
+              <div className="text-xl font-extrabold tracking-tight">
+                <span className="text-slate-900">INDIA</span>
+                <span className="text-teal-600">EDU</span>
+                <span className="text-orange-600">CORE</span>
+              </div>
+
+              <div className="text-xs text-gray-600">
+                AI Powered Assessment Platform
+              </div>
+            </div>
+
+          </div>
 
           {/* Sidebar Toggle */}
 
           <button
             onClick={onToggleSidebar}
-            className="rounded-xl p-2.5 transition hover:bg-slate-100"
+            className="
+              rounded-xl
+              p-2.5
+              transition
+              hover:bg-slate-100
+            "
           >
             <Menu size={20} />
           </button>
@@ -129,6 +140,14 @@ export default function Navbar({ onToggleSidebar }) {
               {roleLabel[user?.role]}
             </span>
 
+          </div>
+
+          {/* Mobile Title */}
+
+          <div className="md:hidden">
+            <h1 className="text-base font-semibold text-slate-900 truncate">
+              {title}
+            </h1>
           </div>
 
         </div>
