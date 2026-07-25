@@ -1,7 +1,7 @@
 import MobileCard from "./MobileCard";
 
 export default function MobileStatsGrid({
-  items,
+  items = [],
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">

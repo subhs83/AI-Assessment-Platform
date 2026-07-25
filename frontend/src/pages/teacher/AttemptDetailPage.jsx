@@ -177,7 +177,7 @@ const wrongCount =
     {/* Mobile Summary */}
 
     <div className="md:hidden">
-      <MobileStatsGrid stats={stats} />
+      <MobileStatsGrid items={stats} />
     </div>
 
     {/* Questions */}
