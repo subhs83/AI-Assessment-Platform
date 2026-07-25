@@ -56,7 +56,7 @@ export default function SubscriptionPage() {
                 title="Subscription"
                 description="View your subscription plan, AI credits and usage."
                 actions={
-                        <BackButton to={-1} label="Go Back" />
+                        <BackButton to={-1} label="Back" />
                       }
             />
 

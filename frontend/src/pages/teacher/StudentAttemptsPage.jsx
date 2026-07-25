@@ -128,7 +128,7 @@ export default function StudentAttemptsPage() {
       <PageHeader
         title="Student Attempts"
         description="View attempt history and performance analysis"
-        actions={<BackButton to={routes.exams.results(examUid)} label="Go Back" /> }
+        actions={<BackButton to={routes.exams.results(examUid)} label="Back" /> }
       />
 
     {/* Student Summary */}

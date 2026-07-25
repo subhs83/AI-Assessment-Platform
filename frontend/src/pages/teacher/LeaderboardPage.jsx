@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
         actions={
           <BackButton
             to={-1}
-            label="Go Back"
+            label="Back"
           />
         }
       />

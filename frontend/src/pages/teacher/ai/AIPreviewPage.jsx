@@ -289,7 +289,7 @@ const handlePrint = (withAnswers) => {
         actions={
           <BackButton
             to={-1}
-            label="Go Back"
+            label="Back"
           />
         }
       />

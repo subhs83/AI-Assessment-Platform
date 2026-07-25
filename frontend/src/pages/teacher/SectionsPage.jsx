@@ -113,7 +113,7 @@ export default function SectionsPage() {
       <PageHeader
         title={`Sections${schoolClass ? ` • Class ${schoolClass.name}` : ""}`}
         description="Manage sections for this class."
-        actions ={<BackButton to={-1} label="Go Back" />}
+        actions ={<BackButton to={-1} label="Back" />}
       />
       <ManagementToolbar
         search={search}

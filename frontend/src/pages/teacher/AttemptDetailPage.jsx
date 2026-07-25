@@ -5,6 +5,7 @@ import SkeletonCard from "../../components/ui/SkeletonCard";
 import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
 import BackButton from "../../components/ui/BackButton";
+import MobileStatGrid from "../../components/ui/mobile/MobileStatGrid";
 
 
 export default function AttemptDetailPage() {
@@ -52,6 +53,37 @@ const wrongCount =
   correctCount -
   notAttemptedCount;
 
+  const stats = [
+    {
+      label: "Score",
+      value: `${report.score}/${report.total_marks}`,
+    },
+    {
+      label: "Percentage",
+      value: `${report.percentage?.toFixed(2)}%`,
+      valueClassName: "text-indigo-600",
+    },
+    {
+      label: "Questions",
+      value: report.total_questions,
+    },
+    {
+      label: "Correct",
+      value: correctCount,
+      valueClassName: "text-green-600",
+    },
+    {
+      label: "Wrong",
+      value: wrongCount,
+      valueClassName: "text-red-600",
+    },
+    {
+      label: "Skipped",
+      value: notAttemptedCount,
+      valueClassName: "text-yellow-600",
+    },
+  ];
+
   if (loading) return <SkeletonCard />;
 
   if (!report) {
@@ -70,19 +102,20 @@ const wrongCount =
       title="Attempt Analysis"
       description={`Review responses for ${report.student_name}`}
       actions={
-        <BackButton to={-1} label="Go Back" />
+        <BackButton to={-1} label="Back" />
       }
     />
 
-    {/* Summary */}
-    <div className="grid gap-4 md:grid-cols-6">
+    {/* Desktop Summary */}
+
+    <div className="hidden md:grid gap-4 md:grid-cols-6">
 
       <div className="bg-white p-5 rounded-lg shadow-sm border">
         <p className="text-sm text-gray-500">
           Score
         </p>
 
-        <h2 className="text-2xl font-bold mt-2">
+        <h2 className="mt-2 text-2xl font-bold">
           {report.score}/{report.total_marks}
         </h2>
       </div>
@@ -92,7 +125,7 @@ const wrongCount =
           Percentage
         </p>
 
-        <h2 className="text-2xl font-bold mt-2 text-indigo-600">
+        <h2 className="mt-2 text-2xl font-bold text-indigo-600">
           {report.percentage?.toFixed(2)}%
         </h2>
       </div>
@@ -102,7 +135,7 @@ const wrongCount =
           Questions
         </p>
 
-        <h2 className="text-2xl font-bold mt-2">
+        <h2 className="mt-2 text-2xl font-bold">
           {report.total_questions}
         </h2>
       </div>
@@ -112,7 +145,7 @@ const wrongCount =
           Correct
         </p>
 
-        <h2 className="text-2xl font-bold mt-2 text-green-600">
+        <h2 className="mt-2 text-2xl font-bold text-green-600">
           {correctCount}
         </h2>
       </div>
@@ -122,7 +155,7 @@ const wrongCount =
           Wrong
         </p>
 
-        <h2 className="text-2xl font-bold mt-2 text-red-600">
+        <h2 className="mt-2 text-2xl font-bold text-red-600">
           {wrongCount}
         </h2>
       </div>
@@ -132,11 +165,17 @@ const wrongCount =
           Skipped
         </p>
 
-        <h2 className="text-2xl font-bold mt-2 text-yellow-600">
+        <h2 className="mt-2 text-2xl font-bold text-yellow-600">
           {notAttemptedCount}
         </h2>
       </div>
 
+    </div>
+
+    {/* Mobile Summary */}
+
+    <div className="md:hidden">
+      <MobileStatGrid stats={stats} />
     </div>
 
     {/* Questions */}
@@ -155,27 +194,35 @@ const wrongCount =
           }`}
         >
 
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="mb-4">
 
-            <h3 className="font-medium text-lg">
-              Q{index + 1}. {q.question_text}
+          <div className="flex items-center justify-between gap-3">
+
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Question {index + 1}
             </h3>
 
             {q.remark === "Correct" ? (
-              <span className="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
+              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
                 Correct
               </span>
             ) : q.remark === "Not Attempted" ? (
-              <span className="px-3 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
+              <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
                 Skipped
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
+              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
                 Wrong
               </span>
             )}
 
           </div>
+
+          <h4 className="mt-3 text-base font-medium leading-7 text-slate-900">
+            {q.question_text}
+          </h4>
+
+        </div>
 
           <div className="space-y-2">
 

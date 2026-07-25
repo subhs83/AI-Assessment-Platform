@@ -144,7 +144,7 @@ export default function ResultsPage() {
 
               <BackButton
                 to={routes.exams.list}
-                label="Go Back"
+                label="Back"
               />
 
             </>
@@ -156,16 +156,14 @@ export default function ResultsPage() {
 
       {/* ================= MOBILE HEADER ================= */}
 
-      <div className="space-y-3 lg:hidden">
+      <div className="lg:hidden">
 
         <PageHeader
           title="Exam Results"
           description={`Exam Title: ${data?.exam_title}`}
-          actions = { <BackButton to={routes.exams.list} label="Back" />
-          }
+          actions ={<BackButton to={routes.exams.list} label="Back" />}
         />
-
-
+        
         <input
           type="text"
           placeholder="Search student or roll..."
