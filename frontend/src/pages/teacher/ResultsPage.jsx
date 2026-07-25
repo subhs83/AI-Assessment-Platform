@@ -11,6 +11,7 @@ import BackButton from "../../components/ui/BackButton";
 
 import ResultsSummary from "../../components/teacher/results/ResultsSummary";
 import ResultTable from "../../components/teacher/results/ResultTable";
+import ResultCardList from "../../components/teacher/results/ResultCardList";
 
 export default function ResultsPage() {
   const { schoolSlug, examUid } = useParams();
@@ -112,7 +113,7 @@ export default function ResultsPage() {
         description={`Exam Title: ${data?.exam_title}`}
         actions={
           <>
-            <div className="w-full px-4 md:w-72">
+           <div className="flex-1 min-w-0 md:w-72 md:flex-none">
               <input
                 type="text"
                 placeholder="Search student or roll..."
@@ -152,11 +153,27 @@ export default function ResultsPage() {
             Showing {filteredResults.length} of {results.length} students
           </div>
 
-          <ResultTable
-            results={filteredResults}
-            examUid={examUid}
-            routes={routes}
-          />
+          <>
+            {/* Desktop Table */}
+
+            <div className="hidden lg:block">
+              <ResultTable
+                results={filteredResults}
+                examUid={examUid}
+                routes={routes}
+              />
+            </div>
+
+            {/* Mobile Cards */}
+
+            <div className="lg:hidden">
+              <ResultCardList
+                results={filteredResults}
+                examUid={examUid}
+                routes={routes}
+              />
+            </div>
+          </>
         </>
       )}
 
