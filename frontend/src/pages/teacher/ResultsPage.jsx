@@ -161,7 +161,7 @@ export default function ResultsPage() {
         <PageHeader
           title="Exam Results"
           description={`Exam Title: ${data?.exam_title}`}
-          action = { 
+          actions = { 
               <BackButton
               to={routes.exams.list}
               label="Back"

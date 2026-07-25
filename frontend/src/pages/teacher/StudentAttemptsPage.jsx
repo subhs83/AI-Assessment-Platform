@@ -11,6 +11,9 @@ import PageHeader from "../../components/ui/PageHeader";
 import { teacherRoutes } from "../../routes/teacherRoutes";
 import BackButton from "../../components/ui/BackButton";
 import { useToast } from "../../components/ui/Toast";
+import AttemptCardList from "../../components/teacher/attempts/AttemptCardList";
+
+
 
 export default function StudentAttemptsPage() {
   const { schoolSlug, examUid, studentDbId } = useParams();
@@ -210,134 +213,175 @@ export default function StudentAttemptsPage() {
         description="No attempt matches the selected filter."
       />
     ) : (
-      <div className="grid gap-4">
 
-        {filteredAttempts.map((a) => (
+      <>
+      {/* ================= DESKTOP ATTEMPTS ================= */}
 
-          <div
-            key={a.id}
-            className={`bg-white border rounded-xl shadow-sm p-5
-            ${
-              a.is_best
-                ? "border-green-300 bg-green-50/30"
-                : ""
-            }`}
-          >
+        <div className="hidden lg:block">
 
-            {/* Top */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="grid gap-4">
 
-              <div>
+            {filteredAttempts.map((a) => (
 
-                <div className="flex flex-wrap items-center gap-2">
+              <div
+                key={a.id}
+                className={`bg-white border rounded-xl shadow-sm p-5
+                ${
+                  a.is_best
+                    ? "border-green-300 bg-green-50/30"
+                    : ""
+                }`}
+              >
 
-                  <h3 className="text-lg font-semibold">
-                    Attempt #{a.attempt_number}
-                  </h3>
+                {/* Top */}
 
-                  {a.is_best && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                      Best Attempt
-                    </span>
-                  )}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+                  <div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+
+                      <h3 className="text-lg font-semibold">
+                        Attempt #{a.attempt_number}
+                      </h3>
+
+
+                      {a.is_best && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                          Best Attempt
+                        </span>
+                      )}
+
+
+                      {a.auto_submitted_reason && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                          Auto Submitted
+                        </span>
+                      )}
+
+
+                      {!a.auto_submitted_reason &&
+                        a.violation_count > 0 && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+                          Violation
+                        </span>
+                      )}
+
+                    </div>
+
+                  </div>
+
+
+                  <button
+                    onClick={() => navigate(routes.attemptDetail(a.id))}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  >
+                    View Analysis
+                  </button>
+
+
+                </div>
+
+
+                {/* Stats */}
+
+                <div className="grid md:grid-cols-4 gap-4 mt-5">
+
+
+                  <div>
+                    <p className="text-xs text-gray-500">
+                      Score
+                    </p>
+
+                    <p className="font-semibold text-lg">
+                      {a.score} / {a.total_marks}
+                    </p>
+                  </div>
+
+
+                  <div>
+                    <p className="text-xs text-gray-500">
+                      Percentage
+                    </p>
+
+                    <p className="font-semibold text-lg text-blue-600">
+                      {(a.percentage || 0).toFixed(2)}%
+                    </p>
+                  </div>
+
+
+                  <div>
+                    <p className="text-xs text-gray-500">
+                      Violations
+                    </p>
+
+                    <p className="font-semibold text-lg">
+                      {a.violation_count || 0}
+                    </p>
+                  </div>
+
+
+                  <div>
+                    <p className="text-xs text-gray-500">
+                      Status
+                    </p>
+
+                    <p className="font-semibold">
+                      {a.auto_submitted_reason
+                        ? "Auto Submitted"
+                        : "Normal"}
+                    </p>
+
+                  </div>
+
+
+                </div>
+
+
+                {/* Time */}
+
+                <div className="mt-5 pt-4 border-t text-sm text-gray-500">
+
+                  <div>
+                    Started: {a.start_time}
+                  </div>
+
+
+                  <div className="mt-1">
+                    Ended: {a.end_time}
+                  </div>
+
 
                   {a.auto_submitted_reason && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
-                      Auto Submitted
-                    </span>
-                  )}
-
-                  {!a.auto_submitted_reason &&
-                    a.violation_count > 0 && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-                      Violation
-                    </span>
+                    <div className="mt-2 text-red-600">
+                      Reason: {a.auto_submitted_reason}
+                    </div>
                   )}
 
                 </div>
 
+
               </div>
 
-              <button
-                onClick={() => navigate(routes.attemptDetail(a.id))}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                View Analysis
-              </button>
-
-            </div>
-
-            {/* Stats */}
-            <div className="grid md:grid-cols-4 gap-4 mt-5">
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  Score
-                </p>
-
-                <p className="font-semibold text-lg">
-                  {a.score} / {a.total_marks}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  Percentage
-                </p>
-
-                <p className="font-semibold text-lg text-blue-600">
-                  {(a.percentage || 0).toFixed(2)}%
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  Violations
-                </p>
-
-                <p className="font-semibold text-lg">
-                  {a.violation_count || 0}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  Status
-                </p>
-
-                <p className="font-semibold">
-                  {a.auto_submitted_reason
-                    ? "Auto Submitted"
-                    : "Normal"}
-                </p>
-              </div>
-
-            </div>
-
-            {/* Time */}
-            <div className="mt-5 pt-4 border-t text-sm text-gray-500">
-
-              <div>
-                Started: {a.start_time}
-              </div>
-
-              <div className="mt-1">
-                Ended: {a.end_time}
-              </div>
-
-              {a.auto_submitted_reason && (
-                <div className="mt-2 text-red-600">
-                  Reason: {a.auto_submitted_reason}
-                </div>
-              )}
-
-            </div>
+            ))}
 
           </div>
 
-        ))}
+        </div>
 
-      </div>
+
+        {/* ================= MOBILE ATTEMPTS ================= */}
+
+        <div className="lg:hidden">
+
+          <AttemptCardList
+            attempts={filteredAttempts}
+            routes={routes}
+          />
+
+        </div>
+      </>
+        
     )}
 
       <GrantAttemptModal
