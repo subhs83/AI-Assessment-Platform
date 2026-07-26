@@ -27,44 +27,48 @@ export default function LeaderboardCard({
   return (
     <MobileCard>
 
-      {/* Header */}
+      {/* Rank */}
 
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex justify-center">
 
-        <div className="min-w-0 flex-1">
-
-          <div className="flex items-center gap-2">
-
-            <div
-              className={`rounded-full px-3 py-1 text-sm font-semibold ${rankBg}`}
-            >
-              {rank}
-            </div>
-
-            <h3 className="truncate text-base font-semibold text-slate-900">
-              {student.first_name} {student.last_name}
-            </h3>
-
-          </div>
-
-          <p className="mt-2 text-sm text-slate-500">
-            {student.class_section || "-"}
-            {" • "}
-            Roll {student.roll_number || "-"}
-          </p>
-
+        <div
+          className={`
+            inline-flex
+            items-center
+            gap-2
+            rounded-full
+            px-5
+            py-2
+            text-lg
+            font-bold
+            ${rankBg}
+          `}
+        >
+          <Trophy size={18} />
+          {rank}
         </div>
 
-        <Trophy
-          size={22}
-          className="text-amber-500"
-        />
+      </div>
+
+      {/* Student */}
+
+      <div className="mt-4 text-center">
+
+        <h3 className="text-lg font-semibold text-slate-900">
+          {student.first_name} {student.last_name}
+        </h3>
+
+        <p className="mt-1 text-sm text-slate-500">
+          {student.class_section || "-"}
+          {" • "}
+          Roll {student.roll_number || "-"}
+        </p>
 
       </div>
 
       {/* Performance */}
 
-      <div className="mt-4 flex items-end justify-between">
+      <div className="mt-5 flex items-end justify-between border-t pt-4">
 
         <div>
 
@@ -94,17 +98,13 @@ export default function LeaderboardCard({
 
       {/* Footer */}
 
-      <div className="mt-4 flex items-center justify-between border-t pt-3">
+      <div className="mt-4 flex items-center justify-center border-t pt-3">
 
         <div className="text-sm text-slate-600">
-          Attempts:
+          Attempts
           <span className="ml-1 font-semibold">
             {student.attempts_count || "-"}
           </span>
-        </div>
-
-        <div className="text-xs font-medium text-indigo-600">
-          Rank #{index + 1}
         </div>
 
       </div>
