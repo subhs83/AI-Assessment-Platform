@@ -36,7 +36,7 @@ export default function Sidebar({ open }) {
           }
         `}
     >
-      <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5">
+      <nav className="flex-1 overflow-y-auto px-3 pt-5 pb-24">
 
         {menu.map((item, idx) => {
 
