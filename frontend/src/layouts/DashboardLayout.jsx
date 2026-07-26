@@ -104,13 +104,15 @@ export default function DashboardLayout() {
 
             </div>
 
+               <Footer />
+
           </main>
 
         </div>
 
       </div>
 
-      <Footer />
+   
 
     </div>
   );
