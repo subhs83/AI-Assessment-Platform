@@ -16,7 +16,7 @@ export default function Sidebar({ open }) {
           left-0
           top-0
           z-40
-          h-screen
+          flex flex-col h-screen
           bg-zinc-900
           border-r
           border-zinc-800
