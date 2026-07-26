@@ -93,9 +93,9 @@ export default function DashboardLayout() {
 
         <div className="flex min-w-0 flex-1 flex-col">
 
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex flex-1 flex-col overflow-y-auto">
 
-            <div className="w-full px-4 py-4 lg:px-8 lg:py-6">
+            <div className="flex-1 w-full px-4 py-4 lg:px-8 lg:py-6">
 
               <PageTransition>
 
@@ -104,8 +104,8 @@ export default function DashboardLayout() {
               </PageTransition>
 
             </div>
-            
-            <Footer />
+
+             <Footer />
 
           </main>
 
@@ -113,6 +113,7 @@ export default function DashboardLayout() {
 
       </div>
 
+     
 
     </div>
   );
