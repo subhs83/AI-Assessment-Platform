@@ -106,108 +106,75 @@ export default function ResultsPage() {
     return <SkeletonCard />;
   }
 
-  return (
-    <div className="space-y-6">
+ return (
+  <div className="space-y-6">
 
-    {/* ================= DESKTOP HEADER ================= */}
-
-      <div className="hidden lg:block">
-
-        <PageHeader
-          title="Exam Results"
-          description={`Exam Title: ${data?.exam_title}`}
-          actions={
-            <>
-              <div className="w-72">
-
-                <input
-                  type="text"
-                  placeholder="Search student or roll..."
-                  value={search}
-                  onChange={(e) =>
-                    setSearch(e.target.value)
-                  }
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    px-3
-                    py-2
-                    text-sm
-                    focus:outline-none
-                    focus:ring-2
-                    focus:ring-indigo-500
-                  "
-                />
-
-              </div>
-
-              <BackButton
-                to={routes.exams.list}
-                label="Back"
-              />
-
-            </>
-          }
+    <PageHeader
+      title="Exam Results"
+      description={`Exam Title: ${data?.exam_title}`}
+      actions={
+        <BackButton
+          to={routes.exams.list}
+          label="Back"
         />
+      }
+    />
 
-      </div>
+    <ResultsSummary
+      summary={summary}
+    />
 
-
-      {/* ================= MOBILE HEADER ================= */}
-
-      <div className="lg:hidden">
-
-        <PageHeader
-          title="Exam Results"
-          description={`Exam Title: ${data?.exam_title}`}
-          actions ={<BackButton to={routes.exams.list} label="Back" />}
-        />
-        
-        <input
-          type="text"
-          placeholder="Search student or roll..."
-          value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
-          className="
-            w-full
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            px-4
-            py-2.5
-            text-sm
-            focus:outline-none
-            focus:ring-2
-            focus:ring-indigo-500
-          "
-        />
-
-      </div>
-
-      <ResultsSummary
-        summary={summary}
+    {results.length === 0 ? (
+      <EmptyState
+        title="No results found"
+        description="No student has attempted this exam yet."
       />
+    ) : (
+      <>
+        {/* Search + Result Count */}
 
-      {results.length === 0 ? (
-        <EmptyState
-          title="No results found"
-          description="No student has attempted this exam yet."
-        />
-      ) : filteredResults.length === 0 ? (
-        <EmptyState
-          title="No matching students"
-          description="Try a different search term."
-        />
-      ) : (
-        <>
-          <div className="text-sm text-gray-500">
-            Showing {filteredResults.length} of {results.length} students
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+
+          <div className="w-full lg:w-80">
+
+            <input
+              type="text"
+              placeholder="Search student or roll..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-200
+                bg-white
+                px-4
+                py-2.5
+                text-sm
+                focus:outline-none
+                focus:ring-2
+                focus:ring-indigo-500
+              "
+            />
+
           </div>
 
+          <div className="text-sm text-slate-500">
+
+            Showing {filteredResults.length} of {results.length} students
+
+          </div>
+
+        </div>
+
+        {filteredResults.length === 0 ? (
+          <EmptyState
+            title="No matching students"
+            description="Try a different search term."
+          />
+        ) : (
           <>
             {/* Desktop Table */}
 
@@ -229,9 +196,11 @@ export default function ResultsPage() {
               />
             </div>
           </>
-        </>
-      )}
+        )}
 
-    </div>
-  );
+      </>
+    )}
+
+  </div>
+);
 }

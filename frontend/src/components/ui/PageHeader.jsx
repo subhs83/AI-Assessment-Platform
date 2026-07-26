@@ -6,8 +6,8 @@ export default function PageHeader({
   iconClassName = "bg-indigo-50 text-indigo-600",
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div className="flex items-start gap-4">
+    <div className="flex md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex w-3/4 items-start gap-4">
 
         {Icon && (
           <div className={`rounded-2xl p-3 ${iconClassName}`}>
