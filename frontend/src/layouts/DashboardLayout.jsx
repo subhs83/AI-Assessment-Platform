@@ -62,15 +62,14 @@ export default function DashboardLayout() {
   }, [location.pathname,isDesktop]);
 
   return (
-    <div className="flex h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
-
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <Navbar
         onToggleSidebar={() =>
           setSidebarOpen((prev) => !prev)
         }
       />
 
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 min-h-0">
 
         {/* Mobile Overlay */}
 
@@ -93,7 +92,7 @@ export default function DashboardLayout() {
 
         <div className="flex min-w-0 flex-1 flex-col">
 
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 min-h-0 overflow-y-auto">
 
             <div className="w-full px-4 py-4 lg:px-8 lg:py-6">
 
