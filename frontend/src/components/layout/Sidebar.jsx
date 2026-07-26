@@ -29,7 +29,7 @@ export default function Sidebar({ open }) {
 
           ${
             open
-              ? "translate-x-0 w-64"
+              ? "translate-x-0 w-72"
               : "-translate-x-full lg:translate-x-0 lg:w-16"
           }
         `}
