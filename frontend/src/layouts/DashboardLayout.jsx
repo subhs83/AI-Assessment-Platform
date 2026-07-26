@@ -104,6 +104,8 @@ export default function DashboardLayout() {
               </PageTransition>
 
             </div>
+            
+            <Footer />
 
           </main>
 
@@ -111,7 +113,6 @@ export default function DashboardLayout() {
 
       </div>
 
-      <Footer />
 
     </div>
   );
