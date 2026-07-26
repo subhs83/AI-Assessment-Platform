@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 import API from "../../api/client";
@@ -11,6 +11,7 @@ import BackButton from "../../components/ui/BackButton";
 import LeaderboardSummary from "../../components/teacher/leaderboard/LeaderboardSummary";
 import LeaderboardPodium from "../../components/teacher/leaderboard/LeaderboardPodium";
 import LeaderboardTable from "../../components/teacher/leaderboard/LeaderboardTable";
+import LeaderboardCardList from "../../components/teacher/leaderboard/LeaderboardCardList";
 
 export default function LeaderboardPage() {
   const { schoolSlug, examUid } = useParams();
@@ -19,6 +20,7 @@ export default function LeaderboardPage() {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -44,7 +46,29 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
-  const leaderboard = data?.leaderboard || [];
+  const leaderboard = useMemo(
+    () => data?.leaderboard || [],
+    [data]
+  );
+
+  const filteredLeaderboard = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return leaderboard;
+    }
+
+    return leaderboard.filter(
+      (student) =>
+        `${student.first_name ?? ""} ${student.last_name ?? ""}`
+          .toLowerCase()
+          .includes(query) ||
+        (student.roll_number ?? "")
+          .toString()
+          .includes(query)
+    );
+  }, [leaderboard, search]);
+
 
   const summary = {
     students: leaderboard.length,
@@ -61,6 +85,8 @@ export default function LeaderboardPage() {
           ) / leaderboard.length
         : 0,
   };
+
+ 
 
   if (loading) {
     return <SkeletonCard />;
@@ -90,9 +116,57 @@ export default function LeaderboardPage() {
         />
       )}
 
-      <LeaderboardTable
-        leaderboard={leaderboard}
-      />
+      <div className="space-y-3">
+
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+
+          <div className="w-full lg:w-80">
+
+            <input
+              type="text"
+              placeholder="Search student or roll..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-200
+                bg-white
+                px-4
+                py-2.5
+                text-sm
+                focus:outline-none
+                focus:ring-2
+                focus:ring-indigo-500
+              "
+            />
+
+          </div>
+
+          <div className="text-sm text-slate-500">
+            Showing {filteredLeaderboard.length} of {leaderboard.length} students
+          </div>
+
+        </div>
+
+        {/* Desktop */}
+
+        <div className="hidden lg:block">
+          <LeaderboardTable
+            leaderboard={filteredLeaderboard}
+          />
+        </div>
+
+        {/* Mobile */}
+
+        <div className="lg:hidden">
+          <LeaderboardCardList
+            leaderboard={filteredLeaderboard}
+          />
+        </div>
+
+      </div>
 
     </div>
   );
