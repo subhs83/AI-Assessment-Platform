@@ -1,8 +1,7 @@
 import {
   Clock3,
   HelpCircle,
-  FileText,
- Target,
+  Target,
   MinusCircle,
 } from "lucide-react";
 
@@ -10,12 +9,6 @@ export default function ExamInfoCard({ exam }) {
   if (!exam) return null;
 
   const items = [
-    {
-      icon: FileText,
-      label: "Title",
-      value: exam.title,
-    },
-
     {
       icon: Clock3,
       label: "Duration",
@@ -37,23 +30,34 @@ export default function ExamInfoCard({ exam }) {
       value:
         Number(exam.negative_marks) > 0
           ? `${exam.negative_marks} Mark`
-          : "No Negative Marking",
+          : "No",
     },
-    
   ];
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl text-center">
+    <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg sm:p-6">
 
-      <h2 className="text-2xl font-bold text-slate-900">
-        Exam Information
-      </h2>
+      {/* Header */}
 
-      <p className="mt-2 text-sm text-slate-500">
-        Please review the exam details before starting.
-      </p>
+      <div className="text-center">
 
-      <div className="mt-4 space-y-2">
+        <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">
+          Exam Information
+        </p>
+
+        <h2 className="mt-3 text-xl font-bold leading-tight text-slate-900 sm:text-2xl">
+          {exam.title}
+        </h2>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Please review the exam details before starting.
+        </p>
+
+      </div>
+
+      {/* Stats */}
+
+      <div className="mt-6 space-y-3">
 
         {items.map((item) => {
           const Icon = item.icon;
@@ -61,30 +65,45 @@ export default function ExamInfoCard({ exam }) {
           return (
             <div
               key={item.label}
-              className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-3"
+              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
             >
+
               <div className="flex items-center gap-3">
 
-                <div className="rounded-xl bg-indigo-100 p-2">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100">
                   <Icon
                     size={20}
                     className="text-indigo-600"
                   />
                 </div>
 
-                <span className="font-medium text-slate-700">
-                  {item.label}
-                </span>
+                <div>
+
+                  <p className="text-xs uppercase tracking-wide text-slate-500">
+                    {item.label}
+                  </p>
+
+                  <p className="font-semibold text-slate-900">
+                    {item.value}
+                  </p>
+
+                </div>
 
               </div>
-
-              <span className="font-semibold text-slate-900">
-                {item.value}
-              </span>
 
             </div>
           );
         })}
+
+      </div>
+
+      {/* Footer */}
+
+      <div className="mt-6 rounded-2xl bg-indigo-50 p-4">
+
+        <p className="text-sm font-medium text-indigo-700">
+          Be sure to verify all exam details before proceeding.
+        </p>
 
       </div>
 

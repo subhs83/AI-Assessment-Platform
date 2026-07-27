@@ -199,15 +199,15 @@ const RegisterPage = () => {
               <ExamInfoCard exam={exam} />
             </div>
 
-            <div className="w-full rounded-3xl border border-slate-200 bg-slate-100 p-5 shadow-2xl backdrop-blur sm:p-6">
+            <div className="w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
 
               {/* Header */}
               <div className="mb-5 text-center">
-                <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">
+                <h2 className="text-2xl font-bold text-slate-900">
                   Student Registration
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-2 text-sm text-slate-500">
                   Enter details to start your exam
                 </p>
               </div>
