@@ -159,59 +159,59 @@ const renderPreviewMode = () => {
     
       <div className="w-full">
 
-        {/* Header */}
-        <div className="mb-4 flex items-start justify-between gap-3">
+        {/* Header Row */}
+        <div className="mb-4 flex items-center justify-between gap-3">
 
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-3">
 
             <input
               type="checkbox"
               checked={selected}
               onChange={onToggle}
-              className="mt-1 h-4 w-4 cursor-pointer"
+              className="h-4 w-4 cursor-pointer"
             />
 
-            <div>
-
-              <div className="mb-2 text-sm font-semibold text-blue-700">
-                Question {index + 1}
-              </div>
-
-              <h3 className="text-base font-semibold leading-7 text-slate-800">
-                {question.question_text}
-              </h3>
-
-            </div>
+            <span className="text-sm font-semibold text-blue-700">
+              Question {index + 1}
+            </span>
 
           </div>
+
 
           <div className="flex items-center gap-2">
 
-          {question.is_edited && (
-            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-              ✓ Edited
-            </span>
-          )}
+            {question.is_edited && (
+              <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                ✓ Edited
+              </span>
+            )}
 
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="
-              flex items-center gap-1
-              rounded-md border
-              px-3 py-1.5
-              text-sm font-medium
-              text-blue-600
-              transition
-              hover:bg-blue-50
-            "
-          >
-            <Pencil size={16} />
-            Edit
-          </button>
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="
+                flex items-center gap-1
+                rounded-md border
+                px-3 py-1.5
+                text-sm font-medium
+                text-blue-600
+                transition
+                hover:bg-blue-50
+              "
+            >
+              <Pencil size={16} />
+              Edit
+            </button>
+
           </div>
 
         </div>
+
+
+        {/* Question Content */}
+        <h3 className="text-base font-semibold leading-7 text-slate-800">
+          {question.question_text}
+        </h3>
 
         {/* Options */}
         <div className="mt-4 space-y-2 text-sm text-slate-700">
