@@ -1,12 +1,20 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
+
 import API from "../../api/client";
 import { teacherRoutes } from "../../routes/teacherRoutes";
+
 import BackButton from "../../components/ui/BackButton";
+import PageHeader from "../../components/ui/PageHeader";
+import SkeletonCard from "../../components/ui/SkeletonCard";
+import ErrorState from "../../components/ui/ErrorState";
+import EmptyState from "../../components/ui/EmptyState";
 
 export default function ReviewQuestionsPage() {
   const { schoolSlug, examUid } = useParams();
-   const routes = teacherRoutes(schoolSlug);
+
+  const routes = teacherRoutes(schoolSlug);
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,92 +23,154 @@ export default function ReviewQuestionsPage() {
   const fetchQuestions = useCallback(async () => {
     try {
       setLoading(true);
+      setError("");
 
       const res = await API.get(
         `/api/teacher/${schoolSlug}/exams/${examUid}/questions`
       );
 
       setQuestions(res.data.data?.questions || []);
-    } catch (err) {
+    } catch {
       setError("Failed to load questions");
     } finally {
       setLoading(false);
     }
-  },[schoolSlug, examUid]);
+  }, [schoolSlug, examUid]);
 
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        message={error}
+        onRetry={fetchQuestions}
+      />
+    );
+  }
+
+  if (!questions.length) {
+    return (
+      <EmptyState
+        title="No questions found"
+        description="Upload questions first to review them."
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <PageHeader
+        title="Review Questions"
+        description="Validate uploaded questions before publishing"
+        actions={
+          <BackButton
+            to={routes.exams.list}
+            label="Back to Exams"
+          />
+        }
+      />
 
-        <div>
-          <h1 className="text-2xl font-semibold">
-            Review Questions
-          </h1>
+      <div className="space-y-5">
 
-          <p className="text-sm text-gray-500 mt-1">
-            Validate uploaded questions before publishing
-          </p>
-        </div>
+        {questions.map((q, index) => {
+          const options = [
+            { key: "A", value: q.option_a },
+            { key: "B", value: q.option_b },
+            { key: "C", value: q.option_c },
+            { key: "D", value: q.option_d },
+          ];
 
-        <BackButton to={routes.exams.list} label="Back to Exams " />
-        
-      </div>
+          return (
+            <div
+              key={index}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              {/* Question */}
 
-      {/* Loading */}
-      {loading && (
-        <div className="text-gray-500">
-          Loading questions...
-        </div>
-      )}
+              <div className="flex items-start gap-3">
 
-      {/* Error */}
-      {error && (
-        <div className="text-red-500">
-          {error}
-        </div>
-      )}
+                <div className="rounded-lg bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
+                  Q{index + 1}
+                </div>
 
-      {/* Empty */}
-      {!loading && questions.length === 0 && (
-        <div className="p-6 bg-yellow-50 border rounded">
-          No questions found. Upload questions first.
-        </div>
-      )}
+                <p className="flex-1 text-base font-medium leading-7 text-slate-800">
+                  {q.question_text}
+                </p>
 
-      {/* Questions List */}
-      <div className="space-y-4">
+              </div>
 
-        {questions.map((q, index) => (
-          <div
-            key={index}
-            className="bg-white border rounded-lg p-4"
-          >
+              {/* Options */}
 
-            <p className="font-medium">
-              Q{index + 1}. {q.question_text}
-            </p>
+              <div className="mt-5 space-y-3">
 
-            <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
+                {options.map((option) => {
+                  const isCorrect =
+                    option.key === q.correct_option;
 
-              <p>A: {q.option_a}</p>
-              <p>B: {q.option_b}</p>
-              <p>C: {q.option_c}</p>
-              <p>D: {q.option_d}</p>
+                  return (
+                    <div
+                      key={option.key}
+                      className={`flex items-start gap-3 rounded-xl border p-3 transition ${
+                        isCorrect
+                          ? "border-green-300 bg-green-50"
+                          : "border-slate-200 bg-slate-50"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                          isCorrect
+                            ? "bg-green-600 text-white"
+                            : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {option.key}
+                      </div>
+
+                      <p className="flex-1 text-sm leading-6 text-slate-700">
+                        {option.value}
+                      </p>
+
+                      {isCorrect && (
+                        <CheckCircle2
+                          size={20}
+                          className="shrink-0 text-green-600"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+
+              </div>
+
+              {/* Footer */}
+
+              <div className="mt-5 flex items-center justify-between border-t pt-4">
+
+                <span className="text-sm text-slate-500">
+                  Correct Answer
+                </span>
+
+                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+                  Option {q.correct_option}
+                </span>
+
+              </div>
 
             </div>
-
-            <p className="mt-2 text-sm text-green-600">
-              Correct: {q.correct_option}
-            </p>
-
-          </div>
-        ))}
+          );
+        })}
 
       </div>
 
