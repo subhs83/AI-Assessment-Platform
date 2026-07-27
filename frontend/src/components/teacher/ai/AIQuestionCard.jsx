@@ -156,36 +156,32 @@ const handleApply = async () => {
 
 const renderPreviewMode = () => {
   return (
-    <div className="flex items-start gap-3">
-
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={onToggle}
-        className="mt-1 h-4 w-4 cursor-pointer"
-      />
-
+    
       <div className="w-full">
 
         {/* Header */}
-        <div className="mb-3 flex items-start justify-between gap-4">
+        <div className="mb-4 flex items-start justify-between gap-3">
 
           <div className="flex items-start gap-2">
 
-            <span
-              className="
-                whitespace-nowrap rounded-md
-                bg-blue-100 px-2 py-1
-                text-xs font-semibold
-                text-blue-700
-              "
-            >
-              Q{index + 1}
-            </span>
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={onToggle}
+              className="mt-1 h-4 w-4 cursor-pointer"
+            />
 
-            <h3 className="font-semibold">
-              {question.question_text}
-            </h3>
+            <div>
+
+              <div className="mb-2 text-sm font-semibold text-blue-700">
+                Question {index + 1}
+              </div>
+
+              <h3 className="text-base font-semibold leading-7 text-slate-800">
+                {question.question_text}
+              </h3>
+
+            </div>
 
           </div>
 
@@ -218,7 +214,7 @@ const renderPreviewMode = () => {
         </div>
 
         {/* Options */}
-        <div className="ml-2 space-y-1 text-sm">
+        <div className="mt-4 space-y-2 text-sm text-slate-700">
 
           <div>
             <span className="font-medium">A.</span>{" "}
@@ -243,13 +239,11 @@ const renderPreviewMode = () => {
         </div>
 
         {/* Correct Answer */}
-        <div className="mt-3 text-sm font-medium text-green-600">
+        <div className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
           Correct Answer: {question.correct_answer}
         </div>
 
       </div>
-
-    </div>
   );
 };
 
@@ -439,7 +433,7 @@ const renderEditMode = () => {
   return (
   <div
     className={`
-      rounded-xl border p-4 shadow-sm transition
+      rounded-2xl border border-slate-200 p-4 shadow-sm transition shadow-sm transition
       ${
         selected
           ? "bg-blue-50 ring-2 ring-blue-500"

@@ -17,7 +17,7 @@ export default function OptionCardGroup({
   };
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-3 sm:space-y-5">
       <div>
         <h3 className="text-lg font-semibold text-slate-900">
           {title}
@@ -30,7 +30,7 @@ export default function OptionCardGroup({
         )}
       </div>
 
-      <div className={`grid gap-4 ${gridClasses[columns]}`}>
+     <div className={`grid gap-3 sm:gap-4 ${gridClasses[columns]}`}>
         {options.map((option) => (
           <SelectableCard
             key={option.value}

@@ -26,7 +26,7 @@ export default function AISaveBar({
         mt-6
         border-t
         bg-white
-        p-4
+        p-3 sm:p-4
         shadow-lg
       "
     >

@@ -24,7 +24,7 @@ export default function SelectableCard({
       onClick={onClick}
       className={`
         group relative w-full overflow-hidden rounded-2xl border
-        p-5 text-left transition-all duration-200
+        p-3 sm:p-5 text-left transition-all duration-200
 
         ${
           selected
@@ -47,12 +47,16 @@ export default function SelectableCard({
         </div>
       )}
 
-      <div className="mt-7">
+      <div className="mt-8 sm:mt-7">
         {/* Icon */}
         {Icon && (
           <div
             className={`
-                mb-5 flex h-12 w-12 items-center justify-center rounded-xl
+                mb-3 sm:mb-5
+                flex
+                h-10 w-10
+                sm:h-12 sm:w-12
+                items-center justify-center rounded-xl
                 transition-all duration-200
 
                 ${
@@ -62,7 +66,7 @@ export default function SelectableCard({
                 }
             `}
         >
-            <Icon size={22}/>
+            <Icon size={18} className="sm:h-[22px] sm:w-[22px]" />
         </div>
         )}
 
@@ -73,7 +77,7 @@ export default function SelectableCard({
 
         {/* Subtitle */}
         {subtitle && (
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-xs sm:text-sm text-slate-500">
             {subtitle}
           </p>
         )}

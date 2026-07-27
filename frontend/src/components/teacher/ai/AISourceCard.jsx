@@ -10,7 +10,7 @@ export default function AISourceCard({
   setShowSource,
 }) {
   return (
-    <div className="mb-6 rounded-xl border bg-gray-50 p-4">
+    <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:rounded-xl">
 
       <div className="flex items-center justify-between">
 
@@ -53,7 +53,7 @@ export default function AISourceCard({
 
       {!showSource && (
 
-        <p className="mt-3 line-clamp-1 text-gray-700">
+        <p className="mt-3 line-clamp-1 text-sm text-slate-700">
           <b>Topic:</b>{" "}
           {data.source_text || "N/A"}
         </p>

@@ -282,7 +282,7 @@ const handlePrint = (withAnswers) => {
 
   return (
     <>
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto w-full max-w-5xl">
 
       <PageHeader
         title="AI Generated Questions"

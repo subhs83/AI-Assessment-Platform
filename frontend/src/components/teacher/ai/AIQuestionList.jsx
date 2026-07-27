@@ -12,21 +12,19 @@ export default function AIQuestionList({
   onQuestionUpdated
 }) {
 
-    console.log("AIQuestionList props:", { questions });
   return (
     <>
       <div className="mb-4 flex items-center gap-2">
 
         <ListChecks size={20} />
 
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-base font-semibold sm:text-lg">
           Generated Questions
         </h2>
 
       </div>
 
-      <div className="space-y-4">
-
+      <div className="space-y-3 sm:space-y-4">
         {questions.map((question, index) => (
 
           <AIQuestionCard
