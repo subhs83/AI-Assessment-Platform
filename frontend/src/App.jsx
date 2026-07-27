@@ -232,11 +232,11 @@ function AppContent() {
 
 export default function App() {
 
-  const loadCurrentUser = useAuthStore((s) => s.loadCurrentUser);
+  // const loadCurrentUser = useAuthStore((s) => s.loadCurrentUser);
 
-      useEffect(() => {
-    loadCurrentUser();
-  }, [loadCurrentUser]);
+  //     useEffect(() => {
+  //   loadCurrentUser();
+  // }, [loadCurrentUser]);
 
       return (
         <ToastProvider>
