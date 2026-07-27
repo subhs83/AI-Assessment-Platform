@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from "lucide-react";
-import MobileCard from "../../components/ui/MobileCard";
+import MobileCard from "../../ui/mobile/MobileCard";
 
 export default function StudentCard({
   student,
