@@ -99,17 +99,20 @@ export default function ReviewQuestionsPage() {
             >
               {/* Question */}
 
-              <div className="flex items-start gap-3">
+              <div className="mb-3 flex items-center justify-between">
 
-                <div className="rounded-lg bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
-                  Q{index + 1}
-                </div>
+                <h3 className="text-sm font-semibold text-indigo-600">
+                  Question {index + 1}
+                </h3>
 
-                <p className="flex-1 text-base font-medium leading-7 text-slate-800">
-                  {q.question_text}
-                </p>
+                {/* Future Actions */}
+                {/* Edit | Print | Delete */}
 
               </div>
+
+              <p className="mt-3 text-base font-medium leading-7 text-slate-800">
+                {q.question_text}
+              </p>
 
               {/* Options */}
 
