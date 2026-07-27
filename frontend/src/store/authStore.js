@@ -13,7 +13,7 @@ export const useAuthStore = create((set) => ({
   isAuthenticated: false,
   authLoading: true,
   authError: null,
-  hasInitialized: false,
+  
 
 
   // -------------------------
@@ -55,13 +55,9 @@ export const useAuthStore = create((set) => ({
 
 
   // -------------------------
-  // Initialize Auth
+  // Restore Session
   // -------------------------
-  initializeAuth: async () => {
-
-    if (useAuthStore.getState().hasInitialized) {
-      return;
-    }
+  loadCurrentUser: async () => {
 
     try {
 
@@ -74,17 +70,15 @@ export const useAuthStore = create((set) => ({
       set({
         user: response.data.user,
         isAuthenticated: true,
-        authLoading: false,
-        hasInitialized: true,
+        authLoading: false
       });
 
-    } catch (error) {
+    } catch {
 
       set({
         user: null,
         isAuthenticated: false,
-        authLoading: false,
-        hasInitialized: true,
+        authLoading: false
       });
 
     }
@@ -115,8 +109,8 @@ export const useAuthStore = create((set) => ({
       user: null,
       isAuthenticated: false,
       authError: null,
-      hasInitialized: false,
     });
+
   }
 
 }
