@@ -12,7 +12,7 @@ export default function SchoolAdminsPage() {
   const { schoolId } = useParams();
   const { showToast } = useToast();
 
-  const { getSchoolAdmins, loading } = useSuperAdminStore();
+  const { getSchoolAdmins } = useSuperAdminStore();
  
   const [school, setSchool] = useState(null);
   const [admins, setAdmins] = useState([]);

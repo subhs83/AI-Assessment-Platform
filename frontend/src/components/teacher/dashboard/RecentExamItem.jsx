@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  FileText,
   Share2,
   BarChart3,
 } from "lucide-react";

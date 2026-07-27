@@ -28,7 +28,7 @@ export default function SubscriptionPage() {
 
     useEffect(() => {
         fetchSubscription(schoolSlug);
-    }, [schoolSlug]);
+    }, [schoolSlug, fetchSubscription]);
 
     
 

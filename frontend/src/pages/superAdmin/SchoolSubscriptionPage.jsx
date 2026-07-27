@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import ChangeSubscriptionPlanModal from "../../components/superAdmin/ChangeSubscriptionPlanModal";
 import ExtendSubscriptionModal from "../../components/superAdmin/ExtendSubscriptionModal";
@@ -36,13 +36,9 @@ export default function SchoolSubscriptionPage() {
     updateSubscriptionStatus,
   } = useSuperAdminStore();
 
-  useEffect(() => {
+  
 
-    loadSubscription();
-
-  }, [schoolId]);
-
-  const loadSubscription = async () => {
+  const loadSubscription = useCallback(async () => {
 
     setLoading(true);
 
@@ -67,7 +63,15 @@ export default function SchoolSubscriptionPage() {
 
     }
 
-  };
+  }, [schoolId, getSchoolSubscription]);
+
+    useEffect(() => {
+
+      loadSubscription();
+
+    }, [loadSubscription]);
+
+    
 
   const handleChangePlan = async (payload) => {
 

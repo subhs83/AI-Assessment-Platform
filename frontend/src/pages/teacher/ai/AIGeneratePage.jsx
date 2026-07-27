@@ -65,7 +65,7 @@ export default function AIGeneratePage() {
 
   useEffect(() => {
     fetchAIConfig(schoolSlug);
-}, [schoolSlug]);
+}, [schoolSlug, fetchAIConfig]);
 
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function AIGeneratePage() {
     };
 
     load();
-  }, [schoolSlug]);
+  }, [schoolSlug, fetchOcrLanguages]);
 
 
   const handleExtract = async () => {
