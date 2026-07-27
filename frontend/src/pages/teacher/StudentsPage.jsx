@@ -11,6 +11,8 @@ import AddStudentModal from "../../components/teacher/students/AddStudentModal";
 import EditStudentModal from "../../components/teacher/students/EditStudentModal";
 import ManagementToolbar from "../../components/ui/ManagementToolbar";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+ 
+import StudentCardList from "../../components/teacher/students/StudentCardList";
 
 import { downloadFile } from "../../utils/downloadFile";
 import { useToast } from "../../components/ui/Toast";
@@ -155,17 +157,31 @@ export default function StudentsPage() {
 
         </div>
 
-      {students.length === 0 ? (
+      {filteredStudents.length === 0 ? (
         <EmptyState
           title="No students found"
           description="Add your first student to get started."
         />
       ) : (
-        <StudentTable
-          students={filteredStudents}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <StudentTable
+              students={filteredStudents}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden">
+            <StudentCardList
+              students={filteredStudents}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
+        </>
       )}
 
       <ImportStudentsModal
