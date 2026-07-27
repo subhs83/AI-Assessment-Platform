@@ -1,6 +1,7 @@
 import { FileText, Users } from "lucide-react";
 
 import DashboardStatCard from "./DashboardStatCard";
+import MobileStatsGrid from "../../ui/mobile/MobileStatsGrid"
 
 export default function DashboardStats({
   stats,
@@ -33,20 +34,24 @@ export default function DashboardStats({
   ];
 
   return (
-    <div className="grid gap-5 md:grid-cols-3">
+    <>
+  <div className="md:hidden">
+    <MobileStatsGrid items={cards} />
+  </div>
 
-      {cards.map((card) => (
-        <DashboardStatCard
-          key={card.title}
-          title={card.title}
-          value={card.value}
-          subtitle={card.subtitle}
-          icon={card.icon}
-          valueClassName={card.valueClassName}
-          iconClassName={card.iconClassName}
-        />
-      ))}
-
-    </div>
+  <div className="hidden gap-5 md:grid md:grid-cols-3">
+    {cards.map((card) => (
+      <DashboardStatCard
+        key={card.title}
+        title={card.title}
+        value={card.value}
+        subtitle={card.subtitle}
+        icon={card.icon}
+        valueClassName={card.valueClassName}
+        iconClassName={card.iconClassName}
+      />
+    ))}
+  </div>
+</>
   );
 }

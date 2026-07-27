@@ -289,7 +289,7 @@ export default function SchoolSubscriptionPage() {
         </p>
 
         <h3 className="mt-2 text-2xl font-bold">
-          {subscription.usage.used_credits}
+          {subscription.usage.used_ai_credits}
         </h3>
 
       </div>
@@ -301,7 +301,7 @@ export default function SchoolSubscriptionPage() {
         </p>
 
         <h3 className="mt-2 text-2xl font-bold text-green-600">
-          {subscription.usage.remaining_credits}
+          {subscription.usage.remaining_ai_credits}
         </h3>
 
       </div>
@@ -443,7 +443,7 @@ export default function SchoolSubscriptionPage() {
             </span>
 
             <span className="font-medium">
-              {subscription.usage.bonus_credits}
+              {subscription.usage.bonus_ai_credits}
             </span>
 
           </div>
