@@ -306,27 +306,27 @@ export default function AIQuestionSettings({
   ];
 
   return (
-    <section className="mb-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+    <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:mb-8 sm:p-8">
 
-      <div className="mb-8 flex items-start gap-4">
+      <div className="mb-5 flex items-start gap-3 sm:mb-8 sm:gap-4">
 
-        <div className="rounded-2xl bg-indigo-100 p-3 text-indigo-700">
+        <div className="rounded-xl bg-indigo-100 p-2.5 text-indigo-700 sm:rounded-2xl sm:p-3">
           <Settings2 size={24} />
         </div>
 
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
             Configure Questions
           </h2>
 
-          <p className="mt-1 text-slate-500">
+          <p className="mt-1 text-sm text-slate-500">
             Customize how AI generates questions for your assessment.
           </p>
         </div>
 
       </div>
 
-      <div className="space-y-10">
+      <div className="space-y-6 sm:space-y-10">
 
         <OptionCardGroup
           title="Questions"

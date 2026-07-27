@@ -99,7 +99,7 @@ export default function ReviewQuestionsPage() {
             >
               {/* Question */}
 
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-1 flex items-center justify-between">
 
                 <h3 className="text-sm font-semibold text-indigo-600">
                   Question {index + 1}

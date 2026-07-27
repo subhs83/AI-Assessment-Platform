@@ -10,39 +10,83 @@ export default function AIExtractedContent({
   }
 
   return (
-    <div
+    <section
       ref={extractRef}
-      className="border rounded-lg p-4 mb-6"
+      className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
     >
-      <h2 className="font-semibold text-lg mb-2">
-        Review Extracted Content
-      </h2>
+      {/* Header */}
 
-      <p className="text-sm text-gray-600 mb-3">
-        Please review the extracted content before generating
-        questions. For image files, you may need to make small
-        corrections before generating questions.
-      </p>
+      <div className="flex items-start justify-between gap-4">
 
-      <div className="text-sm text-green-600 mb-3">
-        ✓ Content extracted successfully
+        <div>
+
+          <h2 className="text-xl font-bold text-slate-900">
+            Review Extracted Content
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Review and correct the extracted text before generating
+            AI questions.
+          </p>
+
+        </div>
+
+        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+          ✓ Ready
+        </span>
+
       </div>
 
-      <div className="text-sm text-gray-500 mb-3">
-        Words: {wordCount} • Characters: {characterCount}
+      {/* Statistics */}
+
+      <div className="mt-4 flex flex-wrap gap-3 text-sm">
+
+        <div className="rounded-xl bg-slate-100 px-3 py-2">
+          <span className="text-slate-500">Words</span>
+
+          <span className="ml-2 font-semibold text-slate-900">
+            {wordCount}
+          </span>
+        </div>
+
+        <div className="rounded-xl bg-slate-100 px-3 py-2">
+          <span className="text-slate-500">
+            Characters
+          </span>
+
+          <span className="ml-2 font-semibold text-slate-900">
+            {characterCount}
+          </span>
+        </div>
+
       </div>
 
-      <div className="text-green-600 text-sm mb-2">
-        ✓ Content ready for review
-      </div>
+      {/* Editor */}
 
       <textarea
-        className="w-full border rounded p-3 h-72"
+        className="
+          mt-5
+          h-72
+          w-full
+          resize-y
+          rounded-2xl
+          border
+          border-slate-300
+          p-4
+          text-sm
+          leading-6
+          text-slate-800
+          placeholder:text-slate-400
+          focus:border-indigo-500
+          focus:outline-none
+          focus:ring-4
+          focus:ring-indigo-100
+        "
         value={extractedContent}
         onChange={(e) =>
           setExtractedContent(e.target.value)
         }
       />
-    </div>
+    </section>
   );
 }

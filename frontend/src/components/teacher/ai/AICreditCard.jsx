@@ -26,9 +26,9 @@ export default function AICreditCard({
       : 0;
 
   return (
-    <div className="mb-6 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-blue-50 p-5 shadow-sm">
+    <div className="mb-6 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-blue-50 p-4 shadow-sm sm:p-5">
 
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 
         <div>
 
@@ -36,7 +36,7 @@ export default function AICreditCard({
 
             <Sparkles className="h-5 w-5 text-indigo-600" />
 
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-base font-semibold sm:text-lg">
               AI Credits
             </h2>
 
@@ -61,7 +61,7 @@ export default function AICreditCard({
 
       {/* Progress */}
 
-      <div className="mt-5">
+      <div className="mt-4">
 
         <div className="mb-2 flex justify-between text-sm">
 
@@ -90,9 +90,9 @@ export default function AICreditCard({
 
       {creditsRequired > 0 && (
 
-        <div className="mt-5 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
 
             <Zap className="h-4 w-4 text-amber-600" />
 

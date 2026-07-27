@@ -65,7 +65,7 @@ export default function ExamInfoCard({ exam }) {
           return (
             <div
               key={item.label}
-              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"
+              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-2"
             >
 
               <div className="flex items-center gap-3">
@@ -99,7 +99,7 @@ export default function ExamInfoCard({ exam }) {
 
       {/* Footer */}
 
-      <div className="mt-6 rounded-2xl bg-indigo-50 p-4">
+      <div className="mt-4 rounded-2xl bg-indigo-50 p-3">
 
         <p className="text-sm font-medium text-indigo-700">
           Be sure to verify all exam details before proceeding.
