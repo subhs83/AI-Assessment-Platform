@@ -1,6 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
+import MobileCard from "../../ui/mobile/MobileCard";
 
-import MobileCard from "../../ui/MobileCard";
 
 export default function StudentCard({
   student,
@@ -8,7 +8,7 @@ export default function StudentCard({
   onDelete,
 }) {
   return (
-    <MobileCard className="p-4">
+    <MobileCard >
 
       {/* Header */}
       <div className="flex items-start justify-between gap-3">

@@ -104,7 +104,7 @@ export default function ExamCard({
           </button>
         )}
 
-        {!exam.is_published && !exam.is_expired && (
+        {exam.total_attempts < 1 && !exam.is_expired && (
           <Link
             to={routes.exams.edit(exam.exam_uid)}
             className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center gap-2"
