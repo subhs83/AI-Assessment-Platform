@@ -12,6 +12,7 @@ import AICreditCard from "../../../components/teacher/ai/AICreditCard";
 import AIQuestionSettings from "../../../components/teacher/ai/AIQuestionSettings";
 import AIGenerateButton from "../../../components/teacher/ai/AIGenerateButton";
 import { useToast } from "../../../components/ui/Toast";
+import { useSchoolStore } from "../../../store/schoolStore";
 
 export default function AIGeneratePage() {
   const { schoolSlug } = useParams();
@@ -39,6 +40,10 @@ export default function AIGeneratePage() {
   const [file, setFile] = useState(null);
 
   const [language, setLanguage] = useState("english");
+
+  const fetchSubscriptionSummary = useSchoolStore(
+  (s) => s.fetchSubscriptionSummary
+);
 
 
   const [extractedContent, setExtractedContent] =
@@ -209,7 +214,10 @@ export default function AIGeneratePage() {
            showToast(res.data.message || "Failed to generate questions.", "error");
           return;
         }
-     
+
+        // Refresh navbar data
+      await fetchSubscriptionSummary(schoolSlug);
+          
 
       navigate(
         `/school/${schoolSlug}/teacher/ai/preview/${requestId}`
