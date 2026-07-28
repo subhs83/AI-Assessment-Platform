@@ -19,6 +19,7 @@ export default function Navbar({ onToggleSidebar }) {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const subscriptionSummary = useSchoolStore( (s) => s.subscriptionSummary);
+  
 
   const [openMenu, setOpenMenu] = useState(false);
 

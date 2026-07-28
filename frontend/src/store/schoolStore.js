@@ -31,25 +31,56 @@ export const useSchoolStore = create((set) => ({
     }
 },
 
+    // fetchSubscriptionSummary: async (schoolSlug) => {
+    //     try {
+    //     const res = await schoolApi.getSubscriptionSummary(schoolSlug);
+
+    //     set({
+    //         subscriptionSummary: res.data.data, 
+    //     });
+
+    //     return res.data.data;
+    // } 
+
+    // catch (error) {
+    //         set({
+    //             error: error.response?.data?.message || "Failed to load subscriptionSummary",
+    //         });
+
+    //         throw error;
+    //     }
+    // },
+
     fetchSubscriptionSummary: async (schoolSlug) => {
-        try {
+    try {
         const res = await schoolApi.getSubscriptionSummary(schoolSlug);
 
+        // console.log(
+        //   "Subscription API response:",
+        //   res.data.data
+        // );
+
         set({
-            subscriptionSummary: res.data.data, 
+            subscriptionSummary: res.data.data,
         });
 
-        return res.data.data;
-    } 
+        // console.log(
+        //   "Store after update:",
+        //   useSchoolStore.getState().subscriptionSummary
+        // );
 
-    catch (error) {
+        return res.data.data;
+
+        } catch (error) {
             set({
                 error: error.response?.data?.message || "Failed to load subscriptionSummary",
-            });
+        });
 
-            throw error;
+        throw error;
         }
-    },
+},
+
+    
 
 
 fetchSchoolBrand: async (schoolSlug) => {

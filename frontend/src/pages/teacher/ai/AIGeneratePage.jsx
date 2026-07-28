@@ -41,8 +41,12 @@ export default function AIGeneratePage() {
 
   const [language, setLanguage] = useState("english");
 
-  const fetchSubscriptionSummary = useSchoolStore(
+const fetchSubscriptionSummary = useSchoolStore(
   (s) => s.fetchSubscriptionSummary
+);
+
+const fetchDashboard = useTeacherStore(
+  (s) => s.fetchDashboard
 );
 
 
@@ -217,6 +221,8 @@ export default function AIGeneratePage() {
 
         // Refresh navbar data
       await fetchSubscriptionSummary(schoolSlug);
+
+      await fetchDashboard(schoolSlug);
           
 
       navigate(
