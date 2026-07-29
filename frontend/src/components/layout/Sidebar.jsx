@@ -12,27 +12,29 @@ export default function Sidebar({ open }) {
   return (
     <aside
       className={`
-          fixed
-          left-0
-          top-0
-          z-40
-          flex flex-col h-screen
-          bg-zinc-900
-          border-r
-          border-zinc-800
-          text-white
-          transition-all
-          duration-300
-          ease-in-out
+        fixed
+        left-0
+        top-16
+        h-[calc(100vh-4rem)]
+        z-40
+        flex flex-col
+        bg-zinc-900
+        border-r
+        border-zinc-800
+        text-white
+        transition-all
+        duration-300
 
-          lg:static
+        lg:static
+        lg:top-0
+        lg:h-screen
 
-          ${
-            open
-              ? "translate-x-0 w-[272]"
-              : "-translate-x-full lg:translate-x-0 lg:w-16"
-          }
-        `}
+        ${
+          open
+            ? "translate-x-0 w-[276px]"
+            : "-translate-x-full lg:translate-x-0 lg:w-16"
+        }
+      `}
     >
       <nav className="flex-1 overflow-y-auto px-3 py-5">
 

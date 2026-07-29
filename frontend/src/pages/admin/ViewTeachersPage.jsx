@@ -173,6 +173,7 @@ export default function ViewTeachersPage() {
         iconColor="text-indigo-600"
         iconBackground="bg-indigo-100"
       />
+      <div className="mt-2 flex justify-end"> 
       <Link
         to={`/school/${schoolSlug}/admin/teachers/add`}
         className="inline-flex items-center gap-2 justify-center rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-indigo-700"
@@ -180,6 +181,7 @@ export default function ViewTeachersPage() {
         <UserPlus size={18} />
         Add Teacher
       </Link>
+      </div>
     </div>
 
 
