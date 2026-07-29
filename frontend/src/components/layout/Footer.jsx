@@ -17,7 +17,7 @@ export default function Footer() {
 
           <span>•</span>
 
-          <span>Version 1.0.0</span>
+          <span>Version 1.1.0</span>
 
         </div>
 
