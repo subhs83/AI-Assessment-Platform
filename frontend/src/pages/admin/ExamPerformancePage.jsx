@@ -9,6 +9,8 @@ import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader"
 import ExamPerformanceFilters from "../../components/admin/performance/ExamPerformanceFilters";
 import ExamPerformanceTable from "../../components/admin/performance/ExamPerformanceTable";
+import ExamPerformanceMobileCard from "../../components/admin/performance/ExamPerformanceMobileCard";
+
 
 import { BarChart3} from "lucide-react";
 
@@ -123,10 +125,21 @@ const filteredExams = exams.filter((exam) => {
     />
 
     {/* Table */}
-    <ExamPerformanceTable
-      schoolSlug={schoolSlug}
-      exams={filteredExams}
-  />
+    {/* Mobile */}
+    <div className="md:hidden">
+      <ExamPerformanceMobileCard
+        schoolSlug={schoolSlug}
+        exams={filteredExams}
+      />
+    </div>
+
+    {/* Desktop */}
+    <div className="hidden md:block">
+      <ExamPerformanceTable
+        schoolSlug={schoolSlug}
+        exams={filteredExams}
+      />
+    </div>
 
   </div>
 );

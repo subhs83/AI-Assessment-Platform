@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import SkeletonCard from "../../components/ui/SkeletonCard";
 import ErrorState from "../../components/ui/ErrorState";
 import PageHeader from "../../components/ui/PageHeader"
+import TeacherPerformanceMobileCard from "../../components/admin/teachers/TeacherPerformanceMobileCard";
 
 import { useAdminStore } from "../../store/adminStore";
 import {
@@ -58,9 +59,13 @@ export default function TeacherPerformancePage() {
       iconClassName="bg-violet-100 ring-1 ring-violet-100 text-violet-600"
     />
 
-
+    <div className="md:hidden">
+      <TeacherPerformanceMobileCard
+        teachers={teacherPerformance}
+      />
+    </div>
     {/* Table */}
-    <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+    <div className="hidden md:block overflow-hidden rounded-2xl border bg-white shadow-sm">
 
       <div className="overflow-x-auto">
 

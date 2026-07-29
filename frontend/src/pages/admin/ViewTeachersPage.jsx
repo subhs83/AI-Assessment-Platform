@@ -10,6 +10,7 @@ import PageHeader from "../../components/ui/PageHeader"
 import { useToast } from "../../components/ui/Toast";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import TeacherTable from "../../components/admin/teachers/TeacherTable";
+import TeacherMobileCard from "../../components/admin/teachers/TeacherMobileCard";
 
 
 import {
@@ -146,6 +147,7 @@ export default function ViewTeachersPage() {
   <div className="space-y-6">
 
     {/* Header */}
+    <div className="hidden md:block">
      <PageHeader
         title="Teachers"
         description="Manage teachers in your school and control account access."
@@ -162,14 +164,43 @@ export default function ViewTeachersPage() {
           </Link>
         }
       />
+    </div>
+   <div className="md:hidden">
+     <PageHeader
+        title="Teachers"
+        description="Manage teachers in your school and control account access."
+        icon={Users}
+        iconColor="text-indigo-600"
+        iconBackground="bg-indigo-100"
+      />
+      <Link
+        to={`/school/${schoolSlug}/admin/teachers/add`}
+        className="inline-flex items-center gap-2 justify-center rounded-xl bg-indigo-600 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-indigo-700"
+      >
+        <UserPlus size={18} />
+        Add Teacher
+      </Link>
+    </div>
 
 
     {/* Table */}
-    <TeacherTable
-      teachers={teachers}
-      onToggle={setTeacherToToggle}
-      onReset={setTeacherToReset}
-    />
+    {/* Mobile */}
+    <div className="md:hidden">
+      <TeacherMobileCard
+        teachers={teachers}
+        onToggle={setTeacherToToggle}
+        onReset={setTeacherToReset}
+      />
+    </div>
+
+    {/* Desktop */}
+    <div className="hidden md:block">
+      <TeacherTable
+        teachers={teachers}
+        onToggle={setTeacherToToggle}
+        onReset={setTeacherToReset}
+      />
+    </div>
 
   </div>
   <ConfirmModal

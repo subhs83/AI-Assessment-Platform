@@ -11,6 +11,9 @@ import PageHeader from "../../components/ui/PageHeader";
 import SchoolAnalyticsStats from "../../components/admin/analytics/SchoolAnalyticsStats";
 import TopTeachersAnalyticsCard from "../../components/admin/analytics/TopTeachersAnalyticsCard";
 import TopExamsAnalyticsCard from "../../components/admin/analytics/TopExamsAnalyticsCard";
+import TopTeachersAnalyticsMobileCard from "../../components/admin/analytics/TopTeachersAnalyticsMobileCard";
+import TopExamsAnalyticsMobileCard from "../../components/admin/analytics/TopExamsAnalyticsMobileCard";
+
 
 import { BarChart3 } from "lucide-react";
 
@@ -87,13 +90,31 @@ export default function SchoolAnalyticsPage() {
         schoolAverage={school_average}
       />
 
-      <TopTeachersAnalyticsCard
-        teachers={top_teachers}
-      />
+      {/* Top Teachers */}
+      <div className="md:hidden">
+        <TopTeachersAnalyticsMobileCard
+          teachers={top_teachers}
+        />
+      </div>
 
-      <TopExamsAnalyticsCard
-        exams={top_exams}
-      />
+      <div className="hidden md:block">
+        <TopTeachersAnalyticsCard
+          teachers={top_teachers}
+        />
+      </div>
+
+      {/* Top Exams */}
+      <div className="md:hidden">
+        <TopExamsAnalyticsMobileCard
+          exams={top_exams}
+        />
+      </div>
+
+      <div className="hidden md:block">
+        <TopExamsAnalyticsCard
+          exams={top_exams}
+        />
+      </div>
 
     </div>
 

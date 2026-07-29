@@ -9,6 +9,8 @@ import PageHeader from "../../components/ui/PageHeader"
 import DashboardMetrics from "../../components/admin/dashboard/DashboardMetrics";
 import TopTeachersCard from "../../components/admin/dashboard/TopTeachersCard";
 import TopExamsCard from "../../components/admin/dashboard/TopExamsCard";
+import TopExamsMobileCard from "../../components/admin/dashboard/TopExamsMobileCard";
+import TopTeachersMobileCard from "../../components/admin/dashboard/TopTeachersMobileCard";
 
 export default function AdminDashboardPage() {
 
@@ -72,17 +74,38 @@ export default function AdminDashboardPage() {
 
 
   {/* Top Teachers */}
-  <TopTeachersCard
-    schoolSlug={schoolSlug}
-    teachers={dashboardData?.top_teachers}
-  />
+    {/* Mobile */}
+  <div className="md:hidden">
+    <TopExamsMobileCard
+      schoolSlug={schoolSlug}
+      exams={dashboardData?.top_exams}
+    />
+  </div>
+
+  {/* Desktop */}
+  <div className="hidden md:block">
+    <TopExamsCard
+      schoolSlug={schoolSlug}
+      exams={dashboardData?.top_exams}
+    />
+  </div>
 
 
   {/* Top Exams */}
-  <TopExamsCard
-    schoolSlug={schoolSlug}
-    exams={dashboardData?.top_exams}
-  />
+  {/* Top Teachers */}
+    <div className="md:hidden">
+      <TopTeachersMobileCard
+        schoolSlug={schoolSlug}
+        teachers={dashboardData?.top_teachers}
+      />
+    </div>
+
+    <div className="hidden md:block">
+      <TopTeachersCard
+        schoolSlug={schoolSlug}
+        teachers={dashboardData?.top_teachers}
+      />
+    </div>
 
 </div>
 
