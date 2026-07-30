@@ -39,11 +39,11 @@ export default function DashboardLayout() {
   useEffect(() => {
     if (!schoolSlug) return;
 
-    if (!examOptions) {
+    if (!examOptions || examOptions.school_slug !== schoolSlug) {
       fetchExamOptions(schoolSlug);
     }
 
-    if (!subscriptionSummary) {
+    if (!subscriptionSummary || subscriptionSummary.school_slug !== schoolSlug ) {
       fetchSubscriptionSummary(schoolSlug);
     }
   }, [

@@ -10,7 +10,7 @@ export const useSchoolStore = create((set) => ({
       error: null,
       examOptions: null,
       branding: null,
-      subscriptionSummary:null,
+      subscriptionSummary: null,
 
   fetchExamOptions: async (schoolSlug) => {
     try {
