@@ -5,7 +5,18 @@ export default function BrandLoading({
     message = "Loading...",
 }) {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div
+        className="
+            fixed
+            inset-0
+            z-[9999]
+            flex
+            items-center
+            justify-center
+            bg-background
+            px-6
+        "
+        >
             <div className="w-full max-w-sm text-center">
 
                 <img

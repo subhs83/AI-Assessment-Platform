@@ -37,11 +37,6 @@ export const useAuthStore = create((set) => ({
         authLoading: false
       });
 
-      console.log(
-        "LOGIN STATE UPDATED",
-        response.data.user
-      );
-
       return response.data;
 
     } catch (error) {
