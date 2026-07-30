@@ -231,29 +231,45 @@ function AppContent() {
 }
 
 
+function AuthInitializer() {
+
+  const authLoading = useAuthStore(
+    (s) => s.authLoading
+  );
+
+  if (authLoading) {
+    return (
+      <BrandLoading message="Loading your workspace..." />
+    );
+  }
+
+  return null;
+}
+
 export default function App() {
 
-  const loadCurrentUser = useAuthStore((s) => s.loadCurrentUser);
-  const authLoading = useAuthStore((s) => s.authLoading);
+  const loadCurrentUser = useAuthStore(
+    (s) => s.loadCurrentUser
+  );
 
   useEffect(() => {
     loadCurrentUser();
   }, [loadCurrentUser]);
 
-  if (authLoading) {
-    return (
-      <ToastProvider>
-        <BrandLoading message="Loading your workspace..." />
-      </ToastProvider>
-    );
-  }
 
   return (
     <ToastProvider>
+
       <GlobalLoadingOverlay />
+
       <BrowserRouter>
+
+        <AuthInitializer />
+
         <AppContent />
+
       </BrowserRouter>
+
     </ToastProvider>
   );
 }
