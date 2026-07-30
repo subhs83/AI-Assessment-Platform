@@ -42,7 +42,10 @@ export default function LoginPage() {
       });
 
       navigate(
-        response.redirect_path
+        response.redirect_path,
+        {
+          replace: true
+        }
       );
 
     } catch (error) {
