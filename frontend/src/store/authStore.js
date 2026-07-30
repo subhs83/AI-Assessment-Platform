@@ -75,10 +75,21 @@ export const useAuthStore = create((set) => ({
 
     } catch {
 
-      set({
-        user: null,
-        isAuthenticated: false,
-        authLoading: false
+      set((state) => {
+
+        // Don't overwrite a successful login
+        if (state.isAuthenticated) {
+          return {
+            authLoading: false
+          };
+        }
+
+        return {
+          user: null,
+          isAuthenticated: false,
+          authLoading: false
+        };
+
       });
 
     }
