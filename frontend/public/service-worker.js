@@ -5,8 +5,6 @@
 const CACHE_NAME = "indiaeducore-static-v1";
 
 const STATIC_ASSETS = [
-  "/",
-  "/index.html",
   "/favicon.ico",
   "/favicon-192x192.png",
   "/favicon-512x512.png",
