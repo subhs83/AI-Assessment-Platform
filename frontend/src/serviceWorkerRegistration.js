@@ -49,6 +49,33 @@ export function register(config) {
 }
 
 
+
+export function unregister() {
+
+  if ("serviceWorker" in navigator) {
+
+    navigator.serviceWorker.ready
+      .then((registration) => {
+
+        registration.unregister();
+
+      })
+      .catch((error) => {
+
+        console.error(
+          "Service worker unregister failed:",
+          error
+        );
+
+      });
+
+  }
+
+}
+
+
+
+
 function registerValidSW(
   swUrl,
   config
