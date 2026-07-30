@@ -31,7 +31,7 @@ export default function Sidebar({ open }) {
 
         ${
           open
-            ? "translate-x-0 w-[276px]"
+            ? "translate-x-0 w-[272px]"
             : "-translate-x-full lg:translate-x-0 lg:w-16"
         }
       `}

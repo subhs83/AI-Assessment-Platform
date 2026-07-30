@@ -1,3 +1,7 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
+import { getDashboardPath } from "../../utils/getDashboardPath";
 import Navbar from "../../components/landing/Navbar";
 import HeroSection from "../../components/landing/HeroSection";
 import StatsSection from "../../components/landing/StatsSection";
@@ -12,6 +16,29 @@ import Footer from "../../components/landing/Footer";
 import SEO from "../../components/common/SEO";
 
 export default function HomePage() {
+
+  const navigate = useNavigate();
+
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const authLoading = useAuthStore((s) => s.authLoading);
+
+  useEffect(() => {
+
+    if (authLoading) {
+      return;
+    }
+
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches;
+
+    if (isStandalone && isAuthenticated && user) {
+      navigate(getDashboardPath(user), { replace: true });
+    }
+
+  }, [authLoading, isAuthenticated, user, navigate]);
+
+
   return (
     <div className="bg-white">
 
