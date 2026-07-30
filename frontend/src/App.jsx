@@ -231,26 +231,18 @@ function AppContent() {
 }
 
 
-function AuthInitializer() {
 
-  const authLoading = useAuthStore(
-    (s) => s.authLoading
-  );
-
-  if (authLoading) {
-    return (
-      <BrandLoading message="Loading your workspace..." />
-    );
-  }
-
-  return null;
-}
 
 export default function App() {
 
   const loadCurrentUser = useAuthStore(
     (s) => s.loadCurrentUser
   );
+
+  const authLoading = useAuthStore(
+    (s) => s.authLoading
+  );
+
 
   useEffect(() => {
     loadCurrentUser();
@@ -264,9 +256,11 @@ export default function App() {
 
       <BrowserRouter>
 
-        <AuthInitializer />
-
-        <AppContent />
+        {authLoading ? (
+          <BrandLoading message="Loading your workspace..." />
+        ) : (
+          <AppContent />
+        )}
 
       </BrowserRouter>
 
