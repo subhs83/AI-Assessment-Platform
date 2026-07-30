@@ -14,6 +14,7 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import ProtectedRoute from "./routes/ProtectedRoute"
 import RoleProtectedRoute from "./routes/RoleProtectedRoute"
 import GlobalLoadingOverlay from "./components/common/GlobalLoadingOverlay"
+import BrandLoading from "./components/loading/BrandLoading"
 
 
 
@@ -233,17 +234,26 @@ function AppContent() {
 export default function App() {
 
   const loadCurrentUser = useAuthStore((s) => s.loadCurrentUser);
+  const authLoading = useAuthStore((s) => s.authLoading);
 
-      useEffect(() => {
+  useEffect(() => {
     loadCurrentUser();
   }, [loadCurrentUser]);
 
-      return (
-        <ToastProvider>
-          <GlobalLoadingOverlay />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </ToastProvider>
-      );
+  if (authLoading) {
+    return (
+      <ToastProvider>
+        <BrandLoading message="Loading your workspace..." />
+      </ToastProvider>
+    );
+  }
+
+  return (
+    <ToastProvider>
+      <GlobalLoadingOverlay />
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </ToastProvider>
+  );
 }

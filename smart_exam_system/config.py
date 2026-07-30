@@ -24,6 +24,7 @@ class Config:
 
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    REMEMBER_COOKIE_DURATION = timedelta(days=30)
 
     # CORS
     CORS_ORIGINS = os.getenv(

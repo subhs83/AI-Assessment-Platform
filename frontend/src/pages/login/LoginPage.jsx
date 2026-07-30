@@ -32,9 +32,13 @@ export default function LoginPage() {
 
     try {
 
+      const isPWA =
+        window.matchMedia("(display-mode: standalone)").matches;
+
       const response = await login({
         email,
-        password
+        password,
+        device_type: isPWA ? "pwa" : "browser",
       });
 
       navigate(

@@ -25,6 +25,7 @@ def login_api():
     session.clear()
     
     data = request.get_json()
+    device_type = data.get("device_type", "browser")
 
     email = data.get("email")
     password = data.get("password")
@@ -67,7 +68,12 @@ def login_api():
             "message": error
         }), 403
 
-    login_user(user)
+    remember = device_type == "pwa"
+
+    login_user(
+        user,
+        remember=remember
+    )
     log_login_attempt( email, user, True, request )
 
     redirect_path = (
