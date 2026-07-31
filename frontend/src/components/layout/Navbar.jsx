@@ -10,7 +10,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getPageTitle } from "../../config/pageTitles";
 import { useAuthStore } from "../../store/authStore";
 import { useSchoolStore } from "../../store/schoolStore";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/branding/logo-navbar.png";
 
 export default function Navbar({ onToggleSidebar }) {
   const location = useLocation();

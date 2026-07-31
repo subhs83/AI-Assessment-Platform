@@ -8,7 +8,7 @@ import {
   LogIn,
 } from "lucide-react";
  
-import logo from "../../assets/logo.png";
+import logo from "../../assets/branding/logo-navbar.png";
 
 import { useAuthStore } from "../../store/authStore";
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
               <img
                 src={logo}
                 alt="IndiaEduCore"
-                className="h-20 w-auto"
+                className="h-20 w-auto object-contain"
               />
 
               <div className="mt-2">

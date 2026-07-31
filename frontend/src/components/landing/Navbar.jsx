@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Menu, X } from "lucide-react";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/branding/logo-navbar.png";
 import { motion  } from "framer-motion";
 import { trackEvent } from "../../utils/analytics";
 
@@ -205,7 +205,7 @@ return (
           <img
             src={logo}
             alt="IndiaEduCore"
-            className="h-10"
+            className="h-10 w-auto object-contain"
           />
 
           <button

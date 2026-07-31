@@ -2,13 +2,13 @@
 
 /* IndiaEduCore Service Worker */
 
-const CACHE_NAME = "indiaeducore-static-v1";
+const CACHE_NAME = "indiaeducore-static-v2";
 
 const STATIC_ASSETS = [
-  "/favicon.ico",
-  "/favicon-192x192.png",
-  "/favicon-512x512.png",
-  "/apple-touch-icon.png"
+  "/icons/favicon.ico",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/apple-touch-icon.png"
 ];
 
 
