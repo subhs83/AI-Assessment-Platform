@@ -37,22 +37,23 @@ export default function DashboardLayout() {
   const isDesktop = window.innerWidth >= 1024;
 
   useEffect(() => {
-    if (!schoolSlug) return;
+  if (!schoolSlug) return;
 
-    if (!examOptions || examOptions.school_slug !== schoolSlug) {
-      fetchExamOptions(schoolSlug);
-    }
+  if (examOptionsSchoolSlug !== schoolSlug) {
+    fetchExamOptions(schoolSlug);
+  }
 
-    if (!subscriptionSummary || subscriptionSummary.school_slug !== schoolSlug ) {
-      fetchSubscriptionSummary(schoolSlug);
-    }
-  }, [
-    schoolSlug,
-    examOptions,
-    subscriptionSummary,
-    fetchExamOptions,
-    fetchSubscriptionSummary,
-  ]);
+  if (subscriptionSummarySchoolSlug !== schoolSlug) {
+    fetchSubscriptionSummary(schoolSlug);
+  }
+
+}, [
+  schoolSlug,
+  examOptionsSchoolSlug,
+  subscriptionSummarySchoolSlug,
+  fetchExamOptions,
+  fetchSubscriptionSummary,
+]);
 
   // Auto close drawer after navigation on mobile
   useEffect(() => {

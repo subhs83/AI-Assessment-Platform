@@ -6,11 +6,15 @@ import API from "../api/client";
 
 
 export const useSchoolStore = create((set) => ({
-      loading: false,
-      error: null,
-      examOptions: null,
-      branding: null,
-      subscriptionSummary: null,
+        loading: false,
+        error: null,
+        branding: null,
+
+        examOptions: null,
+        examOptionsSchoolSlug: null,
+
+        subscriptionSummary: null,
+        subscriptionSummarySchoolSlug: null,
 
   fetchExamOptions: async (schoolSlug) => {
     try {
@@ -18,6 +22,7 @@ export const useSchoolStore = create((set) => ({
 
         set({
             examOptions: res.data.data,
+            examOptionsSchoolSlug: schoolSlug,
         });
 
         return res.data.data;
@@ -62,6 +67,7 @@ export const useSchoolStore = create((set) => ({
 
         set({
             subscriptionSummary: res.data.data,
+            subscriptionSummarySchoolSlug: schoolSlug,
         });
 
         // console.log(
