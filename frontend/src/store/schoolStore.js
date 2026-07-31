@@ -115,13 +115,16 @@ fetchSchoolBrand: async (schoolSlug) => {
   // -------------------------
   reset: () =>
     set({
-      dashboard: null,
-      loading: false,
-      error: null,
-      subscription: null,
-      examOptions: null,
-      subscriptionSummary:null,
-      branding: null,
+        dashboard: null,
+        loading: false,
+        error: null,
+        subscription: null,
+        examOptions: null,
+        examOptionsSchoolSlug: null,
+
+        subscriptionSummary: null,
+        subscriptionSummarySchoolSlug: null,
+        branding: null,
 
     }),
 }));

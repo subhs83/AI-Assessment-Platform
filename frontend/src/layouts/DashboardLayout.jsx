@@ -22,17 +22,19 @@ export default function DashboardLayout() {
     (s) => s.fetchExamOptions
   );
 
-  const examOptions = useSchoolStore(
-    (s) => s.examOptions
-  );
+
+const examOptionsSchoolSlug = useSchoolStore(
+  (s) => s.examOptionsSchoolSlug
+);
 
   const fetchSubscriptionSummary = useSchoolStore(
     (s) => s.fetchSubscriptionSummary
   );
 
-  const subscriptionSummary = useSchoolStore(
-    (s) => s.subscriptionSummary
-  );
+
+const subscriptionSummarySchoolSlug = useSchoolStore(
+  (s) => s.subscriptionSummarySchoolSlug
+);
 
   const isDesktop = window.innerWidth >= 1024;
 
