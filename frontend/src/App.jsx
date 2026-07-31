@@ -249,21 +249,23 @@ export default function App() {
   }, [loadCurrentUser]);
 
 
-  return (
+ return (
     <ToastProvider>
-
-      <GlobalLoadingOverlay />
 
       <BrowserRouter>
 
         {authLoading ? (
           <BrandLoading message="Loading your workspace..." />
         ) : (
+          <>
+          <GlobalLoadingOverlay />
           <AppContent />
+          </>
         )}
 
       </BrowserRouter>
 
     </ToastProvider>
   );
+
 }
