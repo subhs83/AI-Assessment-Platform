@@ -186,7 +186,6 @@ export default function PlatformFeaturesSection() {
                 <Counter
                   end={"100"}
                   suffix="+"
-                  enableScrollSpy
                 />
                 </div>
               <div className="text-indigo-100 mt-2">
@@ -199,7 +198,6 @@ export default function PlatformFeaturesSection() {
                 <Counter
                   end={"1000"}
                   suffix="+"
-                  enableScrollSpy
                 />
                 </div>
               <div className="text-indigo-100 mt-2">

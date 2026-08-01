@@ -111,7 +111,6 @@ export default function AnalyticsSection() {
                   <Counter
                     end={"82"}
                     suffix="%"
-                    enableScrollSpy
                   />
                 </div>
 
@@ -127,7 +126,6 @@ export default function AnalyticsSection() {
                   <Counter
                     end={"95"}
                     suffix="%"
-                    enableScrollSpy
                   />
                 </div>
 
@@ -155,7 +153,7 @@ export default function AnalyticsSection() {
                   +<Counter
                     end={"18"}
                     suffix="%"
-                    enableScrollSpy
+  
                   />
                 </div>
 

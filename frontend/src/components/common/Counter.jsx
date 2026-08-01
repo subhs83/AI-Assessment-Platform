@@ -7,8 +7,6 @@ suffix = "",
 prefix = "",
 decimals = 0,
 duration = 1.2,
-enableScrollSpy = false,
-scrollSpyOnce = true,
 }) {
 const target = Number(end);
 
@@ -21,8 +19,6 @@ decimals={decimals}
 prefix={prefix}
 suffix={suffix}
 separator=","
-enableScrollSpy={enableScrollSpy}
-scrollSpyOnce={scrollSpyOnce}
 />
 );
 }

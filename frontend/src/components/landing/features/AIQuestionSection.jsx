@@ -247,7 +247,6 @@ export default function AIQuestionSection() {
                 <Counter
                         end={"10000"}
                         suffix="+"
-                        enableScrollSpy
                       />
 
               </div>
@@ -267,7 +266,6 @@ export default function AIQuestionSection() {
                 <Counter
                         end={"95"}
                         suffix="%"
-                        enableScrollSpy
                       />
 
               </div>

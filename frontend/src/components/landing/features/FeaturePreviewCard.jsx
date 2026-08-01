@@ -105,7 +105,6 @@ export default function FeaturePreviewCard() {
                       <Counter
                         end={"96"}
                         suffix="%"
-                        enableScrollSpy
                       />
                     </div>
 
@@ -118,7 +117,6 @@ export default function FeaturePreviewCard() {
                     <div className="text-2xl font-bold text-green-600">
                       <Counter
                         end={"120"}
-                        enableScrollSpy
                       />
                     </div>
 
@@ -160,7 +158,6 @@ export default function FeaturePreviewCard() {
                     <span className="font-bold"><Counter
                         end={"95"}
                         suffix="%"
-                        enableScrollSpy
                       /></span>
                   </div>
 
@@ -169,7 +166,6 @@ export default function FeaturePreviewCard() {
                     <span className="font-bold"><Counter
                         end={"92"}
                         suffix="%"
-                        enableScrollSpy
                       /></span>
                   </div>
 
@@ -178,7 +174,6 @@ export default function FeaturePreviewCard() {
                     <span className="font-bold"><Counter
                         end={"90"}
                         suffix="%"
-                        enableScrollSpy
                       /></span>
                   </div>
 
