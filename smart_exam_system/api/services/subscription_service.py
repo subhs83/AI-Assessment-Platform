@@ -449,4 +449,4 @@ def get_subscription_billing_period(subscription):
         20260719
     """
 
-    return subscription.start_at.astimezone(UTC).strftime("%Y%m%d")
+    return subscription.starts_at.astimezone(UTC).strftime("%Y%m%d")
