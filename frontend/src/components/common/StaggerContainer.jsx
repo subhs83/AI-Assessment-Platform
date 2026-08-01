@@ -7,13 +7,13 @@ export default function StaggerContainer({ children }) {
       whileInView="show"
       viewport={{
         once: false,
-        amount: 0.12
+        amount: 0.1
       }}
       variants={{
         hidden: {},
         show: {
           transition: {
-            staggerChildren: 0.2
+            staggerChildren: 0.14
           }
         }
       }}

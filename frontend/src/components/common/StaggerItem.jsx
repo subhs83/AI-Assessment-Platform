@@ -14,7 +14,7 @@ export default function StaggerItem({ children }) {
         }
       }}
       transition={{
-        duration: 0.8
+        duration: 0.5
       }}
     >
       {children}

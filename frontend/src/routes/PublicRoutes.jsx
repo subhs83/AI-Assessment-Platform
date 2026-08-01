@@ -1,16 +1,18 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 import { useAuthStore } from "../store/authStore";
 import { getDashboardPath } from "../utils/getDashboardPath";
+import BrandLoading from "../components/loading/BrandLoading"
 
-import HomePage from "../pages/home/HomePage";
-import FeaturesPage from "../pages/home/FeaturesPage";
-import ContactPage from "../pages/home/ContactPage";
-import DemoPage from "../pages/home/DemoPage";
-import AboutPage from "../pages/home/AboutPage";
-import PricingPage from "../pages/home/PricingPage";
-import PrivacyPage from "../pages/home/PrivacyPage";
-import TermsPage from "../pages/home/TermsPage";
+const HomePage = lazy(() => import("../pages/home/HomePage"));
+const FeaturesPage = lazy(() => import("../pages/home/FeaturesPage"));
+const ContactPage = lazy(() => import("../pages/home/ContactPage"));
+const DemoPage = lazy(() => import("../pages/home/DemoPage"));
+const AboutPage = lazy(() => import("../pages/home/AboutPage"));
+const PricingPage = lazy(() => import("../pages/home/PricingPage"));
+const PrivacyPage = lazy(() => import("../pages/home/PrivacyPage"));
+const TermsPage = lazy(() => import("../pages/home/TermsPage"));
 
 
 export default function PublicRoutes() {
@@ -56,6 +58,9 @@ export default function PublicRoutes() {
 
 
   return (
+    <Suspense
+    fallback={<BrandLoading message="Loading..." />}
+>
     <Routes>
 
       <Route path="/" element={<HomePage />} />
@@ -75,5 +80,7 @@ export default function PublicRoutes() {
       <Route path="/terms" element={<TermsPage />} />
 
     </Routes>
+
+  </Suspense>
   );
 }
