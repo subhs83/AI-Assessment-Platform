@@ -11,6 +11,7 @@ import FAQSection from "../../components/landing/FAQSection";
 import CTASection from "../../components/landing/CTASection";
 import Footer from "../../components/landing/Footer";
 import SEO from "../../components/common/SEO";
+import LazySection from "../../components/common/LazySection";
 
 export default function HomePage() {
 
@@ -29,23 +30,41 @@ export default function HomePage() {
 
       <HeroSection />
 
-      <StatsSection />
-
-      <AIFeaturesSection />
-
-      <FeaturesSection />
-
-      <HowItWorksSection />
-
-      <TeacherBenefitsSection />
-
-      <AcademicImpactSection />
-
-      <FAQSection />
-
-     <CTASection location="home_cta" />
-
-      <Footer />
+      <LazySection>
+        <StatsSection />
+      </LazySection>
+      <LazySection>
+        <AIFeaturesSection />
+      </LazySection>
+      
+      <LazySection>
+       <FeaturesSection /> 
+      </LazySection>
+      
+      <LazySection>
+         <HowItWorksSection />
+      </LazySection>
+     
+      <LazySection>
+        <TeacherBenefitsSection />
+      </LazySection>
+      
+      <LazySection>
+        <AcademicImpactSection />
+      </LazySection>
+      
+      <LazySection>
+        <FAQSection />
+      </LazySection>
+      
+      <LazySection>
+        <CTASection location="home_cta" />
+      </LazySection>
+     
+      <LazySection>
+         <Footer />
+      </LazySection>
+     
 
     </div>
   );
