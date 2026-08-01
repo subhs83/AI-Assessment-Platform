@@ -5,13 +5,20 @@ from sqlalchemy import func
 class SchoolUsageModel(db.Model):
     __tablename__ = "school_usage"
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "school_id",
+            "billing_period",
+            name="uq_school_usage_period",
+        ),
+    )
+
     id = db.Column(db.Integer, primary_key=True)
 
     school_id = db.Column(
         db.Integer,
         db.ForeignKey("schools.id", ondelete="CASCADE"),
         nullable=False,
-        unique=True,
         index=True,
     )
 
@@ -55,3 +62,4 @@ class SchoolUsageModel(db.Model):
         "SchoolModel",
         back_populates="usages",
     )
+    

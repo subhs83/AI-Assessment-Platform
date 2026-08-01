@@ -105,9 +105,14 @@ def get_current_school_usage(school_id):
     ).scalar_one_or_none()
 
     if usage is None:
-        raise ValueError(
-            "No active usage record found for the current billing period."
+
+        usage = SchoolUsageModel(
+            school_id=school_id,
+            billing_period=current_period,
         )
+
+        db.session.add(usage)
+        db.session.commit()
 
     return usage
 
