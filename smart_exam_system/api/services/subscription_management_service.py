@@ -14,7 +14,8 @@ from smart_exam_system.api.services.subscription_service import (
     get_subscription_plan,
     calculate_subscription_expiry,
     get_school_subscription_record,
-    get_school_resource_usage
+    get_school_resource_usage,
+    get_subscription_billing_period,
 )
 
 
@@ -36,9 +37,17 @@ def get_school_subscription_summary(school_id):
 
     limits = get_school_limits(school_id)
 
+
     quota = get_school_ai_quota(school_id)
 
-    usage = get_current_school_usage(school_id)
+    subscription = get_school_subscription(school_id)
+
+    billing_period = get_subscription_billing_period(subscription)
+
+    usage = get_current_school_usage(
+        school_id,
+        billing_period,
+    )
 
     resource_usage = get_school_resource_usage( school_id)
 
@@ -185,7 +194,14 @@ def add_bonus_ai_credits(
     if credits <= 0:
         raise ValueError("Credits must be greater than zero.")
 
-    usage = get_current_school_usage(school_id)
+    subscription = get_school_subscription(school_id)
+
+    billing_period = get_subscription_billing_period(subscription)
+
+    usage = get_current_school_usage(
+        school_id,
+        billing_period,
+    )
 
     usage.bonus_ai_credits += credits
 

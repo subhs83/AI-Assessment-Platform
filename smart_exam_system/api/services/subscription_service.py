@@ -84,37 +84,33 @@ def get_subscription_plan(plan_code):
 
     return plan
 
-def get_current_school_usage(school_id):
-    """
-    Returns the current billing period usage record for a school.
+def get_current_school_usage(
+        school_id,
+        billing_period,
+    ):
+        """
+        Returns the usage record for the given billing period.
+        Creates one automatically if it does not exist.
+        """
 
-    Returns:
-        SchoolUsageModel
+        usage = db.session.execute(
+            db.select(SchoolUsageModel).filter_by(
+                school_id=school_id,
+                billing_period=billing_period,
+            )
+        ).scalar_one_or_none()
 
-    Raises:
-        ValueError: If no usage record exists for the current billing period.
-    """
-    
-    current_period = datetime.now(UTC).strftime("%Y-%m")
+        if usage is None:
 
-    usage = db.session.execute(
-        db.select(SchoolUsageModel).filter_by(
-            school_id=school_id,
-            billing_period=current_period,
-        )
-    ).scalar_one_or_none()
+            usage = SchoolUsageModel(
+                school_id=school_id,
+                billing_period=billing_period,
+            )
 
-    if usage is None:
+            db.session.add(usage)
+            db.session.commit()
 
-        usage = SchoolUsageModel(
-            school_id=school_id,
-            billing_period=current_period,
-        )
-
-        db.session.add(usage)
-        db.session.commit()
-
-    return usage
+        return usage
 
 
 def get_school_subscription(school_id):
@@ -169,7 +165,14 @@ def get_school_limits(school_id):
 
 def get_school_ai_quota(school_id):
     limits = get_school_limits(school_id)
-    usage = get_current_school_usage(school_id)
+    subscription = get_school_subscription(school_id)
+
+    billing_period = get_subscription_billing_period( subscription )
+
+    usage = get_current_school_usage(
+        school_id,
+        billing_period,
+    )
 
     used = usage.ai_credits_used if usage else 0
     total = (
@@ -252,7 +255,14 @@ def consume_ai_credits(school_id, credits_used):
     if credits_used <= 0:
         raise ValueError("Credits used must be greater than zero.")
 
-    usage = get_current_school_usage(school_id)
+    subscription = get_school_subscription(school_id)
+
+    billing_period = get_subscription_billing_period(subscription)
+
+    usage = get_current_school_usage(
+        school_id,
+        billing_period,
+    )
 
     usage.ai_credits_used += credits_used
 
@@ -427,3 +437,16 @@ def get_school_resource_usage(school_id):
             "limit": limits["max_sections"],
         },
     }
+
+
+
+
+def get_subscription_billing_period(subscription):
+    """
+    Returns a stable billing period identifier for the subscription cycle.
+
+    Example:
+        20260719
+    """
+
+    return subscription.start_date.astimezone(UTC).strftime("%Y%m%d")
