@@ -247,6 +247,7 @@ export default function AIQuestionSection() {
                 <Counter
                         end={"10000"}
                         suffix="+"
+                        triggerOnce={false}
                       />
 
               </div>
@@ -266,6 +267,7 @@ export default function AIQuestionSection() {
                 <Counter
                         end={"95"}
                         suffix="%"
+                        triggerOnce={false}
                       />
 
               </div>

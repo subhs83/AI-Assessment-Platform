@@ -65,7 +65,10 @@ const HeroSection = ({
               ${performanceTheme.text}
             `}
           >
-            <Counter end={result.percentage} />%
+            <Counter 
+            end={result.percentage}
+            triggerOnce={false}
+             />%
           </h1>
 
           {/* Student + Rank */}
@@ -100,12 +103,17 @@ const HeroSection = ({
               <div className="mt-1 flex items-end gap-2">
 
                 <span className="text-3xl font-bold text-indigo-700">
-                  #<Counter end={result.rank} />
+                  #<Counter 
+                  end={result.rank} 
+                  triggerOnce={false}/>
                 </span>
 
                 <span className="pb-1 text-sm text-indigo-500">
                   
-                  of <Counter end={result.total_participants} />
+                  of <Counter 
+                  end={result.total_participants} 
+                  triggerOnce={false}
+                  />
                 </span>
 
               </div>

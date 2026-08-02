@@ -150,6 +150,7 @@ return ( <section className="py-12 bg-slate-50">
               <Counter
               end={stat.value}
               suffix={stat.suffix}
+              triggerOnce={false}
             />
             </div>
 

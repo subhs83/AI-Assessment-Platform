@@ -111,6 +111,7 @@ export default function AnalyticsSection() {
                   <Counter
                     end={"82"}
                     suffix="%"
+                    triggerOnce={false}
                   />
                 </div>
 
@@ -126,6 +127,7 @@ export default function AnalyticsSection() {
                   <Counter
                     end={"95"}
                     suffix="%"
+                    triggerOnce={false}
                   />
                 </div>
 
@@ -153,6 +155,7 @@ export default function AnalyticsSection() {
                   +<Counter
                     end={"18"}
                     suffix="%"
+                    triggerOnce={false}
   
                   />
                 </div>

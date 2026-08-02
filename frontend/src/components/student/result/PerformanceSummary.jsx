@@ -47,7 +47,10 @@ export default function PerformanceSummary({ result }) {
       </span>
 
       <span className="text-lg font-bold text-green-600">
-        <Counter end={result.correct} />
+        <Counter 
+        end={result.correct}
+        triggerOnce={false}
+         />
       </span>
     </div>
 
@@ -71,7 +74,10 @@ export default function PerformanceSummary({ result }) {
       </span>
 
       <span className="text-lg font-bold text-red-600">
-        <Counter end={result.wrong} />
+        <Counter 
+        end={result.wrong} 
+        triggerOnce={false}
+        />
         
       </span>
     </div>
@@ -96,7 +102,9 @@ export default function PerformanceSummary({ result }) {
       </span>
 
       <span className="text-lg font-bold text-amber-600">
-         <Counter end={result.not_attempted} />
+         <Counter 
+         end={result.not_attempted} 
+         triggerOnce={false}/>
          
       </span>
     </div>
