@@ -111,8 +111,8 @@ Language Rules:
 - option_c must be in {language}
 - option_d must be in {language}
 
-[
-  {
+  [
+  {{
     "question_text": "Question here",
     "option_a": "Option A",
     "option_b": "Option B",
@@ -120,8 +120,9 @@ Language Rules:
     "option_d": "Option D",
     "correct_answer": "A",
     "explanation": "Short explanation of why option A is correct."
-  }
+  }}
 ]
+
 
 Rules:
 
