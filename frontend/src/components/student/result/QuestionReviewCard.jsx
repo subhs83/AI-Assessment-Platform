@@ -184,9 +184,9 @@ useEffect(() => {
             Selected:
             <span className="font-semibold text-slate-900">
               {" "}
-              {q.selected_option
-                ? q.selected_text
-                : "Not Attempted"}
+              {q.selected_option === "NA"
+                ? "Not Attempted"
+                : `Option ${q.selected_option}`}
             </span>
           </div>
 

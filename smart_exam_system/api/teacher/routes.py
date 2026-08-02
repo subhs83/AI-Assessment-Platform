@@ -406,6 +406,7 @@ def review_questions_api(school_slug, exam_uid):
                 "option_c": q.option_c,
                 "option_d": q.option_d,
                 "correct_option": q.correct_option,
+                "explanation": q.explanation,
                 "marks": q.marks,
                 "negative_marks": q.negative_marks,
                 "ai_generated": q.ai_generated,
