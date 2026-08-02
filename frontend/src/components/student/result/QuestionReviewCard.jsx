@@ -18,7 +18,7 @@ const QuestionReviewCard = ({
   reviewMode === "full_review";
 
   const showExplanation =
-    reviewMode === "full_review" &&
+   showCorrectAnswer &&
     q.explanation?.trim();
 
   const cardRef = useRef(null);
@@ -128,7 +128,7 @@ useEffect(() => {
                   className={`
                     p-3 rounded-xl border transition-all
                     ${
-                      reviewMode === "full_review"
+                     showCorrectAnswer
                         ? isCorrectOption
                           ? "bg-green-50 border-green-400"
                           : isWrongSelection
@@ -158,7 +158,7 @@ useEffect(() => {
                     {/* RIGHT LABELS */}
                     <div className="flex flex-col items-end gap-1">
 
-                      {reviewMode === "full_review" && isCorrectOption && (
+                      {showCorrectAnswer && isCorrectOption && (
                         <span className="text-green-600 text-xs font-semibold whitespace-nowrap">
                           Correct Answer
                         </span>
