@@ -670,7 +670,7 @@ def get_student_result(attempt_id):
         "max_attempts": max_attempts,
 
         "can_take_next_attempt": can_take_next_attempt,
-        "review_enabled": exam.show_result_review,
+        "review_mode": exam.review_mode,
         "quiz_code": exam.quiz_code,
     }
 
@@ -1108,11 +1108,17 @@ def get_attempt_detailed_report(attempt_id):
         report.append({
             "question_id": question.id,
             "question_text": question.question_text,
+
             "selected_option": selected if selected else "NA",
             "selected_text": selected_text if selected else "Not Attempted",
+
             "options": options,
+
             "correct_option": correct,
-            "remark": remark
+            "is_correct": is_correct,
+            "remark": remark,
+
+            "explanation": question.explanation,
         })
 
     return {
@@ -1121,6 +1127,7 @@ def get_attempt_detailed_report(attempt_id):
         "total_marks": attempt.total_marks,
         "total_questions": len(report),
         "percentage": attempt.percentage,
+        "review_mode": exam.review_mode,
         "questions": report
     }
 

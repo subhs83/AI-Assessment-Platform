@@ -230,11 +230,9 @@ const wrongCount =
 
             {Object.entries(q.options || {}).map(([key, val]) => {
 
-              const isSelected =
-                key === q.selected_option;
+              const isSelected =  key === q.selected_option;
 
-              const isCorrect =
-                val === q.correct_text;
+              const isCorrect =  key === q.correct_option;
 
               return (
                 <div
@@ -284,6 +282,18 @@ const wrongCount =
             })}
 
           </div>
+
+          {q.explanation && (
+            <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <h4 className="mb-2 text-sm font-semibold text-blue-700">
+                Explanation
+              </h4>
+
+              <p className="text-sm leading-6 text-slate-700">
+                {q.explanation}
+              </p>
+            </div>
+          )}
 
         </div>
       ))}

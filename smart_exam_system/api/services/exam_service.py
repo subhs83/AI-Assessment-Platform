@@ -4,6 +4,7 @@ from smart_exam_system.extensions import db
 from sqlalchemy import func
 from pathlib import Path
 from werkzeug.exceptions import NotFound
+from smart_exam_system.models.exam import ReviewMode
 from smart_exam_system.models import (
 ExamModel,  
 QuestionModel,
@@ -420,7 +421,7 @@ def create_exam(
     start_date,
     end_date,
     registration_mode="open",
-    show_result_review=True
+    review_mode=ReviewMode.QUESTIONS_ONLY.value,
     ):
     try:
         if duration_minutes <= 0:
@@ -449,7 +450,7 @@ def create_exam(
             teacher_id=teacher_id,
             start_date=start_date,
             end_date=end_date,
-            show_result_review=show_result_review    
+            review_mode=review_mode    
         )
 
         db.session.add(exam)
@@ -500,9 +501,11 @@ def extract_exam_form_data(form_data):
             "Exam title is required."
         )
 
-    show_result_review = str(
-        form_data.get("show_result_review", "true")
-    ).lower() == "true"
+    review_mode  = str(
+        form_data.get("review_mode",
+        ReviewMode.QUESTIONS_ONLY.value,
+        )
+    )
 
     start_date = parse_exam_datetime(
         form_data.get("start_date")
@@ -566,7 +569,7 @@ def extract_exam_form_data(form_data):
         "start_date": start_date,
         "end_date": end_date,
 
-        "show_result_review": show_result_review,
+        "review_mode": review_mode,
     }
 # -------------------------------
 # Publish Exam
@@ -805,7 +808,7 @@ def get_teacher_exam_detail(
             if hasattr(exam.registration_mode, "value")
             else exam.registration_mode,
 
-        "show_result_review": exam.show_result_review,
+        "review_mode": exam.review_mode,
 
         "start_date": exam.start_date.strftime("%Y-%m-%dT%H:%M")
             if exam.start_date
@@ -834,7 +837,7 @@ def update_exam(
     start_date,
     end_date,
     registration_mode="open",
-    show_result_review=True,
+    review_mode=ReviewMode.QUESTIONS_ONLY.value,
 ):
     try:
 
@@ -869,7 +872,7 @@ def update_exam(
         exam.registration_mode = registration_mode
         exam.start_date = start_date
         exam.end_date = end_date
-        exam.show_result_review = show_result_review
+        exam.review_mode = review_mode
 
         ExamTargetModel.query.filter_by(
             exam_id=exam.id

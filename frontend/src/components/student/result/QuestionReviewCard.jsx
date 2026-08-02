@@ -11,7 +11,16 @@ const QuestionReviewCard = ({
   index,
   openIndex,
   setOpenIndex,
+  reviewMode,
 }) => {
+
+  const showCorrectAnswer =
+  reviewMode === "full_review";
+
+  const showExplanation =
+    reviewMode === "full_review" &&
+    q.explanation?.trim();
+
   const cardRef = useRef(null);
   const isOpen = openIndex === index;
 
@@ -103,8 +112,15 @@ useEffect(() => {
             {Object.entries(q.options).map(([key, value]) => {
 
               const isSelected = q.selected_option === key;
-              const isCorrect = q.is_correct && isSelected;
-              const isWrongSelected = isSelected && !q.is_correct;
+
+              const isCorrectOption =
+                q.correct_option === key;
+
+              const isCorrectSelection =
+                q.is_correct && isSelected;
+
+              const isWrongSelection =
+                !q.is_correct && isSelected;
 
               return (
                 <div
@@ -112,9 +128,15 @@ useEffect(() => {
                   className={`
                     p-3 rounded-xl border transition-all
                     ${
-                      isCorrect
+                      reviewMode === "full_review"
+                        ? isCorrectOption
+                          ? "bg-green-50 border-green-400"
+                          : isWrongSelection
+                          ? "bg-red-50 border-red-400"
+                          : "bg-slate-50 border-slate-200"
+                        : isCorrectSelection
                         ? "bg-green-50 border-green-400"
-                        : isWrongSelected
+                        : isWrongSelection
                         ? "bg-red-50 border-red-400"
                         : "bg-slate-50 border-slate-200"
                     }
@@ -136,17 +158,15 @@ useEffect(() => {
                     {/* RIGHT LABELS */}
                     <div className="flex flex-col items-end gap-1">
 
-                      {isCorrect && (
+                      {reviewMode === "full_review" && isCorrectOption && (
                         <span className="text-green-600 text-xs font-semibold whitespace-nowrap">
                           Correct Answer
                         </span>
                       )}
-
-                      {isWrongSelected && (
+                      {isWrongSelection && (
                         <span className="text-red-600 text-xs font-semibold whitespace-nowrap">
-                          Your Answer: 
+                          Your Answer
                         </span>
-                        
                       )}
 
                     </div>
@@ -164,9 +184,23 @@ useEffect(() => {
             Selected:
             <span className="font-semibold text-slate-900">
               {" "}
-              {q.selected_text}
+              {q.selected_option
+                ? q.selected_text
+                : "Not Attempted"}
             </span>
           </div>
+
+          {showExplanation && (
+            <div className="mt-5 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+              <h4 className="mb-2 font-semibold text-indigo-700">
+                Answer Explanation
+              </h4>
+
+              <p className="text-sm leading-6 text-slate-700">
+                {q.explanation}
+              </p>
+            </div>
+          )}
 
         </div>
       )}

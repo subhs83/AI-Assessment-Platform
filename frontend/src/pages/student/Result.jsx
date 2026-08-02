@@ -211,6 +211,13 @@ useEffect(() => {
     canTakeNextAttempt: latestNumber < result.max_attempts,
   };
 }, [attempts, result]);
+
+const reviewButtonLabel =
+  result?.review_mode === "full_review"
+    ? "Review Answers"
+    : result?.review_mode === "questions_only"
+    ? "Review Questions"
+    : "";
     // =========================
     // LOADING
     // =========================
@@ -417,7 +424,7 @@ useEffect(() => {
                   </div>
 
         {/* Review Toggle (centered pill style) */}
-        {result.review_enabled && (
+        {result.review_mode !== "no_review" && (
           <div className="flex justify-center">
             <button
               onClick={() => {
@@ -446,7 +453,7 @@ useEffect(() => {
                     </>
                   ) : (
                     <>
-                      <BookOpen className="w-4 h-4" />  Review Your Answers
+                      <BookOpen className="w-4 h-4" /> {reviewButtonLabel}
                     </>
                   )}
             </button>
@@ -455,7 +462,7 @@ useEffect(() => {
 
       </div>
 
-      {result.review_enabled &&
+      {result.review_mode !== "no_review" &&
         showReview &&
         review?.questions?.length > 0 && (
 
@@ -479,6 +486,7 @@ useEffect(() => {
                 index={index}
                 openIndex={openIndex}
                 setOpenIndex={setOpenIndex}
+                reviewMode={result.review_mode}
                  ref={(el) => {
                     questionRefs.current[q.question_id] = el;
                 }}

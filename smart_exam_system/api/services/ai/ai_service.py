@@ -112,21 +112,26 @@ Language Rules:
 - option_d must be in {language}
 
 [
-  {{
+  {
     "question_text": "Question here",
     "option_a": "Option A",
     "option_b": "Option B",
     "option_c": "Option C",
     "option_d": "Option D",
-    "correct_answer": "A"
-  }}
+    "correct_answer": "A",
+    "explanation": "Short explanation of why option A is correct."
+  }
 ]
 
 Rules:
 
 - No markdown
-- No explanation
 - Strict JSON only
+- Include an "explanation" field for every question.
+- Keep explanations to one or two concise sentences.
+- Explain only why the correct answer is correct.
+- Do not explain incorrect options.
+- If a meaningful explanation cannot be generated, return an empty string ("").
 - Ensure questions are derived from the provided content but are self-contained and meaningful without requiring access to the original passage.
 """
 

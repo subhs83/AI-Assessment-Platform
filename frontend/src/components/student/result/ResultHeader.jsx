@@ -32,6 +32,19 @@ const ResultHeader = ({
       </span>
     );
 
+    const reviewBadge =
+      result.review_mode === "questions_only" ? (
+        <span className="inline-flex whitespace-nowrap items-center gap-2 rounded-full border border-indigo-200 bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700">
+          <Eye className="h-4 w-4" />
+          Questions Review
+        </span>
+      ) : result.review_mode === "full_review" ? (
+        <span className="inline-flex whitespace-nowrap items-center gap-2 rounded-full border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+          <Eye className="h-4 w-4" />
+          Full Review
+        </span>
+      ) : null;
+
   return (
     <div
       className="
@@ -86,12 +99,7 @@ const ResultHeader = ({
 
             {statusBadge}
 
-            {result.review_enabled && (
-              <span className="inline-flex whitespace-nowrap items-center gap-2 rounded-full border border-indigo-200 bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700">
-                <Eye className="h-4 w-4" />
-                Review Available
-              </span>
-            )}
+            {reviewBadge}
 
           </div>
 
@@ -163,13 +171,8 @@ const ResultHeader = ({
 
               {statusBadge}
 
-              {result.review_enabled && (
-                <span className="inline-flex whitespace-nowrap items-center gap-2 rounded-full border border-indigo-200 bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700">
-                  <Eye className="h-4 w-4" />
-                  Review Available
-                </span>
-              )}
-
+              {reviewBadge}
+              
             </div>
 
             <div className="min-w-[155px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">

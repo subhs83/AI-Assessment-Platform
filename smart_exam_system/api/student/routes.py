@@ -11,6 +11,7 @@ from smart_exam_system.models import (
     SchoolModel,
     ExamModel
 )
+from smart_exam_system.models.exam import ReviewMode
 
 from smart_exam_system.api.services.display_option_mapper import (
     build_display_options,
@@ -655,7 +656,7 @@ def get_result(school_slug, attempt_id):
         # ==================================================
         # 4. Review Flag
         # ==================================================
-        show_review = (
+        request_review = (
             request.args.get("review", "false").lower() == "true"
         )
 
@@ -675,12 +676,10 @@ def get_result(school_slug, attempt_id):
         review_data = None
 
         if (
-            show_review
-            and result["review_enabled"]
+        request_review
+            and result["review_mode"] != ReviewMode.NO_REVIEW.value
         ):
-            review_data = get_attempt_detailed_report(
-                attempt.id
-            )
+            review_data = get_attempt_detailed_report(attempt.id)
 
         # ==================================================
         # 6. Response
@@ -718,7 +717,7 @@ def get_result(school_slug, attempt_id):
 
                 "quiz_code": result["quiz_code"],
 
-                "review_enabled": result["review_enabled"],
+                "review_mode": result["review_mode"],
                 "review": review_data,
             },
             "error": None,

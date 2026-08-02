@@ -35,6 +35,10 @@ def get_attempt_detailed_report(attempt_id, school_id):
     if not attempt:
         return None
 
+     # NOW we safely know exam + school context
+    exam = attempt.exam  # relationship assumed OR use join if needed
+    school_id = exam.school_id
+
     # ---------------------------------
     # FETCH STUDENT (SOURCE OF TRUTH)
     # ---------------------------------
@@ -126,9 +130,11 @@ def get_attempt_detailed_report(attempt_id, school_id):
             "selected_text": selected_text,
 
             "options": options,
-
+            "correct_option": correct, 
             "is_correct": is_correct,
-            "remark": remark
+            "remark": remark,
+            "explanation": question.explanation,
+
         })
 
     # ---------------------------------
@@ -144,7 +150,6 @@ def get_attempt_detailed_report(attempt_id, school_id):
         "score": attempt.score,
         "total_marks": attempt.total_marks,
         "percentage": attempt.percentage,
-
         "total_questions": len(report),
         "questions": report
     }
@@ -464,97 +469,97 @@ def get_student_attempts(
     return enriched
 
 
-def get_attempt_detailed_report(attempt_id, school_id):
+# def get_attempt_detailed_report(attempt_id, school_id):
 
-    # ---------------------------------
-    # SECURITY: validate attempt belongs to school via exam
-    # ---------------------------------
-    attempt = db.session.query(AttemptModel).join(ExamModel).filter(
-        AttemptModel.id == attempt_id,
-        ExamModel.school_id == school_id
-    ).first()
+#     # ---------------------------------
+#     # SECURITY: validate attempt belongs to school via exam
+#     # ---------------------------------
+#     attempt = db.session.query(AttemptModel).join(ExamModel).filter(
+#         AttemptModel.id == attempt_id,
+#         ExamModel.school_id == school_id
+#     ).first()
 
-    if not attempt:
-        return None
+#     if not attempt:
+#         return None
 
-    # ---------------------------------
-    # STUDENT (SOURCE OF TRUTH + SAFE)
-    # ---------------------------------
-    student = StudentModel.query.filter_by(
-        id=attempt.student_db_id,
-        school_id=school_id
-    ).first()
+#     # ---------------------------------
+#     # STUDENT (SOURCE OF TRUTH + SAFE)
+#     # ---------------------------------
+#     student = StudentModel.query.filter_by(
+#         id=attempt.student_db_id,
+#         school_id=school_id
+#     ).first()
 
-    student_name = (
-        f"{student.first_name} {student.last_name}"
-        if student else "Unknown Student"
-    )
+#     student_name = (
+#         f"{student.first_name} {student.last_name}"
+#         if student else "Unknown Student"
+#     )
 
-    # ---------------------------------
-    # QUESTION ORDER SAFE LOAD
-    # ---------------------------------
-    question_order = json.loads(attempt.question_order or "[]")
+#     # ---------------------------------
+#     # QUESTION ORDER SAFE LOAD
+#     # ---------------------------------
+#     question_order = json.loads(attempt.question_order or "[]")
 
-    report = []
+#     report = []
 
-    for q_id in question_order:
+#     for q_id in question_order:
 
-        question = db.session.get(QuestionModel, q_id)
+#         question = db.session.get(QuestionModel, q_id)
 
 
-        if not question:
-            continue  # avoid crash if question deleted
+#         if not question:
+#             continue  # avoid crash if question deleted
 
-        answer = StudentAnswerModel.query.filter_by(
-            attempt_id=attempt_id,
-            question_id=q_id
-        ).first()
+#         answer = StudentAnswerModel.query.filter_by(
+#             attempt_id=attempt_id,
+#             question_id=q_id
+#         ).first()
 
-        selected = answer.selected_option if answer else None
-        correct = question.correct_option
+#         selected = answer.selected_option if answer else None
+#         correct = question.correct_option
 
-        option_map = {
-            "A": question.option_a,
-            "B": question.option_b,
-            "C": question.option_c,
-            "D": question.option_d
-        }
+#         option_map = {
+#             "A": question.option_a,
+#             "B": question.option_b,
+#             "C": question.option_c,
+#             "D": question.option_d
+#         }
 
-        selected_text = option_map.get(selected) if selected else None
+#         selected_text = option_map.get(selected) if selected else None
 
-        if selected is None:
-            remark = "Not Attempted"
-            is_correct = False
+#         if selected is None:
+#             remark = "Not Attempted"
+#             is_correct = False
 
-        elif selected == correct:
-            remark = "Correct"
-            is_correct = True
+#         elif selected == correct:
+#             remark = "Correct"
+#             is_correct = True
 
-        else:
-            remark = "Incorrect"
-            is_correct = False
+#         else:
+#             remark = "Incorrect"
+#             is_correct = False
 
-        report.append({
-            "question_id": question.id,
-            "question_text": question.question_text,
+#         report.append({
+#             "question_id": question.id,
+#             "question_text": question.question_text,
 
-            "selected_option": selected if selected else "NA",
-            "selected_text": selected_text if selected else "Not Attempted",
-            "correct_text": option_map.get(correct),   # ✅ FIX ADDED
-            "options": option_map,
+#             "selected_option": selected if selected else "NA",
+#             "selected_text": selected_text if selected else "Not Attempted",
+#             "correct_text": option_map.get(correct),   # ✅ FIX ADDED
+#             "options": option_map,
 
-            "is_correct": is_correct,
-            "remark": remark
-        })
+#             "is_correct": is_correct,
+#             "remark": remark
+#         })
 
-    return {
-        "student_name": student_name,
-        "score": attempt.score,
-        "total_marks": attempt.total_marks,
-        "total_questions": len(report),
-        "percentage": attempt.percentage,
-        "questions": report
-    }
+#     return {
+#         "student_name": student_name,
+#         "score": attempt.score,
+#         "total_marks": attempt.total_marks,
+#         "total_questions": len(report),
+#         "percentage": attempt.percentage,
+#         "questions": report
+#     }
 
 
 def build_student_summary(attempts):

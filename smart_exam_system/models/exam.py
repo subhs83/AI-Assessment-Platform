@@ -1,9 +1,16 @@
 
+from enum import Enum
+
 from smart_exam_system.extensions import db
 from smart_exam_system.models.user import UserModel
 from datetime import datetime
 from sqlalchemy.orm import backref
 import uuid
+
+class ReviewMode(str, Enum): 
+    NO_REVIEW = "no_review" 
+    QUESTIONS_ONLY = "questions_only" 
+    FULL_REVIEW = "full_review"
 
 class ExamModel(db.Model):
     __tablename__ = "exams"
@@ -47,7 +54,12 @@ class ExamModel(db.Model):
     # ✅ Explicit foreign key
     school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False)
 
-    show_result_review = db.Column(db.Boolean, default=True, nullable=False)
+    review_mode = db.Column(
+        db.String(20),
+        nullable=False,
+        default=ReviewMode.QUESTIONS_ONLY.value,
+
+    )
     
     # ✅ Relationship
     school = db.relationship("SchoolModel", backref="exams")

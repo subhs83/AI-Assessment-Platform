@@ -15,6 +15,7 @@ import ExamTargetSelector from "../../components/teacher/exams/ExamTargetSelecto
 import ExamSettings from "../../components/teacher/exams/ExamSettings";
 import ExamSchedule from "../../components/teacher/exams/ExamSchedule";
 import ExamOptions from "../../components/teacher/exams/ExamOptions";
+import { REVIEW_MODE } from "../../constants/examConstants";
 
 const INITIAL_FORM = {
     title: "",
@@ -24,7 +25,7 @@ const INITIAL_FORM = {
     negative: 0,
     max_attempts: 1,
     registration_mode: "verified",
-    show_result_review: true,
+    review_mode: REVIEW_MODE.QUESTIONS_ONLY,
     start_date: "",
     end_date: "",
 };

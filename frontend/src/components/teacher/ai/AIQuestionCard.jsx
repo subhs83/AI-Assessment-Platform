@@ -243,6 +243,18 @@ const renderPreviewMode = () => {
           Correct Answer: {question.correct_answer}
         </div>
 
+        {question.explanation?.trim() && (
+          <div className="mt-4 rounded-lg border border-indigo-100 bg-indigo-50 p-3">
+            <h4 className="mb-1 text-sm font-semibold text-indigo-700">
+              Answer Explanation
+            </h4>
+
+            <p className="text-sm leading-6 text-slate-700">
+              {question.explanation}
+            </p>
+          </div>
+        )}
+
       </div>
   );
 };
@@ -390,6 +402,29 @@ const renderEditMode = () => {
           <option value="C">C</option>
           <option value="D">D</option>
         </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block text-sm font-medium">
+          Answer Explanation
+          <span className="ml-1 text-xs font-normal text-slate-500">
+            (Optional)
+          </span>
+        </label>
+
+        <textarea
+          name="explanation"
+          value={form.explanation || ""}
+          onChange={handleChange}
+          rows={3}
+          placeholder="Explain why the correct answer is correct (optional)"
+          className="
+            w-full rounded-lg border
+            px-3 py-2
+            focus:border-blue-500
+            focus:outline-none
+          "
+        />
       </div>
 
       {/* Actions */}

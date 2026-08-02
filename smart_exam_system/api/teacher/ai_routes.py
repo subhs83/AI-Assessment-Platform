@@ -145,7 +145,8 @@ def save_ai_to_exam(school_slug):
             option_b=q["option_b"],
             option_c=q["option_c"],
             option_d=q["option_d"],
-            correct_option=q["correct_answer"]
+            correct_option=q["correct_answer"],
+            explanation=q.get("explanation") or None,
         )
         db.session.add(question)
 

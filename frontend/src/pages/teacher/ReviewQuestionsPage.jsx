@@ -152,22 +152,37 @@ export default function ReviewQuestionsPage() {
                         />
                       )}
                     </div>
+
+                    
                   );
                 })}
 
               </div>
 
               {/* Footer */}
+              <div className="mt-5 border-t pt-4 space-y-4">
 
-              <div className="mt-5 flex items-center justify-between border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">
+                    Correct Answer
+                  </span>
 
-                <span className="text-sm text-slate-500">
-                  Correct Answer
-                </span>
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+                    Option {q.correct_option}
+                  </span>
+                </div>
 
-                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
-                  Option {q.correct_option}
-                </span>
+                {q.explanation && (
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                    <h4 className="mb-2 text-sm font-semibold text-blue-700">
+                      Explanation
+                    </h4>
+
+                    <p className="text-sm leading-6 text-slate-700">
+                      {q.explanation}
+                    </p>
+                  </div>
+                )}
 
               </div>
 
