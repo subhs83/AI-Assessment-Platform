@@ -5,8 +5,12 @@ import {
   Languages,
   Upload,
   CheckCircle2,
-  UploadCloud
+  UploadCloud,
+  Sparkles
+
 } from "lucide-react";
+
+
 
 export default function AIFileSection({
   file,
@@ -14,6 +18,8 @@ export default function AIFileSection({
   language,
   setLanguage,
   ocrLanguages,
+  analysisMode,
+  setAnalysisMode,
   extracting,
   handleExtract,
   setExtractedContent,
@@ -99,6 +105,47 @@ export default function AIFileSection({
         </select>
 
       </div>
+
+      <div className="mb-5">
+
+      <div className="flex items-center gap-2 mb-1">
+
+        <Sparkles className="w-4 h-4 text-violet-600" />
+
+        <label className="font-medium">
+          Analysis Mode
+        </label>
+
+      </div>
+
+      <p className="text-xs text-gray-500 mb-2">
+        Choose how your document should be analyzed.
+      </p>
+
+      <select
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        value={analysisMode}
+        onChange={(e) => setAnalysisMode(e.target.value)}
+      >
+        <option value="text">
+          Standard Analysis
+        </option>
+
+        <option value="smart">
+          Smart Analysis-Beta
+        </option>
+
+      </select>
+
+      <p className="mt-2 text-xs text-slate-500">
+        {analysisMode === "text"
+          ? "Best for text-only documents."
+          : "Best for figures, equations, graphs and complex layouts."}
+      </p>
+
+    </div>
+
+       
 
       {/* Upload */}
 
@@ -193,8 +240,8 @@ export default function AIFileSection({
         className="w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 py-3 font-semibold text-white shadow-sm transition hover:shadow-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
       >
         {extracting
-          ? "Extracting..."
-          : "Extract Content"}
+          ? "Analyzing..."
+          : "Analyze Content"}
       </button>
 
     </div>

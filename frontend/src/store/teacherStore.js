@@ -126,8 +126,13 @@ export const useTeacherStore = create((set, get) => ({
         set({
           ocrLanguages: res.data.ocr_languages,
         });
+
+        return res.data.default_language || "english";
+
       } catch (err) {
         console.error("Failed to load OCR languages", err);
+
+        return "english";
       }
     },
 

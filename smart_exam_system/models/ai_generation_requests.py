@@ -35,6 +35,11 @@ class AIGenerationRequest(db.Model):
         db.Text
     )
 
+    analysis_report = db.Column(
+        db.JSON,
+        nullable=True,
+    )
+
     difficulty = db.Column(
         db.String(20),
         default="medium"

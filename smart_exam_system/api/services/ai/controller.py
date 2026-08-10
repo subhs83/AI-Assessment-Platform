@@ -1,11 +1,15 @@
 from smart_exam_system.api.services.ai.extractor import extract_input
 from smart_exam_system.api.services.ai.ai_service import generate_from_gemini
 from smart_exam_system.api.services.ai.response_parser import parse_ai_response
-from smart_exam_system.api.services.ai.content_preparer import prepare_ai_content
+from smart_exam_system.api.services.ai.content_preparer import (
+    prepare_ai_content,
+    prepare_analysis_content,
+)
 from smart_exam_system.api.services.ai.finalize_ai_generation import finalize_ai_generation
 from smart_exam_system.api.services.ai_credit_service import process_ai_credit
 
 from smart_exam_system.config import Config
+import json
 
 import logging
 
@@ -14,12 +18,42 @@ logger = logging.getLogger(__name__)
 
 def generate_ai_questions_controller(data, file, school_id, teacher_id):
 
+    analysis_report = None
+
+    analysis_json = data.get("analysis_report")
+    # print("\n========== STEP 1 ==========")
+    # print("analysis_json exists:", analysis_json is not None)
+    # print("analysis_json length:", len(analysis_json) if analysis_json else 0)
+
     manual_content = data.get("content")
 
-    if manual_content:
 
-        content = prepare_ai_content(manual_content)
-        input_type = data.get("source_type", "manual")
+    if analysis_json:
+
+
+        analysis_report = json.loads(analysis_json)
+        # print("\n========== STEP 2 ==========")
+        # print(type(analysis_report))
+        # print("Pages:", len(analysis_report.get("pages", [])))
+
+        content = prepare_analysis_content(
+            analysis_report
+        )
+
+        input_type = (
+            analysis_report["document"]["document_type"]
+        )
+
+    elif manual_content:
+
+        content = prepare_ai_content(
+            manual_content
+        )
+
+        input_type = data.get(
+            "source_type",
+            "manual",
+        )
 
     else:
 
@@ -81,6 +115,7 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
         teacher_id=teacher_id,
         source_type=input_type,
         source_text=content,
+        analysis_report=analysis_report,
         difficulty=difficulty,
         blooms_level=blooms_level,
         question_count=question_count,

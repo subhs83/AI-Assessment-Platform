@@ -9,12 +9,13 @@ def finalize_ai_generation(
     teacher_id,
     source_type,
     source_text,
-    difficulty,
-    blooms_level,
-    question_count,
-    generated_questions,
-    document_language,
-    credits_used,
+    analysis_report=None,
+    difficulty=None,
+    blooms_level=None,
+    question_count=None,
+    generated_questions=None,
+    document_language=None,
+    credits_used=0,
     metadata=None,
 ):
     """
@@ -23,11 +24,15 @@ def finalize_ai_generation(
     """
 
     try:
+        # print("\n========== STEP 3 ==========")
+        # print(type(analysis_report))
+        # print("analysis_report is None:", analysis_report is None)
         request_obj = AIGenerationRequest(
             school_id=school_id,
             teacher_id=teacher_id,
             source_type=source_type,
             source_text=source_text,
+            analysis_report=analysis_report,
             difficulty=difficulty,
             blooms_level=blooms_level,
             question_count=question_count,
@@ -36,7 +41,9 @@ def finalize_ai_generation(
             generation_metadata=metadata or {},
             status="completed",
         )
-
+        # print("\n========== STEP 4 ==========")
+        # print(type(request_obj.analysis_report))
+        # print(request_obj.analysis_report is None)
         db.session.add(request_obj)
 
         consume_ai_credits(
@@ -45,6 +52,9 @@ def finalize_ai_generation(
         )
 
         db.session.commit()
+        # print("\n========== STEP 5 ==========")
+        # print("Saved ID:", request_obj.id)
+        # print("Stored analysis:", request_obj.analysis_report is None)
 
         return request_obj
 

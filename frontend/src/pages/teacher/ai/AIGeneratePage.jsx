@@ -7,7 +7,7 @@ import PageHeader from "../../../components/ui/PageHeader";
 import  LoadingOverlay  from "../../../components/common/LoadingOverlay";
 import AITopicSection from "../../../components/teacher/ai/AITopicSection";
 import AIFileSection from "../../../components/teacher/ai/AIFileSection";
-import AIExtractedContent from "../../../components/teacher/ai/AIExtractedContent";
+import AIReviewPanel from "../../../components/teacher/ai/AIReviewPanel";
 import AICreditCard from "../../../components/teacher/ai/AICreditCard";
 import AIQuestionSettings from "../../../components/teacher/ai/AIQuestionSettings";
 import AIGenerateButton from "../../../components/teacher/ai/AIGenerateButton";
@@ -40,6 +40,7 @@ export default function AIGeneratePage() {
   const [file, setFile] = useState(null);
 
   const [language, setLanguage] = useState("english");
+  const [analysisMode, setAnalysisMode] = useState("text");
 
 const fetchSubscriptionSummary = useSchoolStore(
   (s) => s.fetchSubscriptionSummary
@@ -59,6 +60,8 @@ const fetchDashboard = useTeacherStore(
     );
 
 
+  const [analysisReport, setAnalysisReport] = useState(null);
+
   const [extracting, setExtracting] = useState(false);
   const [sourceType, setSourceType] = useState(previousSourceType);
 
@@ -71,6 +74,8 @@ const fetchDashboard = useTeacherStore(
   const subscription = aiConfig?.subscription;
 
   const aiFeatures = aiConfig?.ai_features ?? {};
+  const reportMode =
+  analysisReport?.document?.analysis_mode || "text";
 
   useEffect(() => {
     fetchAIConfig(schoolSlug);
@@ -101,6 +106,7 @@ const fetchDashboard = useTeacherStore(
       const formData = new FormData();
       formData.append("file", file);
       formData.append("language", language);
+      formData.append("analysis_mode",  analysisMode);
 
       const res = await API.post(
         `/api/teacher/${schoolSlug}/ai/extract`,
@@ -111,12 +117,17 @@ const fetchDashboard = useTeacherStore(
           },
         }
       );
-
       setExtractedContent(res.data.content || "");
+      setAnalysisReport(res.data.analysis_report || null);
       setSourceType(res.data.source_type)
       setWordCount(res.data.word_count || 0);
       setCharacterCount(res.data.character_count || 0);
-      showToast("Content extracted successfully.", "success");
+      showToast(
+        analysisMode === "smart"
+          ? "Smart analysis completed successfully."
+          : "Content extracted successfully.",
+        "success"
+      );
 
     } catch (err) {
       console.error(err);
@@ -127,8 +138,10 @@ const fetchDashboard = useTeacherStore(
 
       setExtractedContent("");
       setSourceType("");
+      setAnalysisReport(null);
       setWordCount(0);
       setCharacterCount(0);
+
       setError(message);
 
       showToast(message, "error");
@@ -193,6 +206,13 @@ const fetchDashboard = useTeacherStore(
       if (hasContent) {
       formData.append("content", extractedContent);
       formData.append("source_type", sourceType);
+
+      if (analysisReport) {
+        formData.append(
+          "analysis_report",
+          JSON.stringify(analysisReport)
+        );
+      }
     }
 
       formData.append("difficulty", difficulty);
@@ -267,7 +287,7 @@ const fetchDashboard = useTeacherStore(
       {(loading  && (
         <LoadingOverlay message="Generating AI Questions..." />
       )) || (extracting && (
-        <LoadingOverlay message="Extracting Content..." />
+        <LoadingOverlay message="Analyzing Content..." />
       ))}
     <div className="max-w-5xl mx-auto">
       
@@ -304,10 +324,15 @@ const fetchDashboard = useTeacherStore(
           file={file}
           setFile={setFile}
           language={language}
+  
           setLanguage={setLanguage}
           ocrLanguages={ocrLanguages}
           extracting={extracting}
           handleExtract={handleExtract}
+
+          analysisMode={analysisMode}
+          setAnalysisMode={setAnalysisMode}
+
           setExtractedContent={setExtractedContent}
           setSourceType={setSourceType}
           setWordCount={setWordCount}
@@ -315,12 +340,14 @@ const fetchDashboard = useTeacherStore(
         />
 
       {/* Extracted Content */}
-      <AIExtractedContent
+      <AIReviewPanel
           extractRef={extractRef}
           extractedContent={extractedContent}
           setExtractedContent={setExtractedContent}
           wordCount={wordCount}
           characterCount={characterCount}
+          reportMode={reportMode}
+          analysisReport={analysisReport}
       />
       {/* AI Cedit Card  */}
       <AICreditCard

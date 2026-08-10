@@ -4,6 +4,12 @@ from smart_exam_system.api.services.subscription_service import (
     get_school_limits,
 )
 from smart_exam_system.api.services.ai.extractor import extract_input
+from smart_exam_system.api.services.document_analysis.analysis_service import (
+    AnalysisService,
+)
+from smart_exam_system.api.services.document_analysis.text_analysis_service import (
+    TextAnalysisService,
+)
 
 
 def extract_ai_input(
@@ -12,7 +18,8 @@ def extract_ai_input(
     file=None,
 ):
     """
-    Validate uploaded AI input and extract its content.
+    Validate uploaded AI input and convert it into
+    a standard Analysis Report.
     """
 
     if (
@@ -34,7 +41,27 @@ def extract_ai_input(
 
         file.seek(0)
 
-    return extract_input(
+    extracted = extract_input(
         data=data,
         file=file,
     )
+
+    if not extracted.get("success"):
+        return extracted
+
+    analysis_mode = data.get(
+        "analysis_mode",
+        "text",
+    )
+
+    report = AnalysisService.analyze(
+        mode=analysis_mode,
+        pages=extracted["data"]["pages"],
+        document_type=extracted["data"]["type"],
+        language=extracted["data"]["language"],
+    )
+
+    return {
+        "success": True,
+        "data": report,
+    }

@@ -1,5 +1,5 @@
 
-from flask import jsonify,request
+from flask import jsonify,request,current_app
 from sqlalchemy import or_
 from flask_login import login_required, current_user
 from smart_exam_system.api.teacher import api_teacher_bp
@@ -14,6 +14,9 @@ from smart_exam_system.models import (
 )
 
 from smart_exam_system.api.services.ai_config_service import get_ai_configuration
+from smart_exam_system.api.services.document_analysis.analysis_service import (
+    AnalysisService,
+)
 from smart_exam_system.extensions import db
 from smart_exam_system.config import Config
 
@@ -45,13 +48,15 @@ def ai_generate(school_slug):
     return jsonify(result), 200
 
 
-@api_teacher_bp.route("/<school_slug>/ai/extract", methods=["POST"])
+@api_teacher_bp.route(
+    "/<school_slug>/ai/extract",
+    methods=["POST"]
+)
 @login_required
 @teacher_required
 def ai_extract(school_slug):
 
     file = request.files.get("file")
- 
 
     if not file:
         return jsonify({
@@ -61,23 +66,53 @@ def ai_extract(school_slug):
 
     data = request.form.to_dict()
 
-    extracted = extract_ai_input(
-        school_id=current_user.school_id,
-        data=data,
-        file=file,
+    analysis_mode = data.get(
+        "analysis_mode",
+        "text",
     )
 
-    if not extracted.get("success"):
-        return jsonify(extracted), 400
+    try:
 
-    content = extracted["data"]["content"]
+        report = AnalysisService.analyze(
+            mode=analysis_mode,
+            file=file,
+            data=data,
+            language=data.get("language"),
+        )
+
+    except Exception as e:
+
+        current_app.logger.exception(
+            "AI document analysis failed"
+        )
+
+        return jsonify({
+            "success": False,
+            "message": str(e),
+        }), 400
+
+
+    # ==========================================================
+    # Compatibility with existing AI question generation flow
+    # ==========================================================
+
+    content = "\n\n".join(
+        page.get("source_text", "")
+        for page in report.get("pages", [])
+    )
+
 
     return jsonify({
         "success": True,
+
+        # New structured report
+        "analysis_report": report,
+
+        # Temporary compatibility
         "content": content,
-        "source_type": extracted["data"]["type"],
+        "source_type": report["document"]["document_type"],
         "character_count": len(content),
-        "word_count": len(content.split())
+        "word_count": len(content.split()),
     })
 
 

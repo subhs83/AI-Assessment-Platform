@@ -4,7 +4,7 @@ import {
   Zap,
   BookOpen,
   NotebookPen,
-  ClipboardList,
+  ClipboardList, 
   GraduationCap,
 
   Leaf,
