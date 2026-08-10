@@ -14,7 +14,6 @@ import { useState } from "react";
 import InfoItem from "./smart-review/InfoItem";
 import AnalysisSummaryCard from "./smart-review/AnalysisSummaryCard";
 import PageReviewSection from "./smart-review/PageReviewSection";
-import resolvePageAssets from "./smart-review/resolvePageAssets";
 
 export default function SmartContentReview({
   extractRef,
