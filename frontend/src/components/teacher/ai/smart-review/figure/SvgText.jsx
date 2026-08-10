@@ -5,6 +5,7 @@ export default function SvgText({
   fontSize = 16,
   textAnchor = "middle",
   fontWeight = "400",
+  fill = "currentColor",
 }) {
   return (
     <text
@@ -13,6 +14,7 @@ export default function SvgText({
       fontSize={fontSize}
       textAnchor={textAnchor}
       fontWeight={fontWeight}
+      fill={fill}
       dominantBaseline="middle"
     >
       {children}

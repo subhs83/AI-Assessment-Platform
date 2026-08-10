@@ -5,6 +5,10 @@ export default function SvgShape({ element }) {
     return null;
   }
 
+  const fill = element.fill ?? "none";
+  const stroke = element.stroke ?? "black";
+  const strokeWidth = element.strokeWidth ?? 3;
+
   switch (element.type) {
     case "circle":
       return (
@@ -12,9 +16,9 @@ export default function SvgShape({ element }) {
           cx={element.cx}
           cy={element.cy}
           r={element.r}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
         />
       );
 
@@ -25,9 +29,9 @@ export default function SvgShape({ element }) {
           y={element.y}
           width={element.size}
           height={element.size}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
         />
       );
 
@@ -38,21 +42,23 @@ export default function SvgShape({ element }) {
           y={element.y}
           width={element.width}
           height={element.height}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
         />
       );
 
     case "polygon":
       return (
         <polygon
-          points={element.points
-            ?.map(([x, y]) => `${x},${y}`)
-            .join(" ")}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
+          points={
+            element.points
+              ?.map(([x, y]) => `${x},${y}`)
+              .join(" ") || ""
+          }
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
         />
       );
 
@@ -63,8 +69,8 @@ export default function SvgShape({ element }) {
           y1={element.y1}
           x2={element.x2}
           y2={element.y2}
-          stroke="currentColor"
-          strokeWidth="3"
+          stroke={stroke}
+          strokeWidth={strokeWidth}
         />
       );
 
@@ -73,8 +79,10 @@ export default function SvgShape({ element }) {
         <circle
           cx={element.x}
           cy={element.y}
-          r="7"
-          fill="currentColor"
+          r={element.r ?? 7}
+          fill={fill === "none" ? "black" : fill}
+          stroke={stroke === "none" ? "none" : stroke}
+          strokeWidth={strokeWidth}
         />
       );
 
@@ -89,28 +97,33 @@ export default function SvgShape({ element }) {
       );
 
     case "arc":
-      return renderArc(element);
+      return renderArc(element, stroke, strokeWidth);
 
     default:
       return null;
   }
 }
 
-function renderArc(element) {
+function renderArc(element, stroke, strokeWidth) {
   const {
     cx,
     cy,
     r,
-    start_angle,
-    end_angle,
   } = element;
+
+  // Support the new AI JSON naming.
+  const startAngle =
+    element.startAngle ?? element.start_angle;
+
+  const endAngle =
+    element.endAngle ?? element.end_angle;
 
   if (
     cx == null ||
     cy == null ||
     r == null ||
-    start_angle == null ||
-    end_angle == null
+    startAngle == null ||
+    endAngle == null
   ) {
     return null;
   }
@@ -119,18 +132,20 @@ function renderArc(element) {
     cx,
     cy,
     r,
-    end_angle
+    endAngle
   );
 
   const end = polarToCartesian(
     cx,
     cy,
     r,
-    start_angle
+    startAngle
   );
 
   const largeArcFlag =
-    Math.abs(end_angle - start_angle) <= 180 ? "0" : "1";
+    Math.abs(endAngle - startAngle) <= 180
+      ? "0"
+      : "1";
 
   const pathData = [
     `M ${start.x} ${start.y}`,
@@ -141,8 +156,8 @@ function renderArc(element) {
     <path
       d={pathData}
       fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
+      stroke={stroke}
+      strokeWidth={strokeWidth}
     />
   );
 }

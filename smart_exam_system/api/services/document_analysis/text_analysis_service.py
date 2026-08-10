@@ -1,4 +1,4 @@
-from smart_exam_system.api.schemas.analysis_report import Page
+
 from smart_exam_system.api.services.document_analysis.analysis_report_builder import (
     AnalysisReportBuilder,
 )
@@ -50,10 +50,8 @@ class TextAnalysisService:
         for page_number, text in enumerate(pages, start=1):
 
             builder.add_page(
-                Page(
-                    page_number=page_number,
-                    source_text=text.strip(),
-                )
+                page_number=page_number,
+                source_text=text.strip(),
             )
 
         return builder.build()
