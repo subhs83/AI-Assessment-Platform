@@ -1,8 +1,6 @@
 import json
 
-from smart_exam_system.api.services.ai.ai_service import (
-    generate_smart_analysis,
-)
+ 
 
 from smart_exam_system.api.services.document_analysis.analysis_report_builder import (
     AnalysisReportBuilder,
@@ -33,10 +31,7 @@ class SmartAnalysisService:
 
         builder = AnalysisReportBuilder()
 
-        response = generate_smart_analysis(
-            file=file,
-            language=language,
-        )
+        response =  ""
 
         response = clean_json_response(response)
         

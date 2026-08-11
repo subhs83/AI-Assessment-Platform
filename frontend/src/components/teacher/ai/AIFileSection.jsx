@@ -1,3 +1,4 @@
+
 import { useRef } from "react";
 
 import {
@@ -6,11 +7,7 @@ import {
   Upload,
   CheckCircle2,
   UploadCloud,
-  Sparkles
-
 } from "lucide-react";
-
-
 
 export default function AIFileSection({
   file,
@@ -18,28 +15,13 @@ export default function AIFileSection({
   language,
   setLanguage,
   ocrLanguages,
-  analysisMode,
-  setAnalysisMode,
-  extracting,
-  handleExtract,
-  setExtractedContent,
-  setSourceType,
-  setWordCount,
-  setCharacterCount,
 }) {
-
   const fileInputRef = useRef(null);
 
-  const resetExtraction = () => {
-      setExtractedContent("");
-      setSourceType("");
-      setWordCount(0);
-      setCharacterCount(0);
-  };
-
   return (
-    <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-5">
+    <div>
 
+      {/* Header */}
       <div className="mb-4 flex items-start gap-3">
 
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100">
@@ -49,35 +31,35 @@ export default function AIFileSection({
         <div>
 
           <h2 className="font-semibold text-lg">
-            Generate from PDF or Image
+            Generate from  PDF  or  Image
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Upload teaching material and generate questions using AI.
+            Upload teaching material and generate questions directly using AI.
           </p>
 
-          <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5">
+          {/* <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5">
 
             <p className="text-sm text-blue-700">
-
-                <span className="font-semibold">💡 Best Results:</span>{" "}
-                PDF files preserve formatting and usually produce the most accurate AI-generated questions.
-
+              <span className="font-semibold">
+                💡 Best Results:
+              </span>{" "}
+              PDF files usually provide the most complete context for
+              AI-generated questions.
             </p>
 
-        </div>
+          </div> */}
 
         </div>
 
       </div>
 
-      {/* OCR Language */}
-
+      {/* Document Language */}
       <div className="mb-5">
 
-        <div className="flex items-center gap-2 mb-1">
+        <div className="mb-1 flex items-center gap-2">
 
-          <Languages className="w-4 h-4 text-indigo-600" />
+          <Languages className="h-4 w-4 text-indigo-600" />
 
           <label className="font-medium">
             Document Language
@@ -85,14 +67,17 @@ export default function AIFileSection({
 
         </div>
 
-        <p className="text-xs text-gray-500 mb-2">
+        <p className="mb-2 text-xs text-gray-500">
           Choose the language used in the uploaded document.
+          This language will be used for question generation.
         </p>
 
         <select
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
           value={language}
-          onChange={(e) => setLanguage(e.target.value)}
+          onChange={(e) =>
+            setLanguage(e.target.value)
+          }
         >
           {ocrLanguages.map((lang) => (
             <option
@@ -106,56 +91,14 @@ export default function AIFileSection({
 
       </div>
 
-      <div className="mb-5">
-
-      <div className="flex items-center gap-2 mb-1">
-
-        <Sparkles className="w-4 h-4 text-violet-600" />
-
-        <label className="font-medium">
-          Analysis Mode
-        </label>
-
-      </div>
-
-      <p className="text-xs text-gray-500 mb-2">
-        Choose how your document should be analyzed.
-      </p>
-
-      <select
-        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-        value={analysisMode}
-        onChange={(e) => setAnalysisMode(e.target.value)}
-      >
-        <option value="text">
-          Standard Analysis
-        </option>
-
-        <option value="smart">
-          Smart Analysis-Beta
-        </option>
-
-      </select>
-
-      <p className="mt-2 text-xs text-slate-500">
-        {analysisMode === "text"
-          ? "Best for text-only documents."
-          : "Best for figures, equations, graphs and complex layouts."}
-      </p>
-
-    </div>
-
-       
-
       {/* Upload */}
-
-      <div className="border-2 border-dashed border-green-300 bg-gradient-to-br from-blue-40 to-white rounded-2xl p-4 text-center mb-5 transition hover:border-green-500 hover:bg-indigo-50/70">
+      <div className="mb-5 rounded-2xl border-2 border-dashed border-green-300 bg-gradient-to-br from-blue-40 to-white p-4 text-center transition hover:border-green-500 hover:bg-indigo-50/70">
 
         <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100">
           <UploadCloud className="h-7 w-7 text-indigo-600" />
         </div>
 
-        <h3 className="text-base font-semibold sm:text-lg text-slate-900">
+        <h3 className="text-base font-semibold text-slate-900 sm:text-lg">
           Upload PDF or Image
         </h3>
 
@@ -173,14 +116,18 @@ export default function AIFileSection({
           accept=".pdf,image/*"
           className="hidden"
           onChange={(e) => {
-            setFile(e.target.files[0]);
-            resetExtraction();
+            const selectedFile =
+              e.target.files?.[0] || null;
+
+            setFile(selectedFile);
           }}
         />
 
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() =>
+            fileInputRef.current?.click()
+          }
           className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-indigo-700 hover:shadow-md"
         >
           <Upload className="h-4 w-4" />
@@ -189,6 +136,7 @@ export default function AIFileSection({
 
       </div>
 
+      {/* Selected File */}
       {file && (
         <div className="mb-4 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white p-4">
 
@@ -218,11 +166,10 @@ export default function AIFileSection({
               type="button"
               onClick={() => {
                 setFile(null);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                }
 
-                resetExtraction();
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
               }}
               className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
             >
@@ -233,17 +180,8 @@ export default function AIFileSection({
 
         </div>
       )}
-      <button
-        type="button"
-        onClick={handleExtract}
-        disabled={!file || extracting}
-        className="w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 py-3 font-semibold text-white shadow-sm transition hover:shadow-lg hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
-      >
-        {extracting
-          ? "Analyzing..."
-          : "Analyze Content"}
-      </button>
 
     </div>
   );
 }
+

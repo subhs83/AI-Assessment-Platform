@@ -1,16 +1,14 @@
 from smart_exam_system.api.services.document_analysis.analysis_report_builder import (
-    AnalysisReportBuilder,
+AnalysisReportBuilder,
 )
-
 
 def populate_builder(builder: AnalysisReportBuilder, data: dict):
     """
     Populate AnalysisReportBuilder from Gemini Smart Analysis JSON.
     """
-
-    # ==========================================================
+    # =========================================================
     # DOCUMENT
-    # ==========================================================
+    # =========================================================
 
     document = data.get("document", {})
 
@@ -24,14 +22,13 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
         page_count=document.get("page_count", 0),
     )
 
-    # ==========================================================
+    # =========================================================
     # SUMMARY
-    # ==========================================================
+    # =========================================================
 
     summary = data.get("summary", {})
 
     builder.set_summary(
-        topic_count=summary.get("topic_count", 0),
         figure_count=summary.get("figure_count", 0),
         table_count=summary.get("table_count", 0),
         equation_count=summary.get("equation_count", 0),
@@ -39,9 +36,9 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
         image_count=summary.get("image_count", 0),
     )
 
-    # ==========================================================
+    # =========================================================
     # PAGES
-    # ==========================================================
+    # =========================================================
 
     for page in data.get("pages", []):
 
@@ -49,7 +46,8 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             page_number=page.get("page_number", 0),
             source_text=page.get("source_text", ""),
             heading=page.get("heading", ""),
-            # summary=page.get("summary", ""),
+            width=page.get("width", 0),
+            height=page.get("height", 0),
             figure_ids=page.get("figure_ids", []),
             table_ids=page.get("table_ids", []),
             equation_ids=page.get("equation_ids", []),
@@ -57,9 +55,9 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             image_ids=page.get("image_ids", []),
         )
 
-    # ==========================================================
+    # =========================================================
     # FIGURES
-    # ==========================================================
+    # =========================================================
 
     for figure in data.get("assets", {}).get("figures", []):
 
@@ -68,20 +66,22 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             page_number=figure.get("page_number", 0),
             type=figure.get("type", ""),
             description=figure.get("description", ""),
+            crop_path=figure.get("crop_path", ""),
             labels=figure.get("labels", []),
-            # relationships=figure.get("relationships", []),
-            elements=figure.get("elements", []),
-            question_references=figure.get("question_references", []),
-            # educational_purpose=figure.get("educational_purpose", ""),
+            bounds=figure.get("bounds", {}),
+            question_references=figure.get(
+                "question_references",
+                [],
+            ),
             required_for_understanding=figure.get(
                 "required_for_understanding",
                 False,
             ),
         )
 
-    # ==========================================================
+    # =========================================================
     # TABLES
-    # ==========================================================
+    # =========================================================
 
     for table in data.get("assets", {}).get("tables", []):
 
@@ -91,20 +91,19 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             description=table.get("description", ""),
             columns=table.get("columns", []),
             rows=table.get("rows", []),
-            # educational_purpose=table.get(
-            #     "educational_purpose",
-            #     "",
-            # ),
-            question_references=table.get("question_references", []),
+            question_references=table.get(
+                "question_references",
+                [],
+            ),
             required_for_understanding=table.get(
                 "required_for_understanding",
                 False,
             ),
         )
 
-    # ==========================================================
+    # =========================================================
     # EQUATIONS
-    # ==========================================================
+    # =========================================================
 
     for equation in data.get("assets", {}).get("equations", []):
 
@@ -114,12 +113,19 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             latex=equation.get("latex", ""),
             description=equation.get("description", ""),
             type=equation.get("type", ""),
-            question_references=equation.get("question_references", []),
+            question_references=equation.get(
+                "question_references",
+                [],
+            ),
+            required_for_understanding=equation.get(
+                "required_for_understanding",
+                False,
+            ),
         )
 
-    # ==========================================================
+    # =========================================================
     # GRAPHS
-    # ==========================================================
+    # =========================================================
 
     for graph in data.get("assets", {}).get("graphs", []):
 
@@ -128,27 +134,25 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             page_number=graph.get("page_number", 0),
             type=graph.get("type", ""),
             description=graph.get("description", ""),
+            crop_path=graph.get("crop_path", ""),
             x_axis_label=graph.get("x_axis_label", ""),
             y_axis_label=graph.get("y_axis_label", ""),
             x_categories=graph.get("x_categories", []),
             series=graph.get("series", []),
-            legend=graph.get("legend", []),
-            x_scale=graph.get("x_scale", ""),
-            y_scale=graph.get("y_scale", ""),
-            # educational_purpose=graph.get(
-            #     "educational_purpose",
-            #     "",
-            # ),
-            question_references=graph.get("question_references", []),
+            bounds=graph.get("bounds", {}),
+            question_references=graph.get(
+                "question_references",
+                [],
+            ),
             required_for_understanding=graph.get(
                 "required_for_understanding",
                 False,
             ),
         )
 
-    # ==========================================================
+    # =========================================================
     # IMAGES
-    # ==========================================================
+    # =========================================================
 
     for image in data.get("assets", {}).get("images", []):
 
@@ -156,12 +160,12 @@ def populate_builder(builder: AnalysisReportBuilder, data: dict):
             id=image.get("id", ""),
             page_number=image.get("page_number", 0),
             description=image.get("description", ""),
-            subjects=image.get("subjects", []),
-            # educational_purpose=image.get(
-            #     "educational_purpose",
-            #     "",
-            # ),
-            question_references=image.get("question_references", []),
+            crop_path=image.get("crop_path", ""),
+            bounds=image.get("bounds", {}),
+            question_references=image.get(
+                "question_references",
+                [],
+            ),
             required_for_understanding=image.get(
                 "required_for_understanding",
                 False,

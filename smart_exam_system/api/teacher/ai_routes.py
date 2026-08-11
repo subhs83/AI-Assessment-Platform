@@ -48,72 +48,69 @@ def ai_generate(school_slug):
     return jsonify(result), 200
 
 
-@api_teacher_bp.route(
-    "/<school_slug>/ai/extract",
-    methods=["POST"]
-)
-@login_required
-@teacher_required
-def ai_extract(school_slug):
+# @api_teacher_bp.route( "/<school_slug>/ai/extract", methods=["POST"])
+# @login_required
+# @teacher_required
+# def ai_extract(school_slug):
 
-    file = request.files.get("file")
+#     file = request.files.get("file")
 
-    if not file:
-        return jsonify({
-            "success": False,
-            "message": "File is required"
-        }), 400
+#     if not file:
+#         return jsonify({
+#             "success": False,
+#             "message": "File is required"
+#         }), 400
 
-    data = request.form.to_dict()
+#     data = request.form.to_dict()
 
-    analysis_mode = data.get(
-        "analysis_mode",
-        "text",
-    )
+#     analysis_mode = data.get(
+#         "analysis_mode",
+#         "text",
+#     )
 
-    try:
+#     try:
 
-        report = AnalysisService.analyze(
-            mode=analysis_mode,
-            file=file,
-            data=data,
-            language=data.get("language"),
-        )
+#         report = AnalysisService.analyze(
+#             mode=analysis_mode,
+#             file=file,
+#             data=data,
+#             language=data.get("language"),
+#         )
 
-    except Exception as e:
+#     except Exception as e:
 
-        current_app.logger.exception(
-            "AI document analysis failed"
-        )
+#         current_app.logger.exception(
+#             "AI document analysis failed"
+#         )
 
-        return jsonify({
-            "success": False,
-            "message": str(e),
-        }), 400
+#         return jsonify({
+#             "success": False,
+#             "message": str(e),
+#         }), 400
 
 
-    # ==========================================================
-    # Compatibility with existing AI question generation flow
-    # ==========================================================
+#     # ==========================================================
+#     # Compatibility with existing AI question generation flow
+#     # ==========================================================
 
-    content = "\n\n".join(
-        page.get("source_text", "")
-        for page in report.get("pages", [])
-    )
+#     content = "\n\n".join(
+#         page.get("source_text", "")
+#         for page in report.get("pages", [])
+#     )
 
 
-    return jsonify({
-        "success": True,
+#     return jsonify({
+#         "success": True,
 
-        # New structured report
-        "analysis_report": report,
+#         # New structured report
+#         "analysis_report": report,
 
-        # Temporary compatibility
-        "content": content,
-        "source_type": report["document"]["document_type"],
-        "character_count": len(content),
-        "word_count": len(content.split()),
-    })
+#         # Temporary compatibility
+#         "content": content,
+#         "source_type": report["document"]["document_type"],
+#         "character_count": len(content),
+#         "word_count": len(content.split()),
+#     })
 
 
 @api_teacher_bp.route("/<school_slug>/ai/request/<int:request_id>", methods=["GET"])

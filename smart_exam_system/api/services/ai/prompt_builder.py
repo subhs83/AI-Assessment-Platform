@@ -77,7 +77,6 @@ Content:
 def build_question_prompt(
     *,
     content,
-    analysis,
     language,
     difficulty,
     blooms_level,
@@ -103,10 +102,6 @@ Difficulty:
 
 Bloom's Taxonomy:
 {blooms_instruction}
-
-Concept Analysis:
-
-{analysis}
 
 Original Content:
 
@@ -184,696 +179,320 @@ Rules:
 
 
 
+
+
+
+
+
+
 def build_smart_analysis_prompt(language):
     return f"""
 You are an Educational Document Analysis Engine.
 
-Your job is to analyze an educational PDF or image document and
-convert it into a structured Analysis Report JSON.
+Analyze the uploaded educational PDF/image and return ONLY valid JSON
+matching Schema 3.0 below.
 
-The document language is:
-
-{language}
+Document language: {language}
 
 The uploaded document is the ONLY source of truth.
 
-============================================================
-CORE OBJECTIVE
-============================================================
+Do not:
+- generate questions
+- solve questions
+- determine answers
+- explain or teach
+- rewrite or translate
+- invent missing information
+- correct the source
 
-Analyze and structure the document.
-
-Do NOT generate questions.
-
-Do NOT solve questions.
-
-Do NOT determine correct answers.
-
-Do NOT teach or explain the document.
-
-Do NOT rewrite the document.
-
-Do NOT translate the document.
-
-Do NOT invent missing information.
-
-Preserve the educational and mathematical meaning of the
-original document.
-
-The resulting JSON will later be provided to an AI question
-generation system.
-
-Therefore, asset descriptions must contain enough accurate
-information for another AI system to understand the educational
-content represented by the asset.
+Preserve the original reading order and educational meaning.
 
 ============================================================
-DOCUMENT INFORMATION
+DOCUMENT
 ============================================================
 
-Populate these fields whenever the information can be identified:
+Populate when confidently identifiable:
 
-- analysis_mode
-- document_type
-- title
-- subject
-- class_name
-- language
-- page_count
+analysis_mode = "smart"
+document_type
+title
+subject
+class_name
+language
+page_count
 
-analysis_mode must be:
-
-"smart"
-
-because this is the Smart Analysis pipeline.
-
-If information cannot be identified confidently, use an empty
-string or 0.
-
-Never guess.
+Use "" or 0 when unavailable. Never guess.
 
 ============================================================
-SUMMARY
+PAGES
 ============================================================
 
-Return:
+For every page return:
 
-- topic_count
-- figure_count
-- table_count
-- equation_count
-- graph_count
+page_number
+width
+height
+source_text
+heading
+figure_ids
+table_ids
+equation_ids
+graph_ids
+image_ids
 
-These are counts of the corresponding detected assets or
-educational topics.
+page_number must be the 1-based page index of the uploaded file.
 
-Do not invent counts.
+PAGE COORDINATE SYSTEM:
+
+For every page, return the pixel dimensions of the page image
+that you analyzed.
+
+The page coordinate system is:
+
+top-left = (0, 0)
+
+x increases from left to right.
+y increases from top to bottom.
+
+All asset bounds on that page MUST use exactly the same
+coordinate system and dimensions.
+
+
+Do NOT use:
+- normalized coordinates
+- percentages
+- PDF points
+- inches
+- coordinates relative to a question
+- coordinates relative to an asset
+
+The page width and height must describe the coordinate system
+used for that page's asset bounds.
 
 ============================================================
-PAGE ANALYSIS
+SOURCE TEXT
 ============================================================
 
-Every page must contain:
-
-- page_number
-- source_text
-- heading
-- summary
-- figure_ids
-- table_ids
-- equation_ids
-- graph_ids
-- image_ids
-
-PAGE NUMBER:
-
-Use the actual document page position.
-
-Do not invent page numbers.
-
-SOURCE TEXT:
-
-source_text contains the page's readable textual structure.
+source_text is the readable educational text in logical order.
 
 Preserve:
+- question numbers
+- question statements
+- answer options
+- headings
+- directions
+- captions
+- meaningful visible text
 
-* question numbers
-* question statements
-* options
-* headings
-* directions
-* captions
-* meaningful visible text
+When an asset is referenced in the text, insert exactly one reference:
 
-When content belongs to a detected asset, replace that content
-with its asset reference.
+[figure:ID]
+[table:ID]
+[equation:ID]
+[graph:ID]
+[image:ID]
 
-Use exactly:
+Do not duplicate the asset's visual content inside source_text.
 
-[figure:fig-X]
-[equation:eq-X]
-[graph:graph-X]
-[table:table-X]
-[image:image-X]
+Do not solve, rewrite, merge, or invent questions.
 
-Examples:
+============================================================
+ASSET IDS
+============================================================
 
-16. Find the value of [equation:eq-1].
-17. Select the correct box [figure:fig-1].
-    Direction: Study the following graph [graph:graph-1].
+Asset IDs must be stable and related to the question number
+when the asset belongs to a question.
 
-Do NOT duplicate asset content inside source_text.
+For example, if question 10 contains a main figure and four
+answer-option figures:
 
-Do NOT write mathematical expressions in source_text when they
-are represented by an equation asset.
+fig-10-main
+fig-10-A
+fig-10-B
+fig-10-C
+fig-10-D
 
-Do NOT write figure descriptions in source_text when represented
-by a figure asset.
+If question 11 contains one figure:
 
-Do NOT write graph data in source_text when represented by a graph
-asset.
+fig-11
 
-Do NOT write table data in source_text when represented by a table
-asset.
+If one graph is used by questions 24 and 25:
 
-If an equation cannot be represented confidently in LaTeX,
-set its "latex" field to "" and still use [equation:eq-X] in
-source_text.
+graph-24-25
 
-source_text is the structural text layer.
-Assets are the canonical representation of non-text content.
+Do NOT create meaningless sequential IDs such as:
 
-Do not solve, correct, rewrite, or invent content.
-Do not merge unrelated questions.
-Preserve logical reading order.
+fig-1
+fig-2
+fig-3
 
+when the question number is known.
 
-HEADING:
+If the asset is not associated with a question, use a unique
+stable ID such as fig-1, graph-1, image-1.
 
-Return the main heading of the page if clearly identifiable.
+Every asset ID must be unique.
 
-Otherwise:
+============================================================
+BOUNDS
+============================================================
+be consistent with the page coordinate system.
 
-""
+For every figure, graph, or image, return:
 
+{{
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0
+}}
 
+Bounds are pixel coordinates in the ORIGINAL PAGE IMAGE.
 
-ASSET REFERENCES:
+The bounding box must surround the COMPLETE visible asset.
 
-Every detected asset must be referenced by its ID in the
-appropriate page array.
+Include all content belonging to the asset, including:
+- labels
+- symbols
+- numbers
+- arrows
+- markings
+- answer-option drawings
+- visible internal content
 
-An asset must belong to exactly one page.
+Do NOT include:
+- unrelated question text
+- neighboring questions
+- unrelated figures
+- unrelated answer options
+- surrounding page content
+
+For separate visual assets, return separate bounding boxes.
+
+For answer-option figures, each option must have its own bounds.
+
+Do not estimate bounds from question text.
+
+Do not use the position of the question number as the asset position.
+
+Do not invent a coordinate system.
 
 ============================================================
 FIGURES
 ============================================================
 
-A Figure represents an educational visual or diagram.
+A figure is an educational visual such as:
 
-Examples include:
-
-- geometry diagrams
-- labelled science diagrams
-- biology diagrams
-- chemistry diagrams
-- physics diagrams
-- flowcharts
-- maps
-- Venn diagrams
-- figure matrices
-- paper-folding diagrams
-- pattern questions
-- visual reasoning diagrams
-- labelled illustrations
-- schematic diagrams
-
-For every meaningful figure create:
-
-{{
-"id": "",
-"page_number": 0,
-"type": "",
-"description": "",
-"labels": [],
-"elements": [],
-"question_references": [],
-"required_for_understanding": false
-}}
-
-FIGURE ID:
-
-Use a unique ID such as:
-
-"fig-1"
-"fig-2"
-"fig-3"
-
-Do not reuse IDs.
-
-PAGE NUMBER:
-
-The page containing the figure.
-
-TYPE:
-
-Describe the figure category.
-
-Examples:
-
-- geometry_diagram
-- venn_diagram
-- figure_matrix
-- paper_folding
-- pattern
-- science_diagram
-- labelled_diagram
+- geometry diagram
+- Venn diagram
+- circuit
+- biology diagram
+- chemistry structure
+- physics diagram
 - flowchart
 - map
-- visual_reasoning
+- labelled diagram
+- pattern
+- visual reasoning diagram
 - illustration
+- schematic
 
-DESCRIPTION:
+Return only figures that are actually visible.
 
-Describe what is visibly represented.
-
-Include important visible information such as:
-
-- shapes
-- objects
-- positions
-- connections
-- arrows
-- labels
-- symbols
-- numbers
-- angles
-- regions
-- patterns
-- relationships
-- visible question marks
-- diagram structure
-
-The description must describe what is visible.
-
-Do not solve the figure.
-
-Do not infer information that is not visible.
-
-MATHEMATICAL AND GEOMETRIC FIGURES:
-
-For mathematics, physics, chemistry, and science diagrams,
-preserve the visible geometry rather than only describing it.
-
-Important visual information may include:
-
-- exact relative position of shapes
-- intersections
-- parallel-looking lines
-- perpendicular-looking lines
-- connected line segments
-- arrows
-- angle marks
-- points
-- labels
-- numerical values
-- shaded regions
-- filled or unfilled shapes
-- nested shapes
-- repeated shapes
-- symmetry
-- visible grid structure
-- diagram boundaries
-
-Do not solve, simplify, rotate, or reinterpret the diagram.
-
-The generated elements should represent what is visibly shown
-in the source document, not what would make mathematical sense.
-
-If the source diagram is unclear, preserve only the geometry
-that can be observed reliably.
-
-
-ELEMENTS:
-
-When a figure is visually reconstructable using basic geometric
-or diagram primitives, populate the "elements" array.
-
-Do not leave "elements" empty simply because the coordinates
-are approximate.
-
-Use approximate normalized coordinates from 0 to 1000 for both
-horizontal and vertical positions.
-
-Supported element types include:
-
-- circle
-- rectangle
-- square
-- triangle
-- polygon
-- line
-- arrow
-- point
-- text
-- arc
-
-For each element, provide the properties needed to render its
-visible shape, position, style, or label.
-
-----------------------------------------------------------
-SHAPE PRESERVATION
-----------------------------------------------------------
-
-Preserve the actual geometric shape visible in the source.
-
-Do not replace one shape with another.
-
-For example:
-
-- square must remain a square
-- rectangle must remain a rectangle
-- circle must remain a circle
-- triangle must remain a triangle
-- polygon must preserve its visible polygonal structure
-
-This is especially important for Venn diagrams, nested
-figures, visual reasoning questions, and geometry diagrams.
-
-----------------------------------------------------------
-POSITION AND PROPORTION
-----------------------------------------------------------
-
-Use coordinates that approximately preserve the visible
-position, size, orientation, and proportions of the source.
-
-The goal is to reconstruct the figure visually, not merely
-list the shapes that appear in it.
-
-Elements that are visually close together in the source should
-remain visually close together in the reconstruction.
-
-----------------------------------------------------------
-OVERLAPPING SHAPES
-----------------------------------------------------------
-
-When shapes overlap, their coordinates must preserve the same
-visible overlap or intersection relationships as the source.
-
-For example, if two shapes visibly overlap in the source,
-their reconstructed coordinates must also make them overlap.
-
-Do not place separate shapes apart when they visibly intersect.
-
-For Venn diagrams, preserve the approximate arrangement and
-intersection of the visible shapes so that numbers and labels
-can remain inside the correct regions.
-
-----------------------------------------------------------
-NESTED SHAPES
-----------------------------------------------------------
-
-When one shape is inside another, preserve the nesting.
-
-For example:
-
-outer square
-    → inner circle
-        → inner triangle
-
-The coordinates and sizes must place the inner shapes inside
-the corresponding outer shapes as they appear in the source.
-
-Do not return the correct shapes with unrelated positions.
-
-----------------------------------------------------------
-FILL AND SHADING
-----------------------------------------------------------
-
-Preserve important visible fill or shading.
-
-When applicable, an element may include:
-
-"fill": "none"
-
-or an appropriate simple fill such as:
-
-"fill": "black"
-"fill": "gray"
-
-Use "fill": "none" when the shape is outline-only.
-
-Also preserve the visible stroke when it is meaningful:
-
-"stroke": "black"
-
-Do not add fill or shading that is not visibly present.
-
-For patterns or hatching that cannot be represented reliably
-with the supported primitives, preserve the main visible shape
-and use the simplest reasonable representation.
-
-----------------------------------------------------------
-TEXT, LABELS, AND NUMBERS
-----------------------------------------------------------
-
-For text, labels, numbers, and symbols inside a figure, provide
-their approximate visible position.
-
-Place each number, label, or symbol inside the same visible
-region where it appears in the source.
-
-For Venn diagrams and other overlapping-region questions,
-position numbers according to the actual region they belong to,
-not merely near the corresponding shape.
-
-Do not move numbers to convenient positions if doing so changes
-the visible meaning of the diagram.
-
-Example:
+For each figure return:
 
 {{
-    "type": "text",
-    "x": 500,
-    "y": 500,
-    "text": "6"
+    "id": "",
+    "page_number": 0,
+    "type": "",
+    "description": "",
+    "labels": [],
+    "bounds": {{
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    }},
+    "crop_path": "",
+    "required_for_understanding": false,
+    "question_references": []
 }}
 
-----------------------------------------------------------
-ELEMENT EXAMPLES
-----------------------------------------------------------
+Describe only what is visibly represented.
 
-Circle:
+Do not solve or interpret beyond the visible content.
 
-{{
-    "type": "circle",
-    "cx": 500,
-    "cy": 500,
-    "r": 200
-}}
+For mathematical/scientific figures, preserve visible relationships
+without solving them.
 
-Square:
-
-{{
-    "type": "square",
-    "x": 300,
-    "y": 300,
-    "size": 300
-}}
-
-Rectangle:
-
-{{
-    "type": "rectangle",
-    "x": 300,
-    "y": 300,
-    "width": 300,
-    "height": 150
-}}
-
-Polygon / Triangle:
-
-{{
-    "type": "polygon",
-    "points": [[100,800],[500,100],[900,800]]
-}}
-
-Line:
-
-{{
-    "type": "line",
-    "x1": 100,
-    "y1": 200,
-    "x2": 800,
-    "y2": 200
-}}
-
-Text or Label:
-
-{{
-    "type": "text",
-    "x": 500,
-    "y": 100,
-    "text": "A"
-}}
-
-Filled shape:
-
-{{
-    "type": "square",
-    "x": 300,
-    "y": 300,
-    "size": 200,
-    "fill": "black"
-}}
-
-----------------------------------------------------------
-FIGURE-SPECIFIC GUIDANCE
-----------------------------------------------------------
-
-For geometry diagrams:
-
-Include the visible shapes, lines, points, angles, arcs,
-labels, and numbers.
-
-For Venn diagrams:
-
-Include the actual visible shapes, their overlaps or
-intersections, and the numbers or labels positioned inside
-their corresponding visible regions.
-
-Do not convert all Venn shapes into circles if the source
-contains different shapes such as squares or triangles.
-
-For nested figures:
-
-Include the outer and inner shapes with coordinates that
-preserve the visible nesting order.
-
-For figure matrices and pattern figures:
-
-Include the visible outer shapes, inner shapes, symbols,
-fill/shading, and their positions within the matrix.
-
-For paper-folding figures:
-
-Include the visible net/folded structure, individual faces,
-symbols, markings, and their relative positions.
-
-For science diagrams:
-
-Include visible shapes, lines, arrows, components, symbols,
-and labels that can reasonably be represented using these
-primitives.
-
-For labelled diagrams:
-
-Preserve the approximate position of labels relative to the
-objects or structures they identify.
-
-----------------------------------------------------------
-IMPORTANT
-----------------------------------------------------------
-
-Do not solve the question.
-
-Do not infer hidden information.
-
-Do not invent elements that are not visibly present.
-
-Do not change the identity of a visible shape.
-
-Do not change visible overlap, nesting, or relative position.
-
-Do not reposition numbers or labels in a way that changes the
-visible meaning of the figure.
-
-Use "elements": [] only when the figure genuinely contains
-visual content that cannot reasonably be represented using the
-supported primitives.
+Do NOT generate SVG.
 
 ============================================================
 TABLES
 ============================================================
 
-A Table represents information organized into rows and columns.
+A table is information organized into rows and columns.
 
-For every meaningful table create:
+Return:
 
 {{
     "id": "",
     "page_number": 0,
     "description": "",
     "columns": [],
-    "question_references": [],
-    "required_for_understanding": false
+    "rows": [],
+    "required_for_understanding": false,
+    "question_references": []
 }}
 
-DESCRIPTION:
+Return visible table data only.
 
-Describe what information the table contains.
-
-COLUMNS:
-
-Return the visible column headings.
-
-If no column headings are visible, return [].
-
-Do not invent missing rows or values.
-
-
+Do not calculate or invent missing values.
 
 ============================================================
 EQUATIONS
 ============================================================
 
-An Equation represents a mathematical, physics, or chemistry
-expression whose mathematical structure is visible.
+An equation is a mathematical, physics, or chemistry expression
+whose mathematical structure is visibly present.
 
-For every meaningful equation create:
+Return:
 
 {{
     "id": "",
     "page_number": 0,
     "latex": "",
     "description": "",
-    "question_references": [],
+    "type": "",
+    "required_for_understanding": false,
+    "question_references": []
 }}
 
-LATEX:
-
-Return the COMPLETE mathematical expression in LaTeX.
-
-Preserve exactly:
-
+Preserve visible mathematical structure including:
 - fractions
-- nested fractions
-- square roots
-- nested square roots
+- roots
+- nested roots
 - powers
-- superscripts
 - subscripts
+- superscripts
 - parentheses
 - brackets
 - absolute values
-- degree symbols
 - inequalities
-- mathematical operators
+- operators
 - grouping
-- nesting
 
-Do not simplify.
+Do not simplify, calculate, correct, or reinterpret.
 
-Do not calculate.
-
-Do not correct.
-
-Do not reinterpret.
-
-The LaTeX must represent the mathematical structure that is
-visually present.
-
-For example, if the document visually contains a nested
-radical structure, preserve the nested sqrt structure in LaTeX.
-
-If the structure cannot be determined confidently:
+If the structure cannot be reliably determined:
 
 "latex": ""
-
-and preserve the readable representation in source_text.
-
-DESCRIPTION:
-
-Briefly describe what the equation represents or where it appears,
-without solving it.
 
 ============================================================
 GRAPHS
 ============================================================
 
-A Graph represents a visual data graph or chart.
-
-Examples:
+A graph is a visual graph or chart such as:
 
 - bar_graph
 - line_graph
@@ -881,8 +500,10 @@ Examples:
 - coordinate_graph
 - comparison_graph
 - statistical_graph
+- histogram
+- scatter_plot
 
-For every graph return:
+Return:
 
 {{
     "id": "",
@@ -893,18 +514,20 @@ For every graph return:
     "y_axis_label": "",
     "x_categories": [],
     "series": [],
-    "legend": [],
-    "x_scale": "",
-    "y_scale": "",
-    "question_references": [],
-    "required_for_understanding": false
+    "bounds": {{
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    }},
+    "crop_path": "",
+    "required_for_understanding": false,
+    "question_references": []
 }}
 
-GRAPH DATA:
+If exact graph data is clearly visible, preserve it.
 
-If the graph contains plotted data, populate "series".
-
-Each series must contain:
+Each series:
 
 {{
     "name": "",
@@ -912,243 +535,106 @@ Each series must contain:
     "values": []
 }}
 
-For example, if a graph shows:
+Never calculate or invent graph values.
 
-Country A:
-1st = 20
-2nd = 24
-3rd = 20
-
-Country B:
-1st = 24
-2nd = 22
-3rd = 22
-
-return:
-
-"series": [
-    {{
-        "name": "Country A",
-        "x_values": ["1st", "2nd", "3rd"],
-        "values": [20, 24, 20]
-    }},
-    {{
-        "name": "Country B",
-        "x_values": ["1st", "2nd", "3rd"],
-        "values": [24, 22, 22]
-    }}
-]
-
-Do not put structured graph data only inside "description".
-
-"description" should briefly describe the graph and its
-overall visual purpose. Do not unnecessarily repeat information
-already represented by the structured graph fields.
-
-"x_categories" should contain the visible shared X-axis
-categories when applicable.
-
-"legend" should contain visible legend names.
-
-"x_axis_label" should contain the visible X-axis label.
-
-"y_axis_label" should contain the visible Y-axis label.
-
-"x_scale" should contain the visible X-axis scale information.
-
-"y_scale" should contain the visible Y-axis scale information.
-
-If exact plotted values are visible, populate "series"
-with those values.
-
-If exact values are not visible, use empty "values"
-rather than inventing values.
-
-Do not calculate missing values.
-
-Do not infer values that are not visible.
-
-Do not invent graph data.
-
-"required_for_understanding" must be true when a question
-or instruction on the page depends on this graph.
-
-"question_references" must contain the question numbers
-that explicitly depend on this graph.
-
-If the graph is present but no question depends on it,
-return an empty "question_references" array.
-
-Return empty arrays when information is unavailable.
+If exact data cannot be reliably read, leave the values empty.
 
 ============================================================
 IMAGES
 ============================================================
 
-An Image represents an educational photograph or real-world
-visual that is not primarily a diagram, graph, equation or table.
+An image is a photograph, real-world image, or educational visual
+that is not primarily a figure, graph, equation, or table.
 
-For every meaningful image create:
+Return:
 
 {{
     "id": "",
     "page_number": 0,
     "description": "",
-    "question_references": [],
+    "bounds": {{
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0
+    }},
+    "crop_path": "",
+    "required_for_understanding": false,
+    "question_references": []
 }}
 
-DESCRIPTION:
-
-Describe the visible educational content.
-
-Do not invent details.
+Describe only visible educational content.
 
 ============================================================
-ASSET LINKING
+QUESTION RELATIONSHIPS
 ============================================================
 
 Every asset must:
 
 1. Have a unique ID.
 2. Belong to exactly one page.
-3. Appear in the corresponding page asset ID list.
+3. Appear in that page's corresponding ID list.
+4. Have the correct page_number.
+5. Be referenced by source_text when the question depends on it.
 
-Example:
+If a question depends on an asset:
 
-If "fig-3" belongs to page 2:
+required_for_understanding = true
 
-page 2 must contain:
+question_references must contain the actual question number.
 
-"figure_ids": ["fig-3"]
+If no question depends on the asset:
 
-Do not reference an asset from another page.
+question_references = []
 
-============================================================
-MATHEMATICAL PRESERVATION
-============================================================
-
-Mathematical structure has higher priority than plain-text
-appearance.
-
-Never flatten mathematical structure when it can be represented
-using LaTeX.
-
-Preserve:
-
-sqrt nesting:
-
-\\sqrt{{a-\\sqrt{{b-\\sqrt{{c}}}}}}
-
-fraction:
-
-\\frac{{a+b}}{{c+d}}
-
-power:
-
-x^{{2}}
-
-subscript:
-
-x_{{1}}
-
-grouping:
-
-\\left( ... \\right)
-
-Do NOT:
-
-- move radicals
-- move operators
-- remove parentheses
-- remove brackets
-- remove nesting
-- simplify
-- calculate
-- correct
-- reinterpret
-
-The source document determines the structure.
+Do not invent relationships.
 
 ============================================================
-QUESTION CONTENT
+COUNTS
 ============================================================
 
-If the document is a question paper, preserve the question
-content in source_text.
+Return:
 
-Preserve:
+figure_count
+table_count
+equation_count
+graph_count
+image_count
 
-- question numbers
-- question statements
-- options
-- directions
-- mathematical expressions
-- references to figures
-- references to graphs
-- references to tables
-
-Do not solve questions.
-
-Do not determine answers.
-
-Do not create new questions.
-
-If a question depends on a figure, the figure must be detected
-and linked to the page.
+Counts must equal the number of actual assets returned.
 
 ============================================================
-DOCUMENT ORDER
+CROP PATH
 ============================================================
 
-Preserve the logical reading order of the document.
+Always return:
 
-Do not reorder content because of unusual visual positioning.
+"crop_path": ""
 
-Do not merge unrelated content.
+Do not generate, guess, or modify crop_path.
 
-Do not split content that belongs together.
-
-============================================================
-NO HALLUCINATION
-============================================================
-
-Never invent:
-
-- text
-- equations
-- mathematical structure
-- figure details
-- graph values
-- table values
-- labels
-- question numbers
-- titles
-- subjects
-- class information
-- educational relationships
-
-If information is unavailable or unclear:
-
-- use ""
-- use []
-- use 0
-- use false
-
-depending on the field type.
-
-Never guess.
+The backend creates crop_path from the page image and bounds.
 
 ============================================================
-EXACT JSON CONTRACT
+MISSING INFORMATION
 ============================================================
 
-Return EXACTLY this structure.
+When information is unavailable:
 
-Do NOT rename fields.
+string -> ""
+array -> []
+number -> 0
+boolean -> false
 
-Do NOT remove fields.
+Do not add fields.
+Do not remove fields.
+Do not rename fields.
 
-Do NOT add fields.
+============================================================
+SCHEMA 3.0
+============================================================
+
+Return exactly:
 
 {{
     "document": {{
@@ -1160,116 +646,37 @@ Do NOT add fields.
         "language": "{language}",
         "page_count": 0
     }},
-
     "summary": {{
-        "topic_count": 0,
         "figure_count": 0,
         "table_count": 0,
         "equation_count": 0,
-        "graph_count": 0
+        "graph_count": 0,
+        "image_count": 0
     }},
-
-    "pages": [
-        {{
-            "page_number": 1,
-            "source_text": "",
-            "heading": "",
-            "figure_ids": [],
-            "table_ids": [],
-            "equation_ids": [],
-            "graph_ids": [],
-            "image_ids": []
-        }}
-    ],
-
+    "pages": [],
     "assets": {{
-        "figures": [
-            {{
-                "id": "",
-                "page_number": 1,
-                "type": "",
-                "description": "",
-                "labels": [],
-                 "elements": [],
-                "question_references": [],
-                "required_for_understanding": false
-            }}
-        ],
-
-        "tables": [
-            {{
-                "id": "",
-                "page_number": 1,
-                "description": "",
-                "columns": [],
-                "question_references": [],
-                "required_for_understanding": false
-            }}
-        ],
-
-        "equations": [
-            {{
-                "id": "",
-                "page_number": 1,
-                "latex": "",
-                "description": "",
-                "question_references": [],
-            }}
-        ],
-
-        "graphs": [
-            {{
-                "id": "",
-                "page_number": 1,
-                "type": "",
-                "description": "",
-                "x_axis_label": "",
-                "y_axis_label": "",
-                "x_categories": [],
-                "series": [
-                    {{
-                        "name": "",
-                        "x_values": [],
-                        "values": []
-                    }}
-                ],
-                "legend": [],
-                "x_scale": "",
-                "y_scale": "",
-                "question_references": [],
-                "required_for_understanding": false
-            }}
-        ]
-
-        "images": [
-            {{
-                "id": "",
-                "page_number": 1,
-                "description": "",
-                "question_references": [],
-            }}
-        ]
+        "figures": [],
+        "tables": [],
+        "equations": [],
+        "graphs": [],
+        "images": []
     }},
-
+    "generation": {{}}
 }}
 
-============================================================
-OUTPUT RULES
-============================================================
+IMPORTANT:
+
+Do not create placeholder assets merely to match the schema.
+
+Only include assets actually detected in the document.
 
 Return ONLY valid JSON.
 
 No markdown.
-
 No explanations.
-
 No comments.
-
 No code fences.
 
-No additional text.
-
 The first character must be "{{".
-
 The last character must be "}}".
 """

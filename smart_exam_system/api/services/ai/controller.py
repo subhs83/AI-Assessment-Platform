@@ -1,121 +1,196 @@
-from smart_exam_system.api.services.ai.extractor import extract_input
-from smart_exam_system.api.services.ai.ai_service import generate_from_gemini
-from smart_exam_system.api.services.ai.response_parser import parse_ai_response
-from smart_exam_system.api.services.ai.content_preparer import (
-    prepare_ai_content,
-    prepare_analysis_content,
+
+from smart_exam_system.api.services.ai.ai_service import (
+    generate_from_gemini,
 )
-from smart_exam_system.api.services.ai.finalize_ai_generation import finalize_ai_generation
-from smart_exam_system.api.services.ai_credit_service import process_ai_credit
+from smart_exam_system.api.services.ai.response_parser import (
+    parse_ai_response,
+)
+from smart_exam_system.api.services.ai.finalize_ai_generation import (
+    finalize_ai_generation,
+)
+from smart_exam_system.api.services.ai_credit_service import (
+    process_ai_credit,
+)
 
 from smart_exam_system.config import Config
-import json
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-def generate_ai_questions_controller(data, file, school_id, teacher_id):
+def generate_ai_questions_controller(
+    data,
+    file,
+    school_id,
+    teacher_id,
+):
+    """
+    Generate AI questions directly from a topic or uploaded file.
 
-    analysis_report = None
+    Flow:
 
-    analysis_json = data.get("analysis_report")
-    # print("\n========== STEP 1 ==========")
-    # print("analysis_json exists:", analysis_json is not None)
-    # print("analysis_json length:", len(analysis_json) if analysis_json else 0)
+        Topic
+          ↓
+        Gemini
+          ↓
+        Question JSON
+          ↓
+        Parse
+          ↓
+        Finalize
 
-    manual_content = data.get("content")
+    or:
 
+        PDF/Image
+          ↓
+        Gemini
+          ↓
+        Question JSON
+          ↓
+        Parse
+          ↓
+        Finalize
+    """
 
-    if analysis_json:
+    topic = (
+        data.get("topic") or ""
+    ).strip()
 
+    # ---------------------------------------------------------
+    # Determine input type
+    # ---------------------------------------------------------
 
-        analysis_report = json.loads(analysis_json)
-        # print("\n========== STEP 2 ==========")
-        # print(type(analysis_report))
-        # print("Pages:", len(analysis_report.get("pages", [])))
+    if topic:
 
-        content = prepare_analysis_content(
-            analysis_report
-        )
+        input_type = "topic"
 
-        input_type = (
-            analysis_report["document"]["document_type"]
-        )
+        content = topic
 
-    elif manual_content:
+    elif file:
 
-        content = prepare_ai_content(
-            manual_content
-        )
+        filename = (
+            file.filename or ""
+        ).lower()
 
-        input_type = data.get(
-            "source_type",
-            "manual",
-        )
+        if filename.endswith(".pdf"):
+
+            input_type = "pdf"
+
+        elif filename.endswith(
+            (".png", ".jpg", ".jpeg")
+        ):
+
+            input_type = "image"
+
+        else:
+
+            return {
+                "success": False,
+                "message": "Invalid input format.",
+            }
+
+        content = None
 
     else:
 
-        extracted = extract_input(data, file)
+        return {
+            "success": False,
+            "message": "Please enter a topic or upload a file.",
+        }
 
-        if not extracted.get("success"):
-            return extracted
+    # ---------------------------------------------------------
+    # Generation settings
+    # ---------------------------------------------------------
 
-        content = prepare_ai_content(
-            extracted["data"]["content"]
-        )
+    difficulty = data.get(
+        "difficulty",
+        "medium",
+    )
 
-        input_type = extracted["data"]["type"]
+    blooms_level = data.get(
+        "blooms_level",
+        "mixed",
+    )
 
-    difficulty = data.get("difficulty", "medium")
-    blooms_level = data.get("blooms_level", "mixed",)
-    question_count = data.get("question_count", 5)
+    question_count = data.get(
+        "question_count",
+        5,
+    )
+
     language = data.get(
         "language",
         Config.DEFAULT_OCR_LANGUAGE,
     )
 
+    # ---------------------------------------------------------
+    # Process AI credit
+    # ---------------------------------------------------------
+
     try:
+
         credits_required = process_ai_credit(
             school_id=school_id,
             input_type=input_type,
         )
+
     except ValueError as e:
+
         return {
             "success": False,
             "message": str(e),
         }
 
+    # ---------------------------------------------------------
+    # Gemini question generation
+    # ---------------------------------------------------------
+
     try:
+
         ai_response = generate_from_gemini(
             content=content,
+            file=file,
             difficulty=difficulty,
             blooms_level=blooms_level,
             question_count=question_count,
             language=language,
         )
+
     except Exception:
-        logger.exception("Failed to generate questions")
+
+        logger.exception(
+            "Failed to generate questions"
+        )
 
         return {
             "success": False,
             "message": "Failed to generate questions.",
         }
 
-    parsed = parse_ai_response(ai_response)
+    # ---------------------------------------------------------
+    # Parse Gemini response
+    # ---------------------------------------------------------
+
+    parsed = parse_ai_response(
+        ai_response
+    )
 
     if not parsed.get("success"):
+
         return parsed
 
     questions = parsed["data"]
+
+    # ---------------------------------------------------------
+    # Finalize generation
+    # ---------------------------------------------------------
 
     ai_request = finalize_ai_generation(
         school_id=school_id,
         teacher_id=teacher_id,
         source_type=input_type,
-        source_text=content,
-        analysis_report=analysis_report,
+        source_text=content or "",
+        analysis_report=None,
         difficulty=difficulty,
         blooms_level=blooms_level,
         question_count=question_count,
@@ -123,6 +198,10 @@ def generate_ai_questions_controller(data, file, school_id, teacher_id):
         document_language=language,
         credits_used=credits_required,
     )
+
+    # ---------------------------------------------------------
+    # Response
+    # ---------------------------------------------------------
 
     return {
         "success": True,

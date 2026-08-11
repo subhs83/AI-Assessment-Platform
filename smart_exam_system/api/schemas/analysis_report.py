@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
 
-SCHEMA_VERSION = "2.0"
+SCHEMA_VERSION = "3.0"
 
 
 # ==========================================================
@@ -26,12 +26,29 @@ class DocumentInfo:
 
 @dataclass
 class Summary:
-    topic_count: int = 0
     figure_count: int = 0
     table_count: int = 0
     equation_count: int = 0
     graph_count: int = 0
     image_count: int = 0
+
+
+# ==========================================================
+# ASSET POSITION
+# ==========================================================
+
+@dataclass
+class AssetBounds:
+    """
+    Bounding box of the asset on the original page image.
+
+    Coordinates are pixels.
+    """
+
+    x: int = 0
+    y: int = 0
+    width: int = 0
+    height: int = 0
 
 
 # ==========================================================
@@ -41,35 +58,36 @@ class Summary:
 @dataclass
 class Figure:
     """
-    Educational visual element such as:
-    geometry diagram, science diagram, Venn diagram,
-    flowchart, map, labelled illustration, pattern, etc.
+    Educational visual such as:
+    geometry diagram, Venn diagram, circuit,
+    biology diagram, chemistry structure, etc.
+
+    The original visual is preserved through its
+    page bounding box. No SVG elements are generated
+    by the AI.
     """
 
     id: str
     page_number: int
 
-    # Type of visual figure.
     type: str = ""
 
-    # What is visually represented.
     description: str = ""
 
-    # Important visible labels.
+    crop_path: str = ""
+
     labels: List[str] = field(default_factory=list)
 
-    # Important visible relationships or properties.
-    # relationships: List[str] = field(default_factory=list)
+    bounds: AssetBounds = field(
+        default_factory=AssetBounds
+    )
 
-    # Essential structured visual elements used
-    # by the frontend for generic SVG rendering.
-    elements: List[Dict[str, Any]] = field(default_factory=list)
-
-    # True when the figure is required to understand
-    # a question, concept, or instruction.
     required_for_understanding: bool = False
 
-    question_references: List[str] = field(default_factory=list)
+    question_references: List[str] = field(
+        default_factory=list
+    )
+
 
 # ==========================================================
 # TABLE
@@ -78,7 +96,9 @@ class Figure:
 @dataclass
 class Table:
     """
-    Structured information presented in rows and columns.
+    Structured table data.
+
+    Frontend renders this as an actual HTML table.
     """
 
     id: str
@@ -86,18 +106,19 @@ class Table:
 
     description: str = ""
 
-    columns: List[str] = field(default_factory=list)
+    columns: List[str] = field(
+        default_factory=list
+    )
 
-    # Actual table data.
-    # Each row should contain values corresponding
-    # to the columns.
-    rows: List[List[str]] = field(default_factory=list)
-
-    # educational_purpose: str = ""
+    rows: List[List[str]] = field(
+        default_factory=list
+    )
 
     required_for_understanding: bool = False
 
-    question_references: List[str] = field(default_factory=list)
+    question_references: List[str] = field(
+        default_factory=list
+    )
 
 
 # ==========================================================
@@ -107,29 +128,23 @@ class Table:
 @dataclass
 class Equation:
     """
-    Mathematical, scientific, physics, or chemical equation.
+    Mathematical, physics, or chemistry equation.
     """
 
     id: str
     page_number: int
 
-    # Complete mathematical structure in LaTeX.
     latex: str = ""
 
-    # Human-readable description of what the equation represents.
     description: str = ""
 
-    # Optional classification.
-    # Examples:
-    # mathematical_expression
-    # algebraic_equation
-    # geometry_expression
-    # physics_equation
-    # chemical_equation
-    # other
     type: str = ""
 
-    question_references: List[str] = field(default_factory=list)
+    required_for_understanding: bool = False
+
+    question_references: List[str] = field(
+        default_factory=list
+    )
 
 
 # ==========================================================
@@ -137,62 +152,47 @@ class Equation:
 # ==========================================================
 
 @dataclass
-class GraphSeries:
-    """
-    One plotted series in a graph.
-    """
-
-    name: str = ""
-
-    # Values should correspond to x_categories
-    # whenever categorical x-axis data is available.
-    values: List[Any] = field(default_factory=list)
-
-    x_values: List[Any] = field(default_factory=list)
-
-
-@dataclass
 class Graph:
     """
-    Structured representation of a graph or chart.
+    Structured graph/chart information.
+
+    Used when the graph data can be represented
+    meaningfully as structured data.
+
+    If exact visual appearance matters more than
+    the data, the original page crop should be used.
     """
 
     id: str
     page_number: int
 
-    # Examples:
-    # bar_graph
-    # line_graph
-    # pie_chart
-    # coordinate_graph
-    # histogram
-    # scatter_plot
-    # other
     type: str = ""
 
     description: str = ""
 
+    crop_path: str = ""
+
     x_axis_label: str = ""
+
     y_axis_label: str = ""
 
-    # Category labels on the X axis.
-    x_categories: List[str] = field(default_factory=list)
+    x_categories: List[str] = field(
+        default_factory=list
+    )
 
-    # Plotted data series.
-    series: List[GraphSeries] = field(default_factory=list)
+    series: List[Dict[str, Any]] = field(
+        default_factory=list
+    )
 
-    # Visible legend entries.
-    legend: List[str] = field(default_factory=list)
-
-    # Visible scale information.
-    x_scale: str = ""
-    y_scale: str = ""
-
-    # educational_purpose: str = ""
+    bounds: AssetBounds = field(
+        default_factory=AssetBounds
+    )
 
     required_for_understanding: bool = False
 
-    question_references: List[str] = field(default_factory=list)
+    question_references: List[str] = field(
+        default_factory=list
+    )
 
 
 # ==========================================================
@@ -202,23 +202,27 @@ class Graph:
 @dataclass
 class Image:
     """
-    Educational photograph or real-world image.
+    Photograph / real-world / educational image.
+
+    Original image is preserved through the page crop.
     """
 
     id: str
     page_number: int
 
-    # What the image visibly contains.
     description: str = ""
 
-    # Important visible subjects, objects, or labels.
-    subjects: List[str] = field(default_factory=list)
+    crop_path: str = ""
 
-    # educational_purpose: str = ""
+    bounds: AssetBounds = field(
+        default_factory=AssetBounds
+    )
 
     required_for_understanding: bool = False
 
-    question_references: List[str] = field(default_factory=list)
+    question_references: List[str] = field(
+        default_factory=list
+    )
 
 
 # ==========================================================
@@ -229,40 +233,34 @@ class Image:
 class Page:
     page_number: int
 
-    # ======================================================
-    # ORIGINAL PAGE CONTENT
-    # ======================================================
-    #
-    # For Text Analysis:
-    #   raw OCR text.
-    #
-    # For Smart Analysis:
-    #   structured/readable page content extracted from
-    #   the document while preserving educational meaning.
-    #
+    # Extracted/readable text from the page.
     source_text: str = ""
-
-    # ======================================================
-    # PAGE UNDERSTANDING
-    # ======================================================
 
     heading: str = ""
 
-    # summary: str = ""
+    width: int = 0
+    height: int = 0
 
-    # ======================================================
-    # ASSET REFERENCES
-    # ======================================================
+    # Asset references belonging to this page.
+    figure_ids: List[str] = field(
+        default_factory=list
+    )
 
-    figure_ids: List[str] = field(default_factory=list)
+    table_ids: List[str] = field(
+        default_factory=list
+    )
 
-    table_ids: List[str] = field(default_factory=list)
+    equation_ids: List[str] = field(
+        default_factory=list
+    )
 
-    equation_ids: List[str] = field(default_factory=list)
+    graph_ids: List[str] = field(
+        default_factory=list
+    )
 
-    graph_ids: List[str] = field(default_factory=list)
-
-    image_ids: List[str] = field(default_factory=list)
+    image_ids: List[str] = field(
+        default_factory=list
+    )
 
 
 # ==========================================================
@@ -271,15 +269,25 @@ class Page:
 
 @dataclass
 class Assets:
-    figures: List[Figure] = field(default_factory=list)
+    figures: List[Figure] = field(
+        default_factory=list
+    )
 
-    tables: List[Table] = field(default_factory=list)
+    tables: List[Table] = field(
+        default_factory=list
+    )
 
-    equations: List[Equation] = field(default_factory=list)
+    equations: List[Equation] = field(
+        default_factory=list
+    )
 
-    graphs: List[Graph] = field(default_factory=list)
+    graphs: List[Graph] = field(
+        default_factory=list
+    )
 
-    images: List[Image] = field(default_factory=list)
+    images: List[Image] = field(
+        default_factory=list
+    )
 
 
 # ==========================================================
@@ -288,13 +296,6 @@ class Assets:
 
 @dataclass
 class AnalysisReport:
-    """
-    Final document analysis contract.
-
-    This schema is independent of the analysis method.
-    Both Text Analysis and Smart Analysis produce the same
-    report structure.
-    """
 
     schema_version: str = SCHEMA_VERSION
 
