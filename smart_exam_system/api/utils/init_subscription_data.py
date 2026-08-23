@@ -14,7 +14,7 @@ DEFAULT_PLANS = [
         "monthly_price": 0,
         "yearly_price": 0,
         "trial_days": 14,
-        "monthly_ai_credits": 300,
+        "monthly_ai_credits": 200,
         "max_students": 100,
         "max_teachers": 5,
         "max_classes": 5,
@@ -33,7 +33,7 @@ DEFAULT_PLANS = [
         "monthly_price": 2499,
         "yearly_price": 25000,
         "trial_days": 0,
-        "monthly_ai_credits": 2500,
+        "monthly_ai_credits": 1500,
         "max_students": 400,
         "max_teachers": 10,
         "max_classes": 10,
@@ -52,7 +52,7 @@ DEFAULT_PLANS = [
         "monthly_price": 4999,
         "yearly_price": 50000,
         "trial_days": 0,
-        "monthly_ai_credits": 7500,
+        "monthly_ai_credits": 3000,
         "max_students": 1000,
         "max_teachers": 25,
         "max_classes": 50,
@@ -71,7 +71,7 @@ DEFAULT_PLANS = [
         "monthly_price": 9999,
         "yearly_price": 99999,
         "trial_days": 0,
-        "monthly_ai_credits": 20000,
+        "monthly_ai_credits": 7500,
         "max_students": 5000,
         "max_teachers": 100,
         "max_classes": 100,
@@ -109,7 +109,7 @@ DEFAULT_AI_FEATURES = [
     {
         "feature_code": "TOPIC_QUESTION",
         "feature_name": "Generate Questions from Topic",
-        "credits_required": 10,
+        "credits_required": 15,
         "is_active": True,
     },
     {
@@ -121,7 +121,7 @@ DEFAULT_AI_FEATURES = [
     {
         "feature_code": "PDF_QUESTION",
         "feature_name": "Generate Questions from PDF",
-        "credits_required": 15,
+        "credits_required": 20,
         "is_active": True,
     },
     {
