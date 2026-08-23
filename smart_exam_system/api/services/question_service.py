@@ -2,8 +2,6 @@ from smart_exam_system.extensions import db
 from smart_exam_system.models import (
 ExamModel,  
 QuestionModel,
-AttemptModel,
-StudentAnswerModel
 )
 from openpyxl import load_workbook
 import logging

@@ -410,6 +410,10 @@ def review_questions_api(school_slug, exam_uid):
                 "marks": q.marks,
                 "negative_marks": q.negative_marks,
                 "ai_generated": q.ai_generated,
+                # 🔴 NEW FIELDS
+                "visual_required": q.visual_required,
+                "visual_type": q.visual_type,
+                "visual": q.visual,
                 "created_at": q.created_at.isoformat() if q.created_at else None
             }
             for q in questions

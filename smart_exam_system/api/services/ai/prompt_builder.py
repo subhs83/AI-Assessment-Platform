@@ -82,601 +82,927 @@ def build_question_prompt(
     blooms_level,
     question_count,
 ):
-
     blooms_instruction = BLOOMS_PROMPTS.get(
         blooms_level,
         BLOOMS_PROMPTS["mixed"],
     )
 
     return f"""
-You are an expert exam question generator.
+You are an expert exam question generator for an educational assessment platform.
 
-Document Language: {language}
+DOCUMENT LANGUAGE:
+{language}
 
-Generate every question, option and answer in {language}.
+Generate every question, option, answer, explanation, and visual label/text in {language}.
 
-Generate {question_count} multiple choice questions.
+Generate exactly {question_count} multiple-choice questions.
 
-Difficulty:
+# INDEPENDENT QUESTION GENERATION
+
+Generate each question independently.
+
+For every question:
+
+1. Determine the question concept and information required to answer it.
+2. Determine whether a visual is required.
+3. If a visual is required, independently generate the visual for that question.
+4. Keep the question, visual, options, answer, and explanation internally
+   consistent.
+
+When multiple questions require visuals, do not automatically reuse the
+visual structure or data from another question.
+
+Each visual-required question independently determines:
+
+- visual structure;
+- number of objects or sets;
+- object/set names;
+- numerical values;
+- relationships;
+- region membership.
+
+Visual variation is required when naturally supported by the question.
+Correctness and consistency always have priority.
+
+For example, Venn-diagram questions may independently use:
+
+- 2 sets;
+- 3 sets;
+- different set names;
+- different numerical values;
+- different region membership patterns.
+
+Do not force every question to use the same number of sets or objects.
+
+Do not copy a visual from an earlier question and change only the question
+text, options, or correct answer.
+
+The visual is part of the current question and must be generated specifically
+for that question.
+
+DIFFICULTY:
 {difficulty}
 
-Bloom's Taxonomy:
+BLOOM'S TAXONOMY:
 {blooms_instruction}
 
-Original Content:
+
+# SOURCE CONTENT
 
 {content}
 
-The provided content may include:
+Use relevant information from the source content to create self-contained,
+academically correct questions.
 
-- Page headings
-- Figures
-- Tables
-- Equations
-- Graph descriptions
-- Image descriptions
+Do not add unsupported facts, concepts, or relationships.
 
-If these are present:
 
-- Generate questions from them whenever appropriate.
-- Use diagrams, tables and equations as valid knowledge sources.
-- Do not ignore non-textual educational content.
-- If a figure or table explains a concept, create conceptual questions from it.
+# MATHEMATICAL NOTATION
 
-Requirements:
+- Use LaTeX for mathematical expressions, equations, formulas, fractions,
+  powers, roots, inequalities, and mathematical symbols.
+- Use inline LaTeX with $...$ inside question_text, options, and explanation.
+- Prefer LaTeX over Unicode mathematical notation.
+- Do not use Unicode superscripts or subscripts when LaTeX can represent them.
+- Keep all mathematical expressions mathematically correct.
+- Use standard LaTeX notation.
+- The final response must remain valid JSON.
+- Escape LaTeX backslashes according to standard JSON string escaping.
 
-- Questions must be self-contained.
-- Maximize coverage of important concepts.
-- Cover major topics before repeating concepts.
-- Prefer conceptual understanding over sentence memorization.
-- Include definitions, processes, functions, examples,
-  comparisons, applications and cause-effect relationships.
-- Avoid duplicate questions.
-- Avoid similar questions.
 
-Never use phrases like:
+# QUESTION RULES
 
-- according to the above paragraph
-- according to the passage
-- according to the information given above
-- based on the picture shown above
-- from the above figure
-- following paragraph
+1. Generate questions from the provided source content.
 
-Return ONLY valid JSON.
+2. Questions may be text-based, mathematical, reasoning-based, figure-based,
+   diagram-based, graph-based, or another appropriate educational type.
 
-Language Rules:
+3. Do not create a visual merely because the source contains a figure.
 
-- question_text in {language}
-- option_a in {language}
-- option_b in {language}
-- option_c in {language}
-- option_d in {language}
+4. A visual is required only when the generated question itself depends on
+   a visual to understand or answer the question.
 
-[
-  {{
-    "question_text": "",
-    "option_a": "",
-    "option_b": "",
-    "option_c": "",
-    "option_d": "",
-    "correct_answer": "A",
-    "explanation": ""
-  }}
-]
+5. When a visual is required:
+
+   "visual_required": true
+
+   and select the appropriate "visual_type".
+
+6. When a visual is not required:
+
+   "visual_required": false,
+   "visual_type": null
+
+7. The visual represents the figure presented WITH THAT QUESTION.
+
+8. The visual must represent the question, not its solution or explanation.
+
+9. Each generated question independently determines its own visual.
+   Do not automatically reuse another question's visual.
+
+10. Do not reuse another question's visual structure, labels, values, or
+    relationships unless the current question genuinely requires the same
+    unchanged visual.
+
+11. If a question changes or modifies a visual situation, only generate it
+    when the resulting visual can be completely represented by the supported
+    visual semantic data.
+
+12. Do not invent unsupported facts or educational relationships.
+
+13. Questions must be self-contained.
+
+14. Generate exactly four options.
+
+15. Only one option may be correct.
+
+16. "correct_answer" must be one of:
+    "A", "B", "C", "D"
+
+17. Options must be plausible and unambiguous.
+
+18. Do not duplicate options.
+
+
+# EXPLANATION RULES
+
+The explanation must concisely(in short) explain why the correct answer is correct.
+
+Do not explain why the other options are wrong.
+
+Do not refer to options as "Option A", "Option B", etc. unless absolutely
+necessary.
+
+The explanation must be consistent with the generated question and visual.
+
+- Return only the final, corrected explanation and solution.
+Do NOT include extra fields for analysis, reasoning, planning, notes,
+validation, or commentary.
+
+Do NOT write phrases such as:
+"I will..."
+"Let me..."
+"Let's..."
+"Final check..."
+"Re-ordering..."
+"Seems good..."
+"I need exactly..."
+"I'll ensure..."
+"My earlier..."
+"This would require..."
+"Let me re-confirm..."
+"I will use..."
+- If you detect an error while solving, silently correct it and return only the final correct solution.
+- Keep the explanation concise and logically ordered.
+- Use escaped newline characters (`\n`) inside JSON string values. Never insert literal line breaks inside a JSON string.
+
+
+# VISUAL OUTPUT
+
+Currently supported visual types:
+
+- "venn"
+- "geometry"
+- "graph"
+
+Future visual types will be added independently.
+
+Do not apply the rules of one visual type to another visual type.
+
+A visual must contain semantic educational information only.
+
+Do NOT generate:
+
+- SVG
+- HTML
+- CSS
+- coordinates
+- pixel positions
+- bounding boxes
+- renderer instructions
+- styling instructions
+- drawing instructions
+
+The frontend is responsible for rendering the semantic data.
+
+
+# VISUAL TYPE: VENN
+
+When:
+
+"visual_required": true
+
+and:
+
+"visual_type": "venn"
+
+return:
+
+"visual": {{
+    "elements": [...],
+    "relationships": [...]
+}}
+
+The Venn semantic data must describe the exact Venn diagram required by
+the generated question.
+
+The number of sets is determined by the question. It may be 2 sets, 3 sets,
+or another supported structure.
+
+Set names, values, and regions must be generated for the current question.
+Do not assume a fixed Venn diagram.
+
+For each meaningful value or label, explicitly describe its set membership
+and non-membership.
+
+Do not rely on visual proximity to determine membership.
+
+Elements may use:
+
+- circle
+- square
+- rectangle
+- triangle
+- polygon
+- dot
+- label
+
+An element may contain relevant properties such as:
+
+- id
+- type
+- label
+- text
+- value
+
+Relationships may describe:
+
+- overlaps
+- belongs_to_region
+- not_in_region
+- inside
+- outside
+
+For a value inside multiple sets, list every containing set.
+
+For a value outside a set, explicitly include that set in "not_in".
+
+Do not include sets, values, regions, or relationships that do not exist
+in the question's required figure.
+
+
+# GEOMETRY VISUAL
+
+When the question depends on a geometric figure:
+
+"visual_required": true,
+"visual_type": "geometry"
+
+Return:
+
+"visual": {{
+  "elements": [],
+  "relationships": []
+}}
+
+The geometry visual must describe the figure semantically.
+Do not generate SVG, coordinates, CSS, HTML, styling, or drawing instructions.
+
+## Supported geometry elements
+
+Supported element types:
+
+- "point"
+- "line"
+- "segment"
+- "ray"
+- "triangle"
+- "rectangle"
+- "square"
+- "circle"
+- "angle"
+- "label"
+
+Each element should contain only the properties required by the question:
+
+- "id"
+- "type"
+- "label"
+- "text"
+- "value"
+- "value_expression"
+
+Use stable IDs based on the element itself.
+
+Examples:
+
+{{
+  "id": "point_a",
+  "label": "A",
+  "type": "point"
+}}
+
+{{
+  "id": "segment_ab",
+  "label": "AB",
+  "type": "segment"
+}}
+
+{{
+  "id": "angle_abc",
+  "label": "∠ABC",
+  "type": "angle",
+  "value": 40
+}}
+
+{{
+  "id": "segment_ab",
+  "label": "AB",
+  "type": "segment",
+  "value_expression": "2x + 5"
+}}
+
+## Supported relationships
+
+Use only relationships required to describe the figure:
+
+Supported relationships:
+
+- "forms_triangle"
+- "connected_to"
+- "lies_on"
+- "collinear"
+- "parallel_to"
+- "perpendicular_to"
+- "equal_to"
+- "midpoint_of"
+- "intersects"
+- "has_angle"
+- "has_length"
+- "has_radius"
+- "has_value"
+- "has_length_relationship"
+
+A relationship uses the following general structure:
+
+{{
+  "elements": ["element_id_1", "element_id_2"],
+  "type": "relationship_type"
+}}
+
+For a relationship involving one element:
+
+{{
+  "element_id": "element_id",
+  "type": "relationship_type",
+  "value": 90
+}}
+
+For a relationship involving a target:
+
+{{
+  "elements": ["element_id_1", "element_id_2"],
+  "target": "element_id",
+  "type": "relationship_type"
+}}
+
+## Measurement rules
+
+Use:
+
+- "value" for a known numeric measurement.
+- "value_expression" for an algebraic measurement.
+
+Examples:
+
+{{
+  "element_id": "angle_a",
+  "type": "has_angle",
+  "value": 90
+}}
+
+{{
+  "element_id": "segment_ab",
+  "type": "has_length",
+  "value": 8
+}}
+
+{{
+  "element_id": "segment_ab",
+  "type": "has_length",
+  "value_expression": "3x + 5"
+}}
+
+{{
+  "elements": ["point_a", "point_d"],
+  "type": "connected_to"
+}}
+
+## Geometry representation rules
+
+1. Represent the actual figure required by the question.
+
+2. Include enough semantic information for the figure to be reconstructed.
+
+3. Include only information relevant to the question.
+
+4. Never include coordinates, SVG, styling, layout instructions, or renderer instructions.
+
+5. Never encode the solution into the figure.
+
+6. Preserve every given geometric measurement and relationship exactly.
+
+7. If a point lies on a segment, explicitly represent it with "lies_on".
+
+8. If multiple points lie on the same line, explicitly represent them with "collinear".
+
+9. If two segments are parallel, explicitly represent "parallel_to".
+
+10. If two segments are perpendicular, explicitly represent "perpendicular_to".
+
+11. If two segments or angles are equal, explicitly represent "equal_to".
+
+12. If a point is a midpoint, explicitly represent "midpoint_of".
+
+13. If two lines or segments intersect at a named point, explicitly represent "intersects".
+
+14. If a triangle is present, explicitly identify its three vertices using "forms_triangle".
+
+15. Additional points on a triangle must not replace the triangle's three vertices.
+
+16. An extension of a triangle side must be represented using a point/line/segment relationship such as "collinear" and must not replace the triangle itself.
+
+17. A point lying on a triangle side must be represented separately using "lies_on".
+
+18. Do not assume a relationship merely because it is mathematically implied. Include relationships that are explicitly needed to reconstruct the stated figure.
+
+19. The visual must represent the question, not the answer.
+
+20. Generate the geometry independently for each question.
+
+21. Never copy geometry measurements or relationships from another question.
+
+22. Mathematical correctness has priority over visual variation.
+
+
+## Triangle rules
+
+For every triangle:
+
+- Include the three triangle vertices as points.
+- Include the three triangle sides as segments when they are needed to reconstruct the figure.
+- Include one "forms_triangle" relationship containing exactly the three triangle vertex IDs.
+- Every segment that represents an explicitly drawn geometric connection between two points must have a corresponding "connected_to" relationship containing those two point IDs.
+
+Example:
+
+{{
+  "elements": [
+    {{
+      "id": "point_a",
+      "label": "A",
+      "type": "point"
+    }},
+    {{
+      "id": "point_b",
+      "label": "B",
+      "type": "point"
+    }},
+    {{
+      "id": "point_c",
+      "label": "C",
+      "type": "point"
+    }}
+  ],
+  "relationships": [
+    {{
+      "elements": [
+        "point_a",
+        "point_b",
+        "point_c"
+      ],
+      "type": "forms_triangle"
+    }}
+  ]
+}}
+
+### Structural Completeness Rule
+
+The visual must contain every segment required to actually draw the stated geometry.
+
+If a triangle or polygon is declared through a `forms_triangle` relationship, the corresponding boundary segments must also be present in `elements` and represented by `connected_to` relationships.
+
+For example, if:
+{{
+  "elements": ["point_a", "point_b", "point_c"],
+  "type": "forms_triangle"
+}}
+
+then the visual must contain:
+- segment_ab
+- segment_bc
+- segment_ca
+
+and corresponding:
+- A-B connected_to
+- B-C connected_to
+- C-A connected_to
+
+For composite figures, include all explicitly drawn internal segments and all segments required to connect stated points.
+
+Do not rely on `forms_triangle` alone to imply drawable segments.
+
+For intersections:
+- include the intersecting segments;
+- include the intersection point;
+- include the four resulting point-to-intersection connections when those portions are part of the visible figure.
+
+The visual JSON must be sufficient for the frontend to reconstruct the complete figure without guessing missing segments.
+
+## Important
+
+The geometry JSON is a semantic description only.
+
+The frontend is responsible for:
+
+- geometry detection
+- coordinate calculation
+- figure orientation
+- positioning
+- labels
+- measurements
+- SVG rendering
+
+Do not generate frontend-specific information.
+
+The frontend is responsible for converting this semantic geometry JSON into the visual figure.
+
+### Visual Consistency Rules
+
+- Every drawn segment connecting two named points must have a corresponding `connected_to` relationship containing those two point IDs.
+- Do not include extra points, segments, diagonals, cevians, or construction lines unless they are explicitly required by the question or required to construct the target figure.
+- Every visual element must have a clear purpose supported by the question or by another stated relationship.
 
 Rules:
-
-- Strict JSON only
-- No markdown
-- Include explanation
-- Explanation must be concise
-- Explain only the correct answer
-- Do not explain incorrect options
-- Use "" if explanation cannot be generated
-- Questions must be self-contained.
-"""
+- "expression" must be the complete equation in LaTeX.
+- "variables" describes only meaningful unknown variables.
+- "relationships" describes only important mathematical relationships.
+- Generate the equation independently for the current question.
+- Do not copy an equation or its values from another question.
+- The equation, question, options, answer, and explanation must remain consistent.
+- Do not generate SVG, coordinates, styling, or renderer instructions.
+- The frontend is responsible for rendering the equation.
 
 
+GRAPH VISUAL RULE
 
+When a question requires a graph, set:
 
+"visual_required": true,
+"visual_type": "graph"
 
+and return a "visual" object using ONLY the following structure:
 
-
-
-
-def build_smart_analysis_prompt(language):
-    return f"""
-You are an Educational Document Analysis Engine.
-
-Analyze the uploaded educational PDF/image and return ONLY valid JSON
-matching Schema 3.0 below.
-
-Document language: {language}
-
-The uploaded document is the ONLY source of truth.
-
-Do not:
-- generate questions
-- solve questions
-- determine answers
-- explain or teach
-- rewrite or translate
-- invent missing information
-- correct the source
-
-Preserve the original reading order and educational meaning.
-
-============================================================
-DOCUMENT
-============================================================
-
-Populate when confidently identifiable:
-
-analysis_mode = "smart"
-document_type
-title
-subject
-class_name
-language
-page_count
-
-Use "" or 0 when unavailable. Never guess.
-
-============================================================
-PAGES
-============================================================
-
-For every page return:
-
-page_number
-width
-height
-source_text
-heading
-figure_ids
-table_ids
-equation_ids
-graph_ids
-image_ids
-
-page_number must be the 1-based page index of the uploaded file.
-
-PAGE COORDINATE SYSTEM:
-
-For every page, return the pixel dimensions of the page image
-that you analyzed.
-
-The page coordinate system is:
-
-top-left = (0, 0)
-
-x increases from left to right.
-y increases from top to bottom.
-
-All asset bounds on that page MUST use exactly the same
-coordinate system and dimensions.
-
-
-Do NOT use:
-- normalized coordinates
-- percentages
-- PDF points
-- inches
-- coordinates relative to a question
-- coordinates relative to an asset
-
-The page width and height must describe the coordinate system
-used for that page's asset bounds.
-
-============================================================
-SOURCE TEXT
-============================================================
-
-source_text is the readable educational text in logical order.
-
-Preserve:
-- question numbers
-- question statements
-- answer options
-- headings
-- directions
-- captions
-- meaningful visible text
-
-When an asset is referenced in the text, insert exactly one reference:
-
-[figure:ID]
-[table:ID]
-[equation:ID]
-[graph:ID]
-[image:ID]
-
-Do not duplicate the asset's visual content inside source_text.
-
-Do not solve, rewrite, merge, or invent questions.
-
-============================================================
-ASSET IDS
-============================================================
-
-Asset IDs must be stable and related to the question number
-when the asset belongs to a question.
-
-For example, if question 10 contains a main figure and four
-answer-option figures:
-
-fig-10-main
-fig-10-A
-fig-10-B
-fig-10-C
-fig-10-D
-
-If question 11 contains one figure:
-
-fig-11
-
-If one graph is used by questions 24 and 25:
-
-graph-24-25
-
-Do NOT create meaningless sequential IDs such as:
-
-fig-1
-fig-2
-fig-3
-
-when the question number is known.
-
-If the asset is not associated with a question, use a unique
-stable ID such as fig-1, graph-1, image-1.
-
-Every asset ID must be unique.
-
-============================================================
-BOUNDS
-============================================================
-be consistent with the page coordinate system.
-
-For every figure, graph, or image, return:
-
-{{
-    "x": 0,
-    "y": 0,
-    "width": 0,
-    "height": 0
+"visual": {{
+  "graph_type": "...",
+  "elements": [...],
+  "relationships": [...]
 }}
 
-Bounds are pixel coordinates in the ORIGINAL PAGE IMAGE.
+Supported graph_type values:
 
-The bounding box must surround the COMPLETE visible asset.
+- "line_graph"
+- "bar_graph"
+- "coordinate_graph"
+- "function_graph"
+- "number_line"
 
-Include all content belonging to the asset, including:
-- labels
-- symbols
-- numbers
-- arrows
-- markings
-- answer-option drawings
-- visible internal content
+Supported element types:
 
-Do NOT include:
-- unrelated question text
-- neighboring questions
-- unrelated figures
-- unrelated answer options
-- surrounding page content
+- "axis"
+- "point"
+- "line"
+- "curve"
+- "bar"
+- "label"
+- "intersection"
+- "highlight"
 
-For separate visual assets, return separate bounding boxes.
+Supported relationship types:
 
-For answer-option figures, each option must have its own bounds.
+- "plotted_on"
+- "connected_to"
+- "intersects"
+- "passes_through"
+- "parallel_to"
+- "perpendicular_to"
+- "equal_to"
+- "highlighted"
+- "has_value"
+- "has_label"
 
-Do not estimate bounds from question text.
-
-Do not use the position of the question number as the asset position.
-
-Do not invent a coordinate system.
-
-============================================================
-FIGURES
-============================================================
-
-A figure is an educational visual such as:
-
-- geometry diagram
-- Venn diagram
-- circuit
-- biology diagram
-- chemistry structure
-- physics diagram
-- flowchart
-- map
-- labelled diagram
-- pattern
-- visual reasoning diagram
-- illustration
-- schematic
-
-Return only figures that are actually visible.
-
-For each figure return:
-
+Example - line graph
 {{
-    "id": "",
-    "page_number": 0,
-    "type": "",
-    "description": "",
-    "labels": [],
-    "bounds": {{
+  "visual_required": true,
+  "visual_type": "graph",
+  "visual": {{
+    "graph_type": "line_graph",
+    "elements": [
+      {{
+        "id": "axis_x",
+        "type": "axis",
+        "label": "Time (hours)"
+      }},
+      {{
+        "id": "axis_y",
+        "type": "axis",
+        "label": "Distance (km)"
+      }},
+      {{
+        "id": "point_1",
+        "type": "point",
+        "label": "(0,0)",
         "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    }},
-    "crop_path": "",
-    "required_for_understanding": false,
-    "question_references": []
+        "y": 0
+      }},
+      {{
+        "id": "point_2",
+        "type": "point",
+        "label": "(2,10)",
+        "x": 2,
+        "y": 10
+      }},
+      {{
+        "id": "line_1",
+        "type": "line",
+        "label": "Distance"
+      }}
+    ],
+    "relationships": [
+      {{
+        "elements": ["point_1", "line_1"],
+        "type": "plotted_on"
+      }},
+      {{
+        "elements": ["point_2", "line_1"],
+        "type": "plotted_on"
+      }}
+    ]
+  }}
 }}
-
-Describe only what is visibly represented.
-
-Do not solve or interpret beyond the visible content.
-
-For mathematical/scientific figures, preserve visible relationships
-without solving them.
-
-Do NOT generate SVG.
-
-============================================================
-TABLES
-============================================================
-
-A table is information organized into rows and columns.
-
-Return:
-
+Example - bar graph
 {{
-    "id": "",
-    "page_number": 0,
-    "description": "",
-    "columns": [],
-    "rows": [],
-    "required_for_understanding": false,
-    "question_references": []
+  "visual_required": true,
+  "visual_type": "graph",
+  "visual": {{
+    "graph_type": "bar_graph",
+    "elements": [
+      {{
+        "id": "category_math",
+        "type": "bar",
+        "label": "Math",
+        "value": 40
+      }},
+      {{
+        "id": "category_science",
+        "type": "bar",
+        "label": "Science",
+        "value": 30
+      }},
+      {{
+        "id": "category_english",
+        "type": "bar",
+        "label": "English",
+        "value": 50
+      }}
+    ],
+    "relationships": [
+      {{
+        "elements": ["category_math"],
+        "type": "has_value",
+        "value": 40
+      }},
+      {{
+        "elements": ["category_science"],
+        "type": "has_value",
+        "value": 30
+      }},
+      {{
+        "elements": ["category_english"],
+        "type": "has_value",
+        "value": 50
+      }}
+    ]
+  }}
 }}
 
-Return visible table data only.
-
-Do not calculate or invent missing values.
-
-============================================================
-EQUATIONS
-============================================================
-
-An equation is a mathematical, physics, or chemistry expression
-whose mathematical structure is visibly present.
-
-Return:
-
-{{
-    "id": "",
-    "page_number": 0,
-    "latex": "",
-    "description": "",
-    "type": "",
-    "required_for_understanding": false,
-    "question_references": []
-}}
-
-Preserve visible mathematical structure including:
-- fractions
-- roots
-- nested roots
-- powers
-- subscripts
-- superscripts
-- parentheses
-- brackets
-- absolute values
-- inequalities
-- operators
-- grouping
-
-Do not simplify, calculate, correct, or reinterpret.
-
-If the structure cannot be reliably determined:
-
-"latex": ""
-
-============================================================
-GRAPHS
-============================================================
-
-A graph is a visual graph or chart such as:
-
-- bar_graph
-- line_graph
-- pie_chart
-- coordinate_graph
-- comparison_graph
-- statistical_graph
-- histogram
-- scatter_plot
-
-Return:
-
-{{
-    "id": "",
-    "page_number": 0,
-    "type": "",
-    "description": "",
-    "x_axis_label": "",
-    "y_axis_label": "",
-    "x_categories": [],
-    "series": [],
-    "bounds": {{
-        "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    }},
-    "crop_path": "",
-    "required_for_understanding": false,
-    "question_references": []
-}}
-
-If exact graph data is clearly visible, preserve it.
-
-Each series:
-
-{{
-    "name": "",
-    "x_values": [],
-    "values": []
-}}
-
-Never calculate or invent graph values.
-
-If exact data cannot be reliably read, leave the values empty.
-
-============================================================
-IMAGES
-============================================================
-
-An image is a photograph, real-world image, or educational visual
-that is not primarily a figure, graph, equation, or table.
-
-Return:
-
-{{
-    "id": "",
-    "page_number": 0,
-    "description": "",
-    "bounds": {{
-        "x": 0,
-        "y": 0,
-        "width": 0,
-        "height": 0
-    }},
-    "crop_path": "",
-    "required_for_understanding": false,
-    "question_references": []
-}}
-
-Describe only visible educational content.
-
-============================================================
-QUESTION RELATIONSHIPS
-============================================================
-
-Every asset must:
-
-1. Have a unique ID.
-2. Belong to exactly one page.
-3. Appear in that page's corresponding ID list.
-4. Have the correct page_number.
-5. Be referenced by source_text when the question depends on it.
-
-If a question depends on an asset:
-
-required_for_understanding = true
-
-question_references must contain the actual question number.
-
-If no question depends on the asset:
-
-question_references = []
-
-Do not invent relationships.
-
-============================================================
-COUNTS
-============================================================
-
-Return:
-
-figure_count
-table_count
-equation_count
-graph_count
-image_count
-
-Counts must equal the number of actual assets returned.
-
-============================================================
-CROP PATH
-============================================================
-
-Always return:
-
-"crop_path": ""
-
-Do not generate, guess, or modify crop_path.
-
-The backend creates crop_path from the page image and bounds.
-
-============================================================
-MISSING INFORMATION
-============================================================
-
-When information is unavailable:
-
-string -> ""
-array -> []
-number -> 0
-boolean -> false
-
-Do not add fields.
-Do not remove fields.
-Do not rename fields.
-
-============================================================
-SCHEMA 3.0
-============================================================
-
-Return exactly:
-
-{{
-    "document": {{
-        "analysis_mode": "smart",
-        "document_type": "",
-        "title": "",
-        "subject": "",
-        "class_name": "",
-        "language": "{language}",
-        "page_count": 0
-    }},
-    "summary": {{
-        "figure_count": 0,
-        "table_count": 0,
-        "equation_count": 0,
-        "graph_count": 0,
-        "image_count": 0
-    }},
-    "pages": [],
-    "assets": {{
-        "figures": [],
-        "tables": [],
-        "equations": [],
-        "graphs": [],
-        "images": []
-    }},
-    "generation": {{}}
-}}
+For every graph, provide enough semantic information for the frontend renderer to reconstruct the graph.
 
 IMPORTANT:
+- Do NOT generate SVG.
+- Do NOT generate HTML.
+- Do NOT provide pixel coordinates.
+- Do NOT describe visual appearance in natural language.
+- Use only the supported graph_type, element types, and relationship types.
+- If the question does not require a graph, use:
+  "visual_required": false,
+  "visual_type": null
+  and do not include a visual object.
+- Do not create a graph merely because numbers appear in the question.
+- The graph must represent information that is necessary or useful for solving or understanding the question.
+# FUTURE VISUAL TYPES
 
-Do not create placeholder assets merely to match the schema.
+Additional visual types will be added here:
 
-Only include assets actually detected in the document.
+ 
+- circuit
+- chart
+- table
+- other
+
+Each visual type will receive its own small semantic contract.
+
+Do not apply Venn-specific rules to future visual types.
+
+
+# VISUAL VARIATION
+
+When multiple questions require visuals, independently construct the visual
+for each question.
+
+Never reuse another question's complete visual data.
+
+For Venn diagrams:
+
+- Use 2 or 3 sets according to the current question.
+- Vary set names when appropriate.
+- Vary numerical region values when appropriate.
+- Generate memberships from the current question.
+- Do not reuse the same complete elements, values, and memberships from
+  another question.
+- Do not change a visual merely to create variation if that would make the
+  question incorrect or ambiguous.
+
+Before returning each question, verify that its visual independently matches
+its own question, answer, and explanation.
+
+
+
+# FINAL JSON FORMAT
 
 Return ONLY valid JSON.
 
-No markdown.
-No explanations.
-No comments.
-No code fences.
+The top-level structure MUST be:
 
-The first character must be "{{".
-The last character must be "}}".
+{{
+    "data": [
+        {{
+            "question_text": "...",
+            "option_a": "...",
+            "option_b": "...",
+            "option_c": "...",
+            "option_d": "...",
+            "correct_answer": "A",
+            "explanation": "...",
+            "visual_required": false,
+            "visual_type": null
+        }}
+    ]
+}}
+
+1. Parse JSON
+2. Check correct_answer is A/B/C/D
+3. Compare correct_answer against the option values
+4. If explanation contains an obvious final numeric answer, compare it
+5. If mismatch → repair/regenerate only that question
+
+When a question requires a visual, add:
+
+When a question requires a Venn diagram, include:
+"visual_required": true,
+"visual_type": "venn",
+"visual": {{
+    "elements": [...],
+    "relationships": [...]
+}}
+
+When a question requires a geometry figure, include:
+"visual_required": true,
+"visual_type": "geometry",
+"visual": {{
+    "elements": [...],
+    "relationships": [...]
+}}
+
+When a question requires a graph, include:
+"visual_required": true,
+"visual_type": "graph",
+"visual": {{
+    "elements": [...],
+    "relationships": [...]
+}}
+
+When a question does not require a visual:
+
+"visual_required": false,
+"visual_type": null
+
+Do NOT include "visual" when visual_required is false.
+
+Never return an empty visual object.
+
+Never return visual data for decorative purposes.
+
+Never return Markdown, comments, headings, or text outside the JSON.
+
+
+# LANGUAGE
+
+The following fields MUST be written in {language}:
+
+- question_text
+- option_a
+- option_b
+- option_c
+- option_d
+- explanation
+- visual labels/text when applicable
+
+STRICT OUTPUT CONTRACT:
+
+Return ONLY the final requested JSON object.
+
+Do NOT include analysis, reasoning, planning, internal thinking, self-review,
+verification, question-selection discussion, ordering discussion, or commentary
+anywhere in the response.
+
+Do NOT expose your reasoning process inside ANY JSON field.
+
+Do NOT use JSON fields to store reasoning, planning, notes, validation,
+drafting thoughts, or internal decisions.
+
+Every JSON field must contain ONLY the final user-facing content required
+by the requested schema.
+
+--------------------------------------------------
+JSON REQUIREMENTS
+--------------------------------------------------
+
+The response MUST be valid JSON.
+
+The response must be directly parseable using JSON.parse().
+
+Do NOT include Markdown code fences.
+
+Do NOT include any text before or after the JSON object.
+
+--------------------------------------------------
+LATEX / BACKSLASH REQUIREMENTS
+--------------------------------------------------
+
+LaTeX may appear inside JSON string values.
+
+Every LaTeX backslash MUST be escaped correctly for JSON.
+
+For example:
+
+WRONG:
+"$\sqrt{15}$"
+
+CORRECT:
+"$\\sqrt{15}$"
+
+WRONG:
+"$\angle ABC$"
+
+CORRECT:
+"$\\angle ABC$"
+
+WRONG:
+"$\frac{1}{2}$"
+
+CORRECT:
+"$\\frac{1}{2}$"
+
+WRONG:
+"$\pi r^2$"
+
+CORRECT:
+"$\\pi r^2$"
+
+Any backslash used inside a JSON string must be represented as `\\`.
+
+--------------------------------------------------
+FINAL VALIDATION
+--------------------------------------------------
+
+Before returning the response, internally verify that:
+
+1. The output is valid JSON.
+2. Every JSON string is properly escaped.
+3. Every LaTeX backslash inside a JSON string is escaped.
+4. No reasoning or planning appears in any field.
+5. No extra fields have been added.
+6. No Markdown or commentary surrounds the JSON.
+7. The final response contains only the requested JSON.
 """

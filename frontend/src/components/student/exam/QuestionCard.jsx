@@ -1,6 +1,7 @@
 import { BookOpen, WifiOff, } from "lucide-react";
 import QuestionOptions from "./QuestionOptions";
-
+import MathText from "../../common/MathText";
+import AIQuestionVisual from "../../teacher/ai/AIQuestionVisual";
 export default function QuestionCard({
   question,
   questionNumber,
@@ -9,8 +10,9 @@ export default function QuestionCard({
   isOffline,
   onSelect,
 }) 
-
 {
+
+  const hasVisual = Boolean(question.visual_required || question.visual);
   return (
   <div
     className="
@@ -83,9 +85,16 @@ export default function QuestionCard({
           md:leading-7
         "
       >
-        {question.question_text}
+       <MathText text={question.question_text} />
       </h2>
-
+ 
+      {hasVisual && (
+          <AIQuestionVisual
+            visualType={question.visual_type || question.visual?.type}
+            visual={question.visual}
+          />
+        )}
+        
     </div>
 
     {/* Divider */}

@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import MathText from "../../common/MathText";
 
 export default function QuestionOptions({
   options,
@@ -98,7 +99,7 @@ export default function QuestionOptions({
                 }
               `}
             >
-              {value}
+              <MathText text= {value}/>
             </p>
           </div>
 

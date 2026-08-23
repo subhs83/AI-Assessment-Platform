@@ -26,7 +26,7 @@ export default function AIHistoryPage() {
   const [status, setStatus] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(20);
 
   const fetchHistory = useCallback(async () => {
     try {

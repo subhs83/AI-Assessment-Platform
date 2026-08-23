@@ -4,6 +4,11 @@ import { Pencil } from "lucide-react";
 import aiApi from "../../../api/aiApi";
 import { useToast } from "../../ui/Toast";
 
+import MathText from "../../common/MathText";
+import {normalizeExplanationText} from "../../common/normalizeText";
+import AIQuestionVisual from "./AIQuestionVisual";
+import { latexToNormal,  normalToLatex, prepareForKaTeX} from "../../common/editableMathText";
+
 export default function AIQuestionCard({
   question,
   index,
@@ -42,9 +47,43 @@ export default function AIQuestionCard({
 
 
 const handleEdit = () => {
-  setForm(question);
+  setForm({
+    ...question,
+
+    question_text:
+      latexToNormal(
+        question.question_text
+      ),
+
+    option_a:
+      latexToNormal(
+        question.option_a
+      ),
+
+    option_b:
+      latexToNormal(
+        question.option_b
+      ),
+
+    option_c:
+      latexToNormal(
+        question.option_c
+      ),
+
+    option_d:
+      latexToNormal(
+        question.option_d
+      ),
+
+    explanation:
+      latexToNormal(
+        question.explanation || ""
+      ),
+  });
+
   setIsEditing(true);
 };
+
 
 const handleCancel = () => {
   setForm(question);
@@ -104,50 +143,70 @@ const handleChange = (e) => {
 
 
 
-const handleApply = async () => {
+  const handleApply = async () => {
+    if (!validateForm()) {
+      return;
+    }
 
-  if (!validateForm()) {
-    return;
-  }
+    try {
+      setSaving(true);
 
-  try {
+      const payload = {
+        ...form,
 
-    setSaving(true);
+        question_text:
+          prepareForKaTeX(normalToLatex(form.question_text )),
 
-    const res = await aiApi.updateQuestion(
-      schoolSlug,
-      requestId,
-      index,
-      form
-    );
-    console.log("Updated Question:", res.data.question);
-    onQuestionUpdated(
-      index,
-      res.data.question
-    );
+        option_a:
+          prepareForKaTeX(normalToLatex(form.option_a )),
 
-    showToast(
-      "Question updated successfully",
-      "success"
-    );
+        option_b:
+          prepareForKaTeX(normalToLatex( form.option_b )),
+        option_c:
+          prepareForKaTeX(normalToLatex( form.option_c )),
 
-    setIsEditing(false);
+        option_d:
+          prepareForKaTeX(normalToLatex( form.option_d )),
 
-  } catch (err) {
+        explanation:
+          prepareForKaTeX(normalToLatex(form.explanation || "")),
+      };
 
-    showToast(
-      err?.response?.data?.message ||
-      "Failed to update question",
-      "error"
-    );
+      const res =
+        await aiApi.updateQuestion(
+          schoolSlug,
+          requestId,
+          index,
+          payload
+        );
 
-  } finally {
+      console.log(
+        "Updated Question:",
+        res.data.question
+      );
 
-    setSaving(false);
+      onQuestionUpdated(
+        index,
+        res.data.question
+      );
 
-  }
+      showToast(
+        "Question updated successfully",
+        "success"
+      );
 
-};
+      setIsEditing(false);
+
+    } catch (err) {
+      showToast(
+        err?.response?.data?.message ||
+        "Failed to update question",
+        "error"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
 /* -------------------------------------------------------------------------- */
@@ -210,30 +269,38 @@ const renderPreviewMode = () => {
 
         {/* Question Content */}
         <h3 className="text-base font-semibold leading-7 text-slate-800">
-          {question.question_text}
+          <MathText text={question.question_text} />
         </h3>
+            {question.visual_required &&
+            question.visual &&
+            question.visual_type && (
+              <AIQuestionVisual
+                visualType={question.visual_type}
+                visual={question.visual}
+              />
+            )}
 
         {/* Options */}
         <div className="mt-4 space-y-2 text-sm text-slate-700">
 
           <div>
             <span className="font-medium">A.</span>{" "}
-            {question.option_a}
+            <MathText text={question.option_a} />
           </div>
 
           <div>
             <span className="font-medium">B.</span>{" "}
-            {question.option_b}
+           <MathText text={question.option_b} />
           </div>
 
           <div>
             <span className="font-medium">C.</span>{" "}
-            {question.option_c}
+            <MathText text={question.option_c} />
           </div>
 
           <div>
             <span className="font-medium">D.</span>{" "}
-            {question.option_d}
+            <MathText text={question.option_d} />
           </div>
 
         </div>
@@ -250,7 +317,7 @@ const renderPreviewMode = () => {
             </h4>
 
             <p className="text-sm leading-6 text-slate-700">
-              {question.explanation}
+               <MathText text={normalizeExplanationText(question.explanation)} />
             </p>
           </div>
         )}

@@ -20,10 +20,12 @@ class QuestionModel(db.Model):
     correct_option = db.Column(db.String(1), nullable=False)
 
     # ✅ NEW
-    explanation = db.Column(
-        db.Text,
-        nullable=True
-    )
+    explanation = db.Column( db.Text, nullable=True)
+    # 🔴 NEW FIELDS FOR VISUALS
+    visual_required = db.Column(db.Boolean, default=False)   # whether a visual is needed
+    visual_type = db.Column(db.String(50), nullable=True)    # "geometry" | "graph" | etc.
+    visual = db.Column(db.JSON, nullable=True)               # JSON payload for rendering
+
 
     marks = db.Column(db.Integer, default=1)
     negative_marks = db.Column(db.Float, default=0)

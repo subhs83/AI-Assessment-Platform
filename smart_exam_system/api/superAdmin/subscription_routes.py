@@ -30,7 +30,7 @@ def get_school_subscription_api(school_id):
     """
     Get complete subscription summary for a school.
     """
-    print("Get complete subscription summary for a school. :")
+    # print("Get complete subscription summary for a school. :")
 
     try:
         data = get_school_subscription_summary(school_id)

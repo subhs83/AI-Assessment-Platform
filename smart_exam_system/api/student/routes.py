@@ -228,7 +228,7 @@ def start_attempt(school_slug, quiz_code):
     
 
 @api_student_bp.route("/<school_slug>/attempt/<int:attempt_id>/question/<int:q_index>", methods=["GET"])
-def get_question(school_slug, attempt_id, q_index):
+def get_question(school_slug,  attempt_id, q_index):
     try:
         # 1. Get attempt
         attempt = resolve_attempt(attempt_id)
@@ -363,7 +363,11 @@ def get_question(school_slug, attempt_id, q_index):
                 "selected_option": selected_option,
                 "remaining_seconds": remaining_seconds,
                 # ⭐ NEW
-                "violation_count": attempt.violation_count or 0
+                "violation_count": attempt.violation_count or 0,
+                # Add these 3 visual fields directly from your model:
+                "visual_required": question.visual_required,
+                "visual_type": question.visual_type,
+                "visual": question.visual,
             },
             "error": None
         })

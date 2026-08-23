@@ -1119,6 +1119,10 @@ def get_attempt_detailed_report(attempt_id):
             "remark": remark,
 
             "explanation": question.explanation,
+             # Add these 3 visual fields directly from your model:
+            "visual_required": question.visual_required,
+            "visual_type": question.visual_type,
+            "visual": question.visual,
         })
 
     return {

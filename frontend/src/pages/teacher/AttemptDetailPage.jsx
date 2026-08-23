@@ -6,6 +6,8 @@ import EmptyState from "../../components/ui/EmptyState";
 import PageHeader from "../../components/ui/PageHeader";
 import BackButton from "../../components/ui/BackButton";
 import MobileStatsGrid from "../../components/ui/mobile/MobileStatsGrid";
+import MathText from "../../components/common/MathText";
+import AIQuestionVisual from "../../components/teacher/ai/AIQuestionVisual";
 
 
 export default function AttemptDetailPage() {
@@ -221,46 +223,41 @@ const wrongCount =
           </div>
 
           <h4 className="mt-3 text-base font-medium leading-7 text-slate-900">
-            {q.question_text}
+             <MathText text= {q.question_text}/>
           </h4>
-
+            {q.visual_required &&
+            q.visual &&
+            q.visual_type && (
+              <AIQuestionVisual
+                visualType={q.visual_type}
+                visual={q.visual}
+              />
+            )}
         </div>
 
           <div className="space-y-2">
-
             {Object.entries(q.options || {}).map(([key, val]) => {
-
-              const isSelected =  key === q.selected_option;
-
-              const isCorrect =  key === q.correct_option;
+              const isSelected = key === q.selected_option;
+              const isCorrect = key === q.correct_option;
 
               return (
                 <div
                   key={key}
                   className={`
                     p-3 rounded-lg border text-sm
-                    ${
-                      isCorrect
-                        ? "bg-green-50 border-green-300"
-                        : ""
-                    }
-                    ${
-                      isSelected &&
-                      !isCorrect
-                        ? "bg-red-50 border-red-300"
-                        : ""
-                    }
+                    ${isCorrect ? "bg-green-50 border-green-300" : ""}
+                    ${isSelected && !isCorrect ? "bg-red-50 border-red-300" : ""}
                   `}
                 >
-
                   <div className="flex items-center justify-between">
-
-                    <span>
-                      {key}. {val}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold">{key}.</span>
+                      <span>
+                        <MathText text={val} />
+                      </span>
+                    </div>
 
                     <div className="flex gap-2">
-
                       {isSelected && (
                         <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
                           Selected
@@ -272,15 +269,11 @@ const wrongCount =
                           Correct
                         </span>
                       )}
-
                     </div>
-
                   </div>
-
                 </div>
               );
             })}
-
           </div>
 
           {q.explanation && (
@@ -290,7 +283,7 @@ const wrongCount =
               </h4>
 
               <p className="text-sm leading-6 text-slate-700">
-                {q.explanation}
+                 <MathText text= {q.explanation}/>
               </p>
             </div>
           )}

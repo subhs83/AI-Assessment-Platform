@@ -4,7 +4,8 @@ import {
   XCircle,
   MinusCircle,
 } from "lucide-react";
-
+import MathText from "../../common/MathText";
+import AIQuestionVisual from "../../teacher/ai/AIQuestionVisual";
 
 const QuestionReviewCard = ({
   q,
@@ -14,17 +15,14 @@ const QuestionReviewCard = ({
   reviewMode,
 }) => {
 
-  const showCorrectAnswer =
-  reviewMode === "full_review";
+  const showCorrectAnswer = reviewMode === "full_review";
 
-  const showExplanation =
-   showCorrectAnswer &&
-    q.explanation?.trim();
+  const showExplanation = showCorrectAnswer && q.explanation?.trim();
 
   const cardRef = useRef(null);
   const isOpen = openIndex === index;
-
-
+  const hasVisual = Boolean(q.visual_required || q.visual);
+ console.log("Visual Data:", q.visual, q.visual_type, q.visual_required,q);
 useEffect(() => {
   if (isOpen) {
     cardRef.current?.scrollIntoView({
@@ -103,8 +101,14 @@ useEffect(() => {
 
           {/* Question */}
           <p className="text-slate-800 font-medium">
-            {q.question_text}
+             <MathText text= {q.question_text}/>
           </p>
+           {hasVisual && (
+            <AIQuestionVisual
+              visualType={q.visual_type || q.visual?.type}
+              visual={q.visual}
+            />
+          )}
 
           {/* Options */}
           <div className="mt-4 space-y-2">
@@ -113,14 +117,11 @@ useEffect(() => {
 
               const isSelected = q.selected_option === key;
 
-              const isCorrectOption =
-                q.correct_option === key;
+              const isCorrectOption = q.correct_option === key;
 
-              const isCorrectSelection =
-                q.is_correct && isSelected;
+              const isCorrectSelection = q.is_correct && isSelected;
 
-              const isWrongSelection =
-                !q.is_correct && isSelected;
+              const isWrongSelection = !q.is_correct && isSelected;
 
               return (
                 <div
@@ -152,7 +153,7 @@ useEffect(() => {
 
                     {/* OPTION TEXT */}
                     <div className="flex-1 text-slate-700 leading-relaxed">
-                      {value}
+                       <MathText text= {value}/>
                     </div>
 
                     {/* RIGHT LABELS */}
@@ -197,7 +198,7 @@ useEffect(() => {
               </h4>
 
               <p className="text-sm leading-6 text-slate-700">
-                {q.explanation}
+                 <MathText text={q.explanation}/>
               </p>
             </div>
           )}

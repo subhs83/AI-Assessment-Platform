@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useExamStore } from "../../store/examStore";
 
 import { useExamSecurity } from "../../hooks/useExamSecurity";
@@ -28,9 +28,8 @@ import PaletteDrawer from "../../components/student/exam/PaletteDrawer";
 import QuestionPalette from "../../components/student/exam/QuestionPalette";
 import LoadingOverlay from "../../components/common/LoadingOverlay";
 
-
 export default function ExamPage() {
-   useExamSecurity(); 
+  useExamSecurity();
   const { schoolSlug, attemptId, index } = useParams();
   const [openPalette, setOpenPalette] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -45,7 +44,6 @@ export default function ExamPage() {
   // =====================
   const currentQuestion = useExamStore((state) => state.currentQuestion);
   const answers = useExamStore((state) => state.answers);
-  const currentIndex = useExamStore((state) => state.currentIndex);
   const remainingSeconds = useExamStore((state) => state.remainingSeconds);
   const violationCount = useExamStore((state) => state.violationCount);
   const isOffline = useExamStore((state) => state.isOffline);
@@ -55,28 +53,14 @@ export default function ExamPage() {
   const saving = useExamStore((state) => state.saving);
 
   const showStartOverlay = useExamStore((s) => s.showStartOverlay);
+  const setShowStartOverlay = useExamStore((s) => s.setShowStartOverlay);
 
-  const setShowStartOverlay = useExamStore((s) => s.setShowStartOverlay );
+  // Keep store currentIndex aligned with URL route index
+ useEffect(() => {
+  useExamStore.setState({ saveStatus: "" });
+  setIsNavigating(false);
+}, [safeIndex]);
 
-  
-  // useEffect(() => {
-    
-  //   useExamStore.setState({
-  //     currentIndex: Number(index),
-  //   });
-  // }, [index]);
-
-
-  useEffect(() => {
-    // clear UI artifacts on navigation
-    useExamStore.setState({
-      saveStatus: "",
-    });
-     console.log("ROUTE CHANGED", safeIndex);
-     // Unlock navigation
-      setIsNavigating(false);
-      
-  }, [safeIndex]);
   // =====================
   // HOOKS
   // =====================
@@ -109,33 +93,24 @@ export default function ExamPage() {
   // =====================
   // LOADING
   // =====================
- if (!currentQuestion) {
-  return (
-    <LoadingOverlay message="Loading your exam..." />
-  );
-}
+  if (!currentQuestion) {
+    return <LoadingOverlay message="Loading your exam..." />;
+  }
+
   // =====================
   // TIMER
   // =====================
   const minutes = Math.floor(remainingSeconds / 60);
   const seconds = remainingSeconds % 60;
-
-  const formattedTime = `${String(minutes).padStart(2, "0")}:${String(
-    seconds
-  ).padStart(2, "0")}`;
+  const formattedTime = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
   // =====================
   // NAVIGATION
   // =====================
   const goNext = () => {
-    console.log("NEXT CLICK", {
-    isNavigating,
-    currentIndex,
-  });
     if (isNavigating) return;
 
     setIsNavigating(true);
-
     const next = safeIndex + 1;
 
     if (next >= currentQuestion.total_questions) {
@@ -143,16 +118,13 @@ export default function ExamPage() {
       return;
     }
 
-    navigate(
-      `/school/${schoolSlug}/attempt/${attemptId}/${next}`
-    );
+    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${next}`);
   };
 
   const goPrev = () => {
     if (isNavigating) return;
 
     setIsNavigating(true);
-
     const prev = safeIndex - 1;
 
     if (prev < 0) {
@@ -160,74 +132,62 @@ export default function ExamPage() {
       return;
     }
 
-    navigate(
-      `/school/${schoolSlug}/attempt/${attemptId}/${prev}`
-    );
+    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${prev}`);
   };
 
-  const selectedOption =
-  answers?.[`${attemptId}_${safeIndex}`] ?? null;
-
-  
+  const selectedOption = answers?.[`${attemptId}_${safeIndex}`] ?? null;
 
   // =====================
   // UI
   // =====================
   return (
-  <>
-    <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+    <>
+      <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-slate-50 via-white to-indigo-50">
+        {/* OVERLAYS */}
+        {isOffline && <OfflineBanner />}
 
-      {/* OVERLAYS */}
-      {isOffline && <OfflineBanner />}
-
-      {showStartOverlay && (
-        <FullscreenOverlay
+        {showStartOverlay && (
+          <FullscreenOverlay
             mode="start"
             onResume={() => {
-                resumeFullscreen();
-
-                setShowStartOverlay(false);
+              resumeFullscreen();
+              setShowStartOverlay(false);
             }}
-        />
-    )}
+          />
+        )}
 
-    {!showStartOverlay  && fullscreenRequired && (
-        <FullscreenOverlay
+        {!showStartOverlay && fullscreenRequired && (
+          <FullscreenOverlay
             mode="violation"
             violationCount={violationCount}
             onResume={resumeFullscreen}
-        />
-    )}
+          />
+        )}
 
-      <SubmitExamModal
-        schoolSlug={schoolSlug}
-        attemptId={attemptId}
-      />
-
-      <div className="select-none flex h-full flex-col">
-
-        {/* HEADER */}
-        <ExamHeader
-          currentIndex={currentIndex}
-          totalQuestions={currentQuestion.total_questions}
-          formattedTime={formattedTime}
-          violationCount={violationCount}
-          remainingSeconds={remainingSeconds}
+        <SubmitExamModal
+          schoolSlug={schoolSlug}
+          attemptId={attemptId}
         />
 
-        {/* CONTENT */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="select-none flex h-full flex-col">
+          {/* HEADER */}
+          <ExamHeader
+            currentIndex={safeIndex}
+            totalQuestions={currentQuestion.total_questions}
+            formattedTime={formattedTime}
+            violationCount={violationCount}
+            remainingSeconds={remainingSeconds}
+          />
 
-          <div className="mx-auto flex h-full w-full max-w-[1500px] gap-5 px-3 py-3 sm:px-5 sm:py-5">
-
-            {/* ================= QUESTION SIDE ================= */}
-            <div className="flex min-w-0 flex-1 flex-col">
-
-              {/* Scrollable Question */}
-              <div className="relative flex-1 overflow-y-auto pr-1">
-
-                <QuestionCard
-                    key={`${attemptId}_${safeIndex}`}   // 🔥 IMPORTANT FIX
+          {/* CONTENT */}
+          <div className="flex flex-1 overflow-hidden">
+            <div className="mx-auto flex h-full w-full max-w-[1500px] gap-5 px-3 py-3 sm:px-5 sm:py-5">
+              {/* QUESTION SIDE */}
+              <div className="flex min-w-0 flex-1 flex-col">
+                {/* Scrollable Question */}
+                <div className="relative flex-1 overflow-y-auto pr-1">
+                  <QuestionCard
+                    key={`${attemptId}_${safeIndex}`}
                     question={currentQuestion}
                     questionNumber={safeIndex + 1}
                     selected={selectedOption}
@@ -237,21 +197,19 @@ export default function ExamPage() {
                       saveAnswer(
                         currentQuestion.question_id,
                         option,
-                        currentIndex
+                        safeIndex
                       );
                     }}
                   />
 
-                <div className="absolute top-4 right-4 z-20">
-                  <SaveStatus key={`${attemptId}-${currentIndex}`} status={saveStatus} />
+                  <div className="absolute top-4 right-4 z-20">
+                    <SaveStatus key={`${attemptId}-${safeIndex}`} status={saveStatus} />
+                  </div>
                 </div>
 
-              </div>
-
-              {/* Sticky Footer */}
-             
+                {/* Sticky Footer */}
                 <ExamFooter
-                  currentIndex={currentIndex}
+                  currentIndex={safeIndex}
                   totalQuestions={currentQuestion.total_questions}
                   isNavigating={isNavigating}
                   isOffline={isOffline}
@@ -260,42 +218,32 @@ export default function ExamPage() {
                   onSubmit={submitExam}
                   openPalette={() => setOpenPalette(true)}
                 />
-
-
-            </div>
-
-            {/* ================= DESKTOP PALETTE ================= */}
-            <aside className="hidden w-[310px] shrink-0 lg:block">
-
-              <div className="h-full">
-
-                <QuestionPalette
-                  schoolSlug={schoolSlug}
-                  attemptId={attemptId}
-                  currentIndex={currentIndex}
-                  isOffline={isOffline}
-                />
-
               </div>
 
-            </aside>
-
+              {/* DESKTOP PALETTE */}
+              <aside className="hidden w-[310px] shrink-0 lg:block">
+                <div className="h-full">
+                  <QuestionPalette
+                    schoolSlug={schoolSlug}
+                    attemptId={attemptId}
+                    currentIndex={safeIndex}
+                    isOffline={isOffline}
+                  />
+                </div>
+              </aside>
+            </div>
           </div>
-
         </div>
-
       </div>
 
-    </div>
-
-    <PaletteDrawer
-      schoolSlug={schoolSlug}
-      attemptId={attemptId}
-      currentIndex={currentIndex}
-      open={openPalette}
-      onClose={() => setOpenPalette(false)}
-      isOffline={isOffline}
-    />
-  </>
-);
+      <PaletteDrawer
+        schoolSlug={schoolSlug}
+        attemptId={attemptId}
+        currentIndex={safeIndex}
+        open={openPalette}
+        onClose={() => setOpenPalette(false)}
+        isOffline={isOffline}
+      />
+    </>
+  );
 }

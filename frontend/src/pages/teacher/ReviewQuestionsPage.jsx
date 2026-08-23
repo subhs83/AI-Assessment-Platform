@@ -11,6 +11,10 @@ import SkeletonCard from "../../components/ui/SkeletonCard";
 import ErrorState from "../../components/ui/ErrorState";
 import EmptyState from "../../components/ui/EmptyState";
 
+import AIQuestionVisual from "../../components/teacher/ai/AIQuestionVisual";
+import MathText from "../../components/common/MathText";
+import { normalizeExplanationText } from "../../components/common/normalizeText";
+
 export default function ReviewQuestionsPage() {
   const { schoolSlug, examUid } = useParams();
 
@@ -111,8 +115,15 @@ export default function ReviewQuestionsPage() {
               </div>
 
               <p className="mt-3 text-base font-medium leading-7 text-slate-800">
-                {q.question_text}
+                <MathText text={q.question_text} />
               </p>
+
+              {q.visual_required && q.visual && q.visual_type && (
+                            <AIQuestionVisual
+                              visualType={q.visual_type}
+                              visual={q.visual}
+                            />
+                          )}
 
               {/* Options */}
 
@@ -142,7 +153,7 @@ export default function ReviewQuestionsPage() {
                       </div>
 
                       <p className="flex-1 text-sm leading-6 text-slate-700">
-                        {option.value}
+                         <MathText text= {option.value}/>
                       </p>
 
                       {isCorrect && (
@@ -179,7 +190,7 @@ export default function ReviewQuestionsPage() {
                     </h4>
 
                     <p className="text-sm leading-6 text-slate-700">
-                      {q.explanation}
+                       <MathText text={normalizeExplanationText(q.explanation)} />
                     </p>
                   </div>
                 )}

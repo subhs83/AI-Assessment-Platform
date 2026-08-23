@@ -298,14 +298,11 @@ def download_summary_report(school_slug):
 @login_required
 @school_admin_required
 def get_exam_leaderboard_admin_api(school_slug, exam_uid):
-    print("Route exam_uid:", exam_uid)
-    print("Current user school_id:", current_user.school_id)
+    # print("Route exam_uid:", exam_uid)
+    # print("Current user school_id:", current_user.school_id)
 
     exam = ExamModel.query.filter_by(exam_uid=exam_uid).first()
-    print("Exam:", exam)
-
-    if exam:
-        print("Exam school_id:", exam.school_id)
+    # print("Exam:", exam)
 
     exam = get_exam_by_uid(
         school_id=current_user.school_id,

@@ -5,7 +5,6 @@ from flask_login import login_required, current_user
 from smart_exam_system.api.teacher import api_teacher_bp
 from smart_exam_system.models import AIGenerationRequest
 from smart_exam_system.api.utils.api_response import api_response
-from smart_exam_system.api.services.ai_input_service import extract_ai_input
 from smart_exam_system.api.utils.decorators import  teacher_required
 from smart_exam_system.api.services.ai.controller import ( generate_ai_questions_controller)
 from smart_exam_system.models import (
@@ -14,9 +13,7 @@ from smart_exam_system.models import (
 )
 
 from smart_exam_system.api.services.ai_config_service import get_ai_configuration
-from smart_exam_system.api.services.document_analysis.analysis_service import (
-    AnalysisService,
-)
+
 from smart_exam_system.extensions import db
 from smart_exam_system.config import Config
 
@@ -179,6 +176,10 @@ def save_ai_to_exam(school_slug):
             option_d=q["option_d"],
             correct_option=q["correct_answer"],
             explanation=q.get("explanation") or None,
+            # 🔴 NEW FIELDS
+            visual_required=q.get("visual_required", False),
+            visual_type=q.get("visual_type"),
+            visual=q.get("visual"),
         )
         db.session.add(question)
 
@@ -270,7 +271,10 @@ def update_ai_question(school_slug, request_id, question_index):
 
     data = request.get_json() or {}
 
-    ai_request = db.session.get(AIGenerationRequest, request_id)
+    ai_request = db.session.get(
+        AIGenerationRequest,
+        request_id
+    )
 
     if not ai_request:
         return jsonify({
@@ -278,15 +282,23 @@ def update_ai_question(school_slug, request_id, question_index):
             "message": "AI request not found"
         }), 404
 
-    questions = deepcopy(ai_request.generated_questions or [])
+    questions = deepcopy(
+        ai_request.generated_questions or []
+    )
 
-    if question_index < 0 or question_index >= len(questions):
+    if (
+        question_index < 0
+        or question_index >= len(questions)
+    ):
         return jsonify({
             "success": False,
             "message": "Invalid question index"
         }), 400
 
-    # Validate required fields
+    # ---------------------------------------------------------
+    # Validate required editable fields
+    # ---------------------------------------------------------
+
     required_fields = [
         "question_text",
         "option_a",
@@ -297,51 +309,138 @@ def update_ai_question(school_slug, request_id, question_index):
     ]
 
     for field in required_fields:
-        value = str(data.get(field, "")).strip()
+
+        value = str(
+            data.get(field, "")
+        ).strip()
 
         if not value:
             return jsonify({
                 "success": False,
-                "message": f"{field.replace('_', ' ').title()} is required"
+                "message":
+                    f"{field.replace('_', ' ').title()} is required"
             }), 400
 
+    # ---------------------------------------------------------
     # Validate correct answer
-    if data["correct_answer"] not in ["A", "B", "C", "D"]:
+    # ---------------------------------------------------------
+
+    if data["correct_answer"] not in [
+        "A",
+        "B",
+        "C",
+        "D",
+    ]:
         return jsonify({
             "success": False,
-            "message": "Correct answer must be A, B, C or D"
+            "message":
+                "Correct answer must be A, B, C or D"
         }), 400
 
-    updated_question = {
-        "question_text": data["question_text"].strip(),
-        "option_a": data["option_a"].strip(),
-        "option_b": data["option_b"].strip(),
-        "option_c": data["option_c"].strip(),
-        "option_d": data["option_d"].strip(),
-        "correct_answer": data["correct_answer"],
-        "is_edited": True,
-    }
+    # ---------------------------------------------------------
+    # IMPORTANT
+    #
+    # Preserve the complete generated question.
+    #
+    # Do NOT construct a new question object from only
+    # editable fields because Smart Analysis data such as
+    # visual, relationships, elements, etc. would be lost.
+    # ---------------------------------------------------------
 
-    questions[question_index] = updated_question
+    existing_question = deepcopy( questions[question_index])
 
-    # Important: assign back so SQLAlchemy detects the JSON change
+    # ---------------------------------------------------------
+    # Update ONLY editable fields
+    # ---------------------------------------------------------
+
+    existing_question["question_text"] = ( data["question_text"].strip())
+
+    existing_question["option_a"] = ( data["option_a"].strip())
+
+    existing_question["option_b"] = (data["option_b"].strip())
+
+    existing_question["option_c"] = (data["option_c"].strip())
+
+    existing_question["option_d"] = (data["option_d"].strip())
+
+    existing_question["correct_answer"] = (data["correct_answer"])
+
+    existing_question["explanation"] = (data["explanation"].strip())
+
+    # ---------------------------------------------------------
+    # Mark edited
+    # ---------------------------------------------------------
+
+    existing_question["is_edited"] = True
+
+    # ---------------------------------------------------------
+    # Save complete question back
+    # ---------------------------------------------------------
+
+    questions[question_index] = existing_question
+
     ai_request.generated_questions = questions
 
-    flag_modified( ai_request, "generated_questions")
+    flag_modified(
+        ai_request,
+        "generated_questions"
+    )
 
     db.session.commit()
 
-    # Debug only
-    # db.session.refresh(ai_request)
+    # ---------------------------------------------------------
+    # Debug
+    # ---------------------------------------------------------
+
     # print(
-    #     "Saved Question:",
-    #     ai_request.generated_questions[question_index]
+    #     "[AI QUESTION UPDATED]",
+    #     {
+    #         "question_index": question_index,
+    #         "question_text":
+    #             existing_question.get(
+    #                 "question_text"
+    #             ),
+    #         "has_visual":
+    #             bool(
+    #                 existing_question.get(
+    #                     "visual"
+    #                 )
+    #             ),
+    #         "visual_type":
+    #             existing_question.get(
+    #                 "visual_type"
+    #             ),
+    #         "visual_required":
+    #             existing_question.get(
+    #                 "visual_required"
+    #             ),
+    #         "has_explanation":
+    #             bool(
+    #                 existing_question.get(
+    #                     "explanation"
+    #                 )
+    #             ),
+    #         "has_relationships":
+    #             bool(
+    #                 existing_question.get(
+    #                     "relationships"
+    #                 )
+    #             ),
+    #         "has_elements":
+    #             bool(
+    #                 existing_question.get(
+    #                     "elements"
+    #                 )
+    #             ),
+    #     }
     # )
 
     return jsonify({
         "success": True,
-        "message": "Question updated successfully",
-        "question": updated_question,
+        "message":
+            "Question updated successfully",
+        "question":
+            existing_question,
     }), 200
 
 

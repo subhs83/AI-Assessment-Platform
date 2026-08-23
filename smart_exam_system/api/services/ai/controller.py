@@ -171,13 +171,12 @@ def generate_ai_questions_controller(
     # Parse Gemini response
     # ---------------------------------------------------------
 
-    parsed = parse_ai_response(
-        ai_response
-    )
+    parsed = parse_ai_response(ai_response)
 
     if not parsed.get("success"):
-
         return parsed
+
+    # print("Parsed AI data type:", type(parsed["data"]))
 
     questions = parsed["data"]
 
