@@ -1,8 +1,9 @@
 import time
 import tempfile
 import os
-
 from flask import current_app
+
+from google.genai import types
 from google import genai
 from google.genai.errors import ServerError
 
@@ -134,6 +135,10 @@ def generate_from_gemini(
                                 generation_prompt,
                                 uploaded_file,
                             ],
+                            # ADD THIS CONFIG TO ENFORCE JSON
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                            )
                         )
                     )
 
@@ -144,6 +149,10 @@ def generate_from_gemini(
                         client.models.generate_content(
                             model="gemini-2.5-flash",
                             contents=generation_prompt,
+                            # ADD THIS CONFIG TO ENFORCE JSON
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                            )
                         )
                     )
 

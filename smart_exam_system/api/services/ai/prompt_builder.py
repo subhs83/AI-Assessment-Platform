@@ -998,11 +998,12 @@ FINAL VALIDATION
 
 Before returning the response, internally verify that:
 
-1. The output is valid JSON.
-2. Every JSON string is properly escaped.
-3. Every LaTeX backslash inside a JSON string is escaped.
-4. No reasoning or planning appears in any field.
-5. No extra fields have been added.
-6. No Markdown or commentary surrounds the JSON.
-7. The final response contains only the requested JSON.
+1. Output ONLY valid, parseable JSON. Do not include any conversational text, internal monologues, preambles, or postscripts. 
+2.Do not explain your thought process outside of the designated JSON fields.
+3. Every JSON string is properly escaped.
+4. Every LaTeX backslash inside a JSON string is escaped.
+5. No reasoning or planning appears in any field.
+6. No extra fields have been added.
+7. No Markdown or commentary surrounds the JSON.
+8. The final response contains only the requested JSON.
 """
