@@ -1,8 +1,8 @@
 import {
   calculateSegmentLabelPosition,
-  getSegmentEndpoints 
+  getSegmentEndpoints,
+  getSvgDimensions
 } from "./geometryHelpers";
-
 /*
  * geometryRenderers.js
  *
@@ -162,8 +162,11 @@ export function renderSegment(
   segment,
   index,
   positions,
-  endpoints
+  endpoints,
+  isMobile
 ) {
+  //console.log("renderSegment: ", isMobile)
+  const {strokeWidth} = getSvgDimensions(isMobile);
   if ( !segment || !endpoints ) {
     return null;
   }
@@ -186,7 +189,7 @@ export function renderSegment(
       x2={p2.x}
       y2={p2.y}
       stroke="blue"
-      strokeWidth="3"
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
     />
@@ -202,8 +205,11 @@ export function renderPoints(
   positions,
   relationships = [],
   segments = [],
-  circles = []
+  circles = [],
+  isMobile
 ) {
+  //console.log("renderPoints: ", isMobile)
+  const {strokeWidth,fontSize} = getSvgDimensions(isMobile);
   return Object.keys(points).map((id) => {
     const point = points[id];
     const position = positions[id];
@@ -464,7 +470,9 @@ export function renderPoints(
             y={labelY}
             textAnchor={labelAnchor}
             dominantBaseline="middle"
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
+            fontSize={fontSize}
+            strokeWidth={strokeWidth}
+            className="fill-slate-700 font-bold"
           >
             {point.label}
           </text>
@@ -481,10 +489,12 @@ export function renderSegmentAnnotations(
   segments,
   points,
   positions,
-  relationships = []
+  getSegmentEndpoints,
+  relationships,
+  isMobile
 ) {
-
- 
+  //console.log("renderSegmentAnnotations :", isMobile)
+ const {strokeWidth,fontSize} = getSvgDimensions(isMobile);
   return segments.map(
     (segment, index) => {
 
@@ -555,7 +565,9 @@ export function renderSegmentAnnotations(
           y={labelPosition.y}
           textAnchor="middle"
           dominantBaseline="middle"
-          className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
+          fontSize={fontSize}
+          strokeWidth={strokeWidth}
+          className="fill-slate-700 font-bold"
         >
           {text}
         </text>
@@ -799,8 +811,11 @@ export function renderAngles(
   angles,
   points,
   positions,
-  figure // 🔴 pass figure into this function
+  figure, // 🔴 pass figure into this function
+  isMobile
 ) {
+    //console.log("renderAngles : ", isMobile)
+  const {strokeWidth,fontSize} = getSvgDimensions(isMobile);
   return angles.map((angle, index) => {
     if (!angle) return null;
 
@@ -844,9 +859,9 @@ export function renderAngles(
           d={arc.path}
           fill="none"
           stroke="currentColor"
-          strokeWidth="3"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
-          vector-effect="non-scaling-stroke"
+          vectorEffect="non-scaling-stroke"
           className="stroke-slate-800 dark:stroke-slate-100"
         />
         {value && (
@@ -855,7 +870,9 @@ export function renderAngles(
             y={labelPosition.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
+            fontSize={fontSize}
+            strokeWidth={strokeWidth}
+            className="fill-slate-700 font-bold"
           >
             {value}
           </text>
@@ -868,16 +885,21 @@ export function renderAngles(
 
 
 
+
 export function renderCircles(
   circles,
   points,
-  positions
+  positions,
+  isMobile=false
 ) {
+   // console.log("renderCircles : ", isMobile)
+  const { 
+    width: SVG_WIDTH, height: SVG_HEIGHT, 
+    paddingX, paddingY, strokeWidth} = getSvgDimensions(isMobile);
+    //console.log({SVG_WIDTH, SVG_HEIGHT, paddingX, paddingY, strokeWidth})
 
-  const SVG_WIDTH = 520;
-  const SVG_HEIGHT = 160;
-  const HORIZONTAL_PADDING = 50;
-  const VERTICAL_PADDING = 10;
+  const HORIZONTAL_PADDING = paddingX
+  const VERTICAL_PADDING = paddingY
   if (
     !Array.isArray(circles) ||
     circles.length === 0
@@ -895,7 +917,7 @@ export function renderCircles(
     Math.min( 
       SVG_WIDTH / 2 - HORIZONTAL_PADDING,
       SVG_HEIGHT / 2 - VERTICAL_PADDING
-    );
+    )*0.85
 
   return circles.map((circle, index) => {
       /*
@@ -909,6 +931,7 @@ export function renderCircles(
        */
 
       const specializedCenter = circle.__renderCenter;
+          //console.log("specializedCenter: ",specializedCenter)
 
       /*
        * ----------------------------------------
@@ -935,6 +958,8 @@ export function renderCircles(
           ? positions[centerId]
           : null;
 
+
+
       /*
        * ----------------------------------------
        * SELECT CENTER
@@ -947,6 +972,7 @@ export function renderCircles(
        */
 
       const center = specializedCenter || normalCenter;
+      //console.log("rendercenter: ", specializedCenter, normalCenter)
 
       /*
        * ----------------------------------------
@@ -1031,7 +1057,7 @@ export function renderCircles(
           r={renderRadius}
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.5" /* Strong base line width */
+          strokeWidth={strokeWidth} /* Strong base line width */
           vectorEffect="non-scaling-stroke" /* Prevents the stroke from thinning when SVG scales down */
         />
       );
@@ -1042,7 +1068,9 @@ export function renderCircles(
 
 // geometryRenderers.js
 
-export function renderCollinear(relationships, positions) {
+export function renderCollinear(relationships, positions, isMobile=false ) {
+    //console.log("renderCollinear : ", isMobile)
+  const {strokeWidth} = getSvgDimensions(isMobile);
   return relationships
     .filter(rel => rel.type === "collinear" && rel.__renderPolyline)
     .map((rel, idx) => {
@@ -1057,7 +1085,7 @@ export function renderCollinear(relationships, positions) {
             key={`collinear-${idx}`}
             points={pointsAttr}
             stroke="blue"
-            strokeWidth="2"
+            strokeWidth={strokeWidth}
             fill="none"
           />
         );

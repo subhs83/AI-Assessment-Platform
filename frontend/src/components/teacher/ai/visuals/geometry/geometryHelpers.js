@@ -1734,3 +1734,66 @@ export function lineIntersection(
   }
 
 
+  export function lineCircleIntersections(px, py, angle, cx, cy, r) {
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+
+  const a = dx * dx + dy * dy; // Always 1.0 since cos^2 + sin^2 = 1
+  const b = 2 * (dx * (px - cx) + dy * (py - cy));
+  const c = (px - cx) ** 2 + (py - cy) ** 2 - r * r;
+
+  const disc = b * b - 4 * a * c;
+
+  // No intersection
+  if (disc < 0) return [];
+
+  const sqrtDisc = Math.sqrt(disc);
+  const t1 = (-b - sqrtDisc) / (2 * a);
+  const t2 = (-b + sqrtDisc) / (2 * a);
+
+  // 1. Separate roots into near and far points based on distance t along the ray
+  const minT = Math.min(t1, t2);
+  const maxT = Math.max(t1, t2);
+
+  // 2. Ensure minT and maxT are distinct to avoid point overlap (disc > epsilon)
+  if (Math.abs(maxT - minT) < 1e-3) {
+    // Single intersection point (Tangent ray)
+    return [
+      { x: px + maxT * dx, y: py + maxT * dy },
+      { x: px + maxT * dx, y: py + maxT * dy }
+    ];
+  }
+
+  // Two distinct intersection points (Secant ray)
+  return [
+    { x: px + minT * dx, y: py + minT * dy }, // Point A / C (Near Intersection)
+    { x: px + maxT * dx, y: py + maxT * dy }  // Point B / D (Far Intersection)
+  ];
+}
+
+
+  // At the top of your geometry helper file/module:
+export const getSvgDimensions = (isMobile = false) => {
+  if (isMobile) {
+    return {
+      width: 360,
+      height: 280,
+      paddingX: 20, // Horizontal padding for mobile
+      paddingY: 20, // Vertical padding for mobile
+      strokeWidth: 3.5,
+      fontSize: 18,
+    };
+  }
+
+  return {
+    width: 520,
+    height: 160,
+    paddingX: 60, // Horizontal padding for desktop
+    paddingY: 20, // Vertical padding for desktop
+    strokeWidth: 2,
+    fontSize: 13,
+  };
+};
+
+
+

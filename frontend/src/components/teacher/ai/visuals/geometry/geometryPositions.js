@@ -1,10 +1,14 @@
+
+
 import {
   getSegmentEndpoints,
   midpoint,
   lineIntersection,
   solveEquation,
-  evaluateExpression
+  evaluateExpression,
+  getSvgDimensions
 } from "./geometryHelpers";
+
 
 export function calculateGeometryPositions({
   points,
@@ -12,25 +16,22 @@ export function calculateGeometryPositions({
   angles,
   relationships,
   figure,
-  circles
+  circles,
+  isMobile = false,
 }) {
-
 
   const pointIds = Object.keys(points);
   const positions = {};
 
-  const centerX = 200;
-  const centerY = 100;
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY} = getSvgDimensions(isMobile);
+  //console.log("getSvgDimensions: ",SVG_WIDTH,SVG_HEIGHT)
+  const centerX = SVG_WIDTH/2;
+  const centerY = SVG_HEIGHT/2;
 
-  const SVG_WIDTH = 520;
-  const SVG_HEIGHT = 200;
 
-  const SVG_HORIZONTAL_PADDING = 30;
-  const SVG_VERTICAL_PADDING = 20;
+  const SVG_AVAILABLE_WIDTH = SVG_WIDTH - paddingX * 2;
 
-  const SVG_AVAILABLE_WIDTH = SVG_WIDTH - SVG_HORIZONTAL_PADDING * 2;
-
-  const SVG_AVAILABLE_HEIGHT = SVG_HEIGHT -  SVG_VERTICAL_PADDING * 2;
+  const SVG_AVAILABLE_HEIGHT = SVG_HEIGHT -  paddingY * 2;
 
   /*
    * ------------------------------------------
@@ -48,9 +49,9 @@ export function calculateGeometryPositions({
    * figure should stay within so nothing touches the SVG edge.
    */
 
-  const FILL_FACTOR = 0.85;
+  const FILL_FACTOR = 0.80;
 
-  const HALF_W = (SVG_AVAILABLE_WIDTH / 3) * FILL_FACTOR;
+  const HALF_W = (SVG_AVAILABLE_WIDTH / 2.5) * FILL_FACTOR;
   const HALF_H = (SVG_AVAILABLE_HEIGHT / 2) * FILL_FACTOR;
 
   /*
@@ -66,12 +67,13 @@ export function calculateGeometryPositions({
     null;
 
   // Base radius derived from available canvas size
-  const maxRadius = Math.min(SVG_AVAILABLE_WIDTH, SVG_AVAILABLE_HEIGHT) / 2;
+  const maxRadius = Math.min(SVG_AVAILABLE_WIDTH / 2, SVG_AVAILABLE_HEIGHT / 2) 
+  //console.log("maxRadius:",maxRadius)
 
   // Scale radius based on number of points (more points → smaller radius)
   const radius = Math.max(
     maxRadius * 0.3, // minimum radius safeguard
-    maxRadius - pointIds.length * 3
+    maxRadius - pointIds.length
   );
 
   //console.log("pointIds.length: ",pointIds.length)
@@ -159,9 +161,7 @@ export function calculateGeometryPositions({
             Number.isFinite(item.length)
         );
 
-    const hasTwoChordGeometry =
-      Boolean(centerId) &&
-      chordCandidates.length >= 2;
+    const hasTwoChordGeometry = Boolean(centerId) && chordCandidates.length >= 2;
 
     /*
      * ------------------------------------------
@@ -230,11 +230,9 @@ export function calculateGeometryPositions({
       ),
     ];
 
-    const hasTwoTangents =
-      tangentRelationships.length >= 2;
+    const hasTwoTangents =  tangentRelationships.length >= 2;
 
-    const hasTangentPerpendiculars =
-      perpendicularRelationships.length >= 2;
+    const hasTangentPerpendiculars =  perpendicularRelationships.length >= 2;
 
     const hasTangentChordGeometry =
       Boolean(centerId) &&
@@ -247,6 +245,7 @@ export function calculateGeometryPositions({
       );
 
     if (hasTangentChordGeometry) {
+
       specializedCircleGeometry = true;
 
       /*
@@ -327,7 +326,7 @@ export function calculateGeometryPositions({
        * CIRCLE RADIUS
        * ----------------------------------------
        */
-
+      //console.log("circleRadius; ", radius)
       const circleRadius = radius;
 
       circle.__renderRadius =  circleRadius;
@@ -1532,8 +1531,13 @@ export function calculateGeometryPositions({
     */
 
       if (!specializedCircleGeometry) {
-        const arcAC = relationships.find(r => r.type === "has_value" && r.elements.includes("arc_ac"));
-        const arcBD = relationships.find(r => r.type === "has_value" && r.elements.includes("arc_bd"));
+       
+        const arcAC = relationships.find(
+          (r) => r.type === "has_value" && r.elements.includes("arc_ac")
+        );
+        const arcBD = relationships.find(
+          (r) => r.type === "has_value" && r.elements.includes("arc_bd")
+        );
 
         if (arcAC && arcBD) {
           const farArcValue = Number(arcAC.value);
@@ -1541,83 +1545,119 @@ export function calculateGeometryPositions({
           const externalAngle = (farArcValue - nearArcValue) / 2;
 
           if (externalAngle > 0) {
-            // External point P
-            const px = centerX - SVG_AVAILABLE_WIDTH * 0.25;
+            // 1. Convert external angle to radians and clamp to a safe threshold (< 90 deg)
+            const extAngleRad = (Math.min(externalAngle, 60) * Math.PI) / 180;
+
+            // 2. Set radius dynamic to available canvas extents
+            const r = Math.min(HALF_W, HALF_H) 
+
+            // 3. Compute distance dP mathematically so sin(extAngleRad) < (r / dP)
+            // Using a 0.70 factor guarantees the secant rays slice well inside the circle
+            const safeSinFactor = 0.70;
+            const dP = r / (Math.sin(extAngleRad) / safeSinFactor);
+
+            // 4. Center the combined geometry (Point P to Center C) dynamically around centerX/centerY
+            const totalSpanX = dP + r;
+            const startX = centerX - totalSpanX / 2;
+
+            const px = startX;
             const py = centerY;
             positions["point_p"] = { x: px, y: py };
 
-            // Circle
-            const cx = centerX + SVG_AVAILABLE_WIDTH * 0.08;
+            const cx = px + dP;
             const cy = centerY;
 
-            const r = (Math.min(SVG_AVAILABLE_WIDTH, SVG_AVAILABLE_HEIGHT) / 2) *  FILL_FACTOR;
+            if (points["point_o"]) {
+              positions["point_o"] = { x: cx, y: cy };
+            }
 
-            // Intersection helper
+            // 5. Robust Line-Circle Intersection helper
             function lineCircleIntersections(px, py, angle, cx, cy, r) {
-              const dx = Math.cos(angle), dy = Math.sin(angle);
-              const a = dx*dx + dy*dy;
-              const b = 2*(dx*(px-cx) + dy*(py-cy));
-              const c = (px-cx)**2 + (py-cy)**2 - r*r;
-              const disc = b*b - 4*a*c;
-              if (disc < 0) return [];
-              const t1 = (-b + Math.sqrt(disc))/(2*a);
-              const t2 = (-b - Math.sqrt(disc))/(2*a);
+              const dx = Math.cos(angle);
+              const dy = Math.sin(angle);
+
+              const fx = px - cx;
+              const fy = py - cy;
+
+              const a = dx * dx + dy * dy; // 1.0
+              const b = 2 * (fx * dx + fy * dy);
+              const c = fx * fx + fy * fy - r * r;
+
+              const disc = b * b - 4 * a * c;
+              if (disc < 0) return []; // Should not trigger now because dP is dynamically bounded
+
+              const sqrtDisc = Math.sqrt(disc);
+              const t1 = (-b - sqrtDisc) / (2 * a);
+              const t2 = (-b + sqrtDisc) / (2 * a);
+
+              // t1 is entry point (near), t2 is exit point (far)
               return [
-                {x: px + t1*dx, y: py + t1*dy},
-                {x: px + t2*dx, y: py + t2*dy}
+                { x: px + t1 * dx, y: py + t1 * dy }, // Near point (A or C)
+                { x: px + t2 * dx, y: py + t2 * dy }, // Far point (B or D)
               ];
             }
 
             // Two secant directions
             const baseAngle = Math.atan2(cy - py, cx - px);
-            const angleAB = baseAngle - externalAngle * Math.PI/180;
-            const angleCD = baseAngle + externalAngle * Math.PI/180;
+            const angleAB = baseAngle - extAngleRad;
+            const angleCD = baseAngle + extAngleRad;
 
-            const [A,B] = lineCircleIntersections(px, py, angleAB, cx, cy, r);
-            const [C,D] = lineCircleIntersections(px, py, angleCD, cx, cy, r);
+            const ptsAB = lineCircleIntersections(px, py, angleAB, cx, cy, r);
+            const ptsCD = lineCircleIntersections(px, py, angleCD, cx, cy, r);
 
-            if (A && B && C && D) {
-              positions["point_a"] = A;
-              positions["point_b"] = B;
-              positions["point_c"] = C;
-              positions["point_d"] = D;
+            if (ptsAB.length === 2 && ptsCD.length === 2) {
+                // t1 (ptsAB[0]) is the NEAR intersection (Point B)
+                // t2 (ptsAB[1]) is the FAR intersection (Point A)
+                const [B, A] = ptsAB; 
 
-              // Circle render data
-              const circle = circles.find(c => c && c.type === "circle");
-              if (circle) {
-                circle.__renderCenter = { x: cx, y: cy };
-                circle.__renderRadius = r;
+                // t1 (ptsCD[0]) is the NEAR intersection (Point D)
+                // t2 (ptsCD[1]) is the FAR intersection (Point C)
+                const [D, C] = ptsCD; 
+
+                positions["point_a"] = A; // Far point (Arc AC = 70°)
+                positions["point_b"] = B; // Near point (Arc BD = 30°)
+                positions["point_c"] = C; // Far point (Arc AC = 70°)
+                positions["point_d"] = D; // Near point (Arc BD = 30°)
+
+                // Rest of rendering data remains the same...
+                const circle = circles.find((c) => c && c.type === "circle");
+                if (circle) {
+                  circle.__renderCenter = { x: cx, y: cy };
+                  circle.__renderRadius = r;
+                }
+
+                // Update polylines to represent ray order: P -> B -> A and P -> D -> C
+                const relPAB = relationships.find(
+                  (rel) =>
+                    rel.type === "collinear" &&
+                    rel.elements.includes("point_p") &&
+                    rel.elements.includes("point_a") &&
+                    rel.elements.includes("point_b")
+                );
+                if (relPAB) {
+                  relPAB.__renderPolyline = ["point_p", "point_b", "point_a"];
+                }
+
+                const relPCD = relationships.find(
+                  (rel) =>
+                    rel.type === "collinear" &&
+                    rel.elements.includes("point_p") &&
+                    rel.elements.includes("point_c") &&
+                    rel.elements.includes("point_d")
+                );
+                if (relPCD) {
+                  relPCD.__renderPolyline = ["point_p", "point_d", "point_c"];
+                }
+
+                // Keep explicit segments for compatibility (connecting P to the furthest points A & C)
+                const segPA = segments.find((s) => s.id === "segment_pa" || s.id === "segment_pb");
+                if (segPA) segPA.__renderEndpoints = [positions["point_p"], positions["point_a"]];
+
+                const segPC = segments.find((s) => s.id === "segment_pc" || s.id === "segment_pd");
+                if (segPC) segPC.__renderEndpoints = [positions["point_p"], positions["point_c"]];
+
+                specializedCircleGeometry = true;
               }
-
-              // Attach collinear polylines for rendering
-              const relPAB = relationships.find(rel =>
-                rel.type === "collinear" &&
-                rel.elements.includes("point_p") &&
-                rel.elements.includes("point_a") &&
-                rel.elements.includes("point_b")
-              );
-              if (relPAB) {
-                relPAB.__renderPolyline = ["point_p","point_a","point_b"];
-              }
-
-              const relPCD = relationships.find(rel =>
-                rel.type === "collinear" &&
-                rel.elements.includes("point_p") &&
-                rel.elements.includes("point_c") &&
-                rel.elements.includes("point_d")
-              );
-              if (relPCD) {
-                relPCD.__renderPolyline = ["point_p","point_c","point_d"];
-              }
-
-              // Keep explicit segments for compatibility
-              const segPB = segments.find(s => s.id === "segment_pb");
-              if (segPB) segPB.__renderEndpoints = [positions["point_p"], positions["point_b"]];
-              const segPD = segments.find(s => s.id === "segment_pd");
-              if (segPD) segPD.__renderEndpoints = [positions["point_p"], positions["point_d"]];
-
-              specializedCircleGeometry = true;
-            }
           }
         }
       }
@@ -2217,7 +2257,7 @@ if (chordCases.length >= 2) {
        * the SVG.
        */
 
-      const svgRadius = Math.min( HALF_H, circleRadius * 9 );
+      const svgRadius = radius
 
       const scale = svgRadius / circleRadius;
       const knownDistancePx = known.distance * scale;
@@ -3284,11 +3324,8 @@ if (chordCases.length >= 2) {
                     */
 
 
-                    const targetRadius =
-                      (Math.min(
-                        SVG_AVAILABLE_WIDTH,
-                        SVG_AVAILABLE_HEIGHT
-                      ) / 2) * FILL_FACTOR;
+                    const targetRadius = radius
+                     
 
                     const fitScale = targetRadius / rawRadius;
 
@@ -4645,7 +4682,7 @@ function ensureTriangleSides(triangleRelationships, segments) {
 
       // Slant amount as a fraction of HALF_W, so the parallelogram's
       // shear scales with the canvas instead of being a fixed pixel skew.
-      const slant = HALF_W * 0.35;
+      const slant = HALF_W * 0.25;
 
       positions[a] = { x: centerX - HALF_W + slant, y: centerY - HALF_H };
       positions[b] = { x: centerX + HALF_W + slant, y: centerY - HALF_H };
@@ -4992,3 +5029,4 @@ if (figure.type === "generic") {
 
   return positions;
 }
+

@@ -1,10 +1,9 @@
-import React from "react";
-
 import { parseGeometry } from "./geometry/geometryParser";
 import { detectGeometryFigure } from "./geometry/geometryDetector";
 import { calculateGeometryPositions } from "./geometry/geometryPositions";
 
-import { getSegmentEndpoints } from "./geometry/geometryHelpers";
+import { getSegmentEndpoints, getSvgDimensions } from "./geometry/geometryHelpers";
+import { useIsMobile } from "../../../../hooks/useIsMobile"
 
 import {
   renderSegment,
@@ -16,6 +15,11 @@ import {
 } from "./geometry/geometryRenderers";
 
 export default function GeometryVisual({ visual }) {
+const isMobile = useIsMobile();
+// 1. Dynamic Canvas Bounds
+  // Mobile uses a squarer, padded box (360x280). Desktop uses the wide layout (520x160).
+ const { width, height } = getSvgDimensions(isMobile);
+  // 2. Dynamic Stroke & Text Weights
   if (!visual) return null;
 
   /*
@@ -52,6 +56,7 @@ export default function GeometryVisual({ visual }) {
   const positions = calculateGeometryPositions({
     ...parsed,
     figure,
+    isMobile
   });
 
   /*
@@ -98,9 +103,9 @@ export default function GeometryVisual({ visual }) {
 
   return (
     <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {/* <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         Figure
-      </div>
+      </div> */}
 
       {DEBUG_GEOMETRY && (
         <div className="mb-2 rounded bg-slate-900 p-2 text-xs text-white">
@@ -111,9 +116,9 @@ export default function GeometryVisual({ visual }) {
      <div className="flex justify-center w-full overflow-x-auto">
 
         <svg
-          viewBox="0 0 520 200"
+          viewBox={`0 0 ${width} ${height}`}
           /* Added min-h-[200px] to prevent mobile vertical squishing and crisp rendering */
-          className="h-auto w-full max-w-2xl text-slate-800 dark:text-slate-100 overflow-visible"
+          className="h-auto w-full max-w-xl text-slate-800 dark:text-slate-100 overflow-visible"
           role="img"
           aria-label="Geometry figure"
         >
@@ -126,7 +131,9 @@ export default function GeometryVisual({ visual }) {
           {renderCircles(
             circles,
             points,
-            positions
+            positions,
+            isMobile,
+
           )}
 
           {/* ------------------------------------------
@@ -138,10 +145,9 @@ export default function GeometryVisual({ visual }) {
               segment,
               index,
               positions,
-              getSegmentEndpoints(
-                segment,
-                points
-              )
+              getSegmentEndpoints(segment, points),
+              isMobile
+
             )
           )}
 
@@ -149,7 +155,7 @@ export default function GeometryVisual({ visual }) {
           {/* ------------------------------------------
                 COLLINEAR RELATIONSHIPS
               ------------------------------------------ */}
-            {renderCollinear(relationships, positions)}
+            {renderCollinear(relationships, positions, isMobile)}
 
 
           {/* ------------------------------------------
@@ -162,6 +168,7 @@ export default function GeometryVisual({ visual }) {
             positions,
             getSegmentEndpoints,
              relationships,
+             isMobile
             )}
 
           {/* ------------------------------------------
@@ -172,7 +179,8 @@ export default function GeometryVisual({ visual }) {
             angles,
             points,
             positions,
-            figure
+            figure,
+            isMobile
             )}
 
        
@@ -186,7 +194,8 @@ export default function GeometryVisual({ visual }) {
             positions,
             relationships,
             segments,
-            circles
+            circles,
+            isMobile
           )}
 
         </svg>
