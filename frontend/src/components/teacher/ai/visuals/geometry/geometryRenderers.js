@@ -186,8 +186,9 @@ export function renderSegment(
       x2={p2.x}
       y2={p2.y}
       stroke="blue"
-      strokeWidth="2"
+      strokeWidth="3"
       strokeLinecap="round"
+      vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
     />
   );
 }
@@ -463,7 +464,7 @@ export function renderPoints(
             y={labelY}
             textAnchor={labelAnchor}
             dominantBaseline="middle"
-            className="fill-slate-800 text-sm font-semibold"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {point.label}
           </text>
@@ -554,7 +555,7 @@ export function renderSegmentAnnotations(
           y={labelPosition.y}
           textAnchor="middle"
           dominantBaseline="middle"
-          className="fill-slate-700 text-xs font-semibold"
+          className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
         >
           {text}
         </text>
@@ -843,9 +844,10 @@ export function renderAngles(
           d={arc.path}
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="3"
           strokeLinecap="round"
-          opacity="0.75"
+          vector-effect="non-scaling-stroke"
+          className="stroke-slate-800 dark:stroke-slate-100"
         />
         {value && (
           <text
@@ -853,7 +855,7 @@ export function renderAngles(
             y={labelPosition.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-slate-700 text-xs font-semibold"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {value}
           </text>
@@ -1029,7 +1031,8 @@ export function renderCircles(
           r={renderRadius}
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5" /* Strong base line width */
+          vectorEffect="non-scaling-stroke" /* Prevents the stroke from thinning when SVG scales down */
         />
       );
     }

@@ -86,7 +86,8 @@ function LineGraph({ axes, points }) {
           x2={margin.left}
           y2={margin.top + graphHeight}
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5" /* Base thickness */
+          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
         />
 
         {/* X-axis */}
@@ -96,7 +97,8 @@ function LineGraph({ axes, points }) {
           x2={margin.left + graphWidth}
           y2={margin.top + graphHeight}
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5" /* Base thickness */
+          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
         />
 
         {/* Y-axis ticks/grid */}
@@ -115,6 +117,8 @@ function LineGraph({ axes, points }) {
                 y2={y}
                 stroke="currentColor"
                 strokeOpacity="0.12"
+                strokeWidth="2.5" /* Base thickness */
+                vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
               />
 
               <text
@@ -122,7 +126,7 @@ function LineGraph({ axes, points }) {
                 y={y}
                 textAnchor="end"
                 dominantBaseline="middle"
-                className="fill-slate-500 text-[10px]"
+                className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
               >
                 {formatNumber(value)}
               </text>
@@ -137,7 +141,7 @@ function LineGraph({ axes, points }) {
             x={point.x}
             y={height - margin.bottom + 25}
             textAnchor="middle"
-            className="fill-slate-600 text-[11px]"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {point.x_label || point.label}
           </text>
@@ -167,7 +171,7 @@ function LineGraph({ axes, points }) {
               x={point.x}
               y={point.y - 10}
               textAnchor="middle"
-              className="fill-slate-700 text-[10px] font-medium"
+              className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
             >
               {formatNumber(point.y_value)}
             </text>
@@ -180,7 +184,7 @@ function LineGraph({ axes, points }) {
             x={margin.left + graphWidth / 2}
             y={height - 8}
             textAnchor="middle"
-            className="fill-slate-600 text-xs font-medium"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {xAxis.label}
           </text>
@@ -194,7 +198,7 @@ function LineGraph({ axes, points }) {
             transform={`rotate(-90 15 ${
               margin.top + graphHeight / 2
             })`}
-            className="fill-slate-600 text-xs font-medium"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {yAxis.label}
           </text>
@@ -257,7 +261,8 @@ function BarGraph({ axes, bars }) {
           x2={margin.left}
           y2={margin.top + graphHeight}
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5" /* Base thickness */
+          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
         />
 
         {/* X-axis */}
@@ -267,7 +272,8 @@ function BarGraph({ axes, bars }) {
           x2={margin.left + graphWidth}
           y2={margin.top + graphHeight}
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5" /* Base thickness */
+          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
         />
 
         {/* Y ticks */}
@@ -290,6 +296,7 @@ function BarGraph({ axes, bars }) {
                   y2={y}
                   stroke="currentColor"
                   strokeOpacity="0.12"
+                  vectorEffect="non-scaling-stroke" /* Prevents the stroke from thinning when SVG scales down */
                 />
 
                 <text
@@ -297,7 +304,7 @@ function BarGraph({ axes, bars }) {
                   y={y}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  className="fill-slate-500 text-[10px]"
+                  className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
                 >
                   {formatNumber(value)}
                 </text>
@@ -338,7 +345,7 @@ function BarGraph({ axes, bars }) {
                 x={x + barWidth / 2}
                 y={y - 7}
                 textAnchor="middle"
-                className="fill-slate-700 text-[10px] font-medium"
+                className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
               >
                 {formatNumber(value)}
               </text>
@@ -348,7 +355,7 @@ function BarGraph({ axes, bars }) {
                 x={x + barWidth / 2}
                 y={height - margin.bottom + 25}
                 textAnchor="middle"
-                className="fill-slate-600 text-[10px]"
+                className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
               >
                 {bar.label}
               </text>
@@ -362,7 +369,7 @@ function BarGraph({ axes, bars }) {
             x={margin.left + graphWidth / 2}
             y={height - 8}
             textAnchor="middle"
-            className="fill-slate-600 text-xs font-medium"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {xAxis.label}
           </text>
@@ -376,7 +383,7 @@ function BarGraph({ axes, bars }) {
             transform={`rotate(-90 15 ${
               margin.top + graphHeight / 2
             })`}
-            className="fill-slate-600 text-xs font-medium"
+            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
           >
             {yAxis.label}
           </text>

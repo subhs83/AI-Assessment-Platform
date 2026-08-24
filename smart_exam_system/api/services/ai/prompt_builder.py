@@ -915,7 +915,6 @@ Never return visual data for decorative purposes.
 
 Never return Markdown, comments, headings, or text outside the JSON.
 
-
 # LANGUAGE
 
 The following fields MUST be written in {language}:
@@ -966,26 +965,14 @@ Every LaTeX backslash MUST be escaped correctly for JSON.
 
 For example:
 
-WRONG:
-"$\sqrt{15}$"
-
 CORRECT:
 "$\\sqrt{15}$"
-
-WRONG:
-"$\angle ABC$"
 
 CORRECT:
 "$\\angle ABC$"
 
-WRONG:
-"$\frac{1}{2}$"
-
 CORRECT:
 "$\\frac{1}{2}$"
-
-WRONG:
-"$\pi r^2$"
 
 CORRECT:
 "$\\pi r^2$"

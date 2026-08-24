@@ -20,13 +20,13 @@ export function calculateGeometryPositions({
   const positions = {};
 
   const centerX = 200;
-  const centerY = 80;
+  const centerY = 100;
 
   const SVG_WIDTH = 520;
-  const SVG_HEIGHT = 160;
+  const SVG_HEIGHT = 200;
 
-  const SVG_HORIZONTAL_PADDING = 50;
-  const SVG_VERTICAL_PADDING = 10;
+  const SVG_HORIZONTAL_PADDING = 30;
+  const SVG_VERTICAL_PADDING = 20;
 
   const SVG_AVAILABLE_WIDTH = SVG_WIDTH - SVG_HORIZONTAL_PADDING * 2;
 

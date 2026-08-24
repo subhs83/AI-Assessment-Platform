@@ -97,8 +97,7 @@ export default function GeometryVisual({ visual }) {
    */
 
   return (
-    <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
-
+    <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         Figure
       </div>
@@ -109,11 +108,12 @@ export default function GeometryVisual({ visual }) {
         </div>
       )}
 
-      <div className="flex justify-center">
+     <div className="flex justify-center w-full overflow-x-auto">
 
         <svg
-          viewBox="0 0 520 160"
-          className="h-auto w-full max-w-xl text-slate-700"
+          viewBox="0 0 520 200"
+          /* Added min-h-[200px] to prevent mobile vertical squishing and crisp rendering */
+          className="h-auto w-full max-w-2xl text-slate-800 dark:text-slate-100 overflow-visible"
           role="img"
           aria-label="Geometry figure"
         >
