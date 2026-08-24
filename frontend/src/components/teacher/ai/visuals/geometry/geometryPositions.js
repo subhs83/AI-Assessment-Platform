@@ -73,7 +73,7 @@ export function calculateGeometryPositions({
   // Scale radius based on number of points (more points → smaller radius)
   const radius = Math.max(
     maxRadius * 0.3, // minimum radius safeguard
-    maxRadius - pointIds.length
+    maxRadius - pointIds.length*3
   );
 
   //console.log("pointIds.length: ",pointIds.length)

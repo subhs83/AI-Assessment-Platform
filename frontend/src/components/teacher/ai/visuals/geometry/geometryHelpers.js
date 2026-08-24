@@ -1776,12 +1776,12 @@ export function lineIntersection(
 export const getSvgDimensions = (isMobile = false) => {
   if (isMobile) {
     return {
-      width: 400,
-      height: 240,
+      width: 380,
+      height: 220,
       paddingX: 20, // Horizontal padding for mobile
       paddingY: 20, // Vertical padding for mobile
       strokeWidth: 3.5,
-      fontSize: 18,
+      fontSize: 20,
     };
   }
 
