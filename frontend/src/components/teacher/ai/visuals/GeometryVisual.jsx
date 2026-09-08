@@ -1,5 +1,5 @@
 import { parseGeometry } from "./geometry/geometryParser";
-import { detectGeometryFigure } from "./geometry/geometryDetector";
+//import { detectGeometryFigure } from "./geometry/geometryDetector";
 import { calculateGeometryPositions } from "./geometry/geometryPositions";
 
 import { getSegmentEndpoints, getSvgDimensions } from "./geometry/geometryHelpers";
@@ -11,6 +11,7 @@ import {
   renderAngles,
   renderCircles,
   renderCollinear,
+  renderArcs,
   renderSegmentAnnotations,
 } from "./geometry/geometryRenderers";
 
@@ -37,6 +38,7 @@ const isMobile = useIsMobile();
     labels,
     circles,
     relationships,
+    arcs,
   } = parsed;
 
   /*
@@ -45,8 +47,7 @@ const isMobile = useIsMobile();
    * --------------------------------------------------
    */
 
-  const figure = detectGeometryFigure(parsed);
-
+  const figure = visual?.figure || parsed?.figure || { type: "generic" };
   /*
    * --------------------------------------------------
    * CALCULATE POSITIONS
@@ -65,7 +66,7 @@ const isMobile = useIsMobile();
    * --------------------------------------------------
    */
 
-  const DEBUG_GEOMETRY = false;
+  const DEBUG_GEOMETRY = true;
 
   if (DEBUG_GEOMETRY) {
     console.log(
@@ -109,7 +110,7 @@ const isMobile = useIsMobile();
 
       {DEBUG_GEOMETRY && (
         <div className="mb-2 rounded bg-slate-900 p-2 text-xs text-white">
-          Figure: {figure?.type || "generic"}
+          Figure: {figure?.type || "generic"}, {figure?.subtype}, {figure?.feature}
         </div>
       )}
 
@@ -171,6 +172,12 @@ const isMobile = useIsMobile();
              isMobile
             )}
 
+            {/* ------------------------------------------
+              Render Arcs
+             ------------------------------------------ */}
+
+            {renderArcs(arcs, points, positions, relationships, angles, figure, isMobile)}
+
           {/* ------------------------------------------
               ANGLES
              ------------------------------------------ */}
@@ -179,7 +186,7 @@ const isMobile = useIsMobile();
             angles,
             points,
             positions,
-            figure,
+            relationships,
             isMobile
             )}
 
@@ -195,6 +202,7 @@ const isMobile = useIsMobile();
             relationships,
             segments,
             circles,
+            angles,
             isMobile
           )}
 

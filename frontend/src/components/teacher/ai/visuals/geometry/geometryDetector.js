@@ -319,18 +319,17 @@ const hasExteriorAngle =
     * --------------------------------------------------
     */
 
-    const hasMedianSegment =
-      segments.some((segment) =>
-        String(segment.label || "")
-          .toUpperCase()
-          .includes("MEDIAN")
-      );
-
+    // const hasMedianSegment =
+    //   segments.some((segment) =>
+    //     String(segment.label || "")
+    //       .toUpperCase()
+    //       .includes("MEDIAN")
+    //   );
+    const basePointsCount = pointIds.length - midpointRelationships.length;
     if (
-      pointIds.length === 4 &&
+      basePointsCount === 4 &&
       parallelPairs.length === 1 &&
-      midpointRelationships.length >= 2 &&
-      hasMedianSegment
+      midpointRelationships.length >= 2
     ) {
       return {
         type: "trapezoid_median",

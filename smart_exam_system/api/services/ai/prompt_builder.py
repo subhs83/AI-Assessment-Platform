@@ -76,921 +76,586 @@ Content:
 
 def build_question_prompt(
     *,
-    content,
-    language,
-    difficulty,
-    blooms_level,
-    question_count,
-):
-    blooms_instruction = BLOOMS_PROMPTS.get(
-        blooms_level,
-        BLOOMS_PROMPTS["mixed"],
-    )
-
-    return f"""
-You are an expert exam question generator for an educational assessment platform.
+    content: str,
+    language: str,
+    difficulty: str,
+    blooms_level: str,
+    question_count: int,
+) -> str:
+    """
+    Generates a production-ready system prompt string for LLM educational question generation.
+    Enforces a strict visual taxonomy across Math, Physics, Chemistry, Data Interpretation,
+    Coordinate Geometry, and IMO/ISO level composite figures.
+    """
+    return f"""You are an expert exam question generator for an educational assessment platform.
 
 DOCUMENT LANGUAGE:
 {language}
 
 Generate every question, option, answer, explanation, and visual label/text in {language}.
+Generate exactly {question_count} self-contained, academically correct multiple-choice questions based on the provided source content.
 
-Generate exactly {question_count} multiple-choice questions.
-
-# INDEPENDENT QUESTION GENERATION
-
-Generate each question independently.
-
-For every question:
-
-1. Determine the question concept and information required to answer it.
-2. Determine whether a visual is required.
-3. If a visual is required, independently generate the visual for that question.
-4. Keep the question, visual, options, answer, and explanation internally
-   consistent.
-
-When multiple questions require visuals, do not automatically reuse the
-visual structure or data from another question.
-
-Each visual-required question independently determines:
-
-- visual structure;
-- number of objects or sets;
-- object/set names;
-- numerical values;
-- relationships;
-- region membership.
-
-Visual variation is required when naturally supported by the question.
-Correctness and consistency always have priority.
-
-For example, Venn-diagram questions may independently use:
-
-- 2 sets;
-- 3 sets;
-- different set names;
-- different numerical values;
-- different region membership patterns.
-
-Do not force every question to use the same number of sets or objects.
-
-Do not copy a visual from an earlier question and change only the question
-text, options, or correct answer.
-
-The visual is part of the current question and must be generated specifically
-for that question.
-
-DIFFICULTY:
-{difficulty}
-
-BLOOM'S TAXONOMY:
-{blooms_instruction}
+DIFFICULTY: {difficulty}
+BLOOM'S TAXONOMY: {blooms_level}
 
 
 # SOURCE CONTENT
 
 {content}
 
-Use relevant information from the source content to create self-contained,
-academically correct questions.
 
-Do not add unsupported facts, concepts, or relationships.
+# MATHEMATICAL & LATEX FORMATTING
 
-
-# MATHEMATICAL NOTATION
-
-- Use LaTeX for mathematical expressions, equations, formulas, fractions,
-  powers, roots, inequalities, and mathematical symbols.
-- Use inline LaTeX with $...$ inside question_text, options, and explanation.
-- Prefer LaTeX over Unicode mathematical notation.
+- Use standard LaTeX for all mathematical expressions, equations, formulas, fractions, powers, roots, and inequalities.
+- Write inline LaTeX using $...$ inside "question_text", options, and "explanation".
+- Use LaTeX backslashes only for mathematical notation and symbols, not for ordinary text. (e.g., "\\\\frac{{1}}{{2}}", "\\\\angle ABC", "\\\\theta", "\\\\pi r^2").
 - Do not use Unicode superscripts or subscripts when LaTeX can represent them.
-- Keep all mathematical expressions mathematically correct.
-- Use standard LaTeX notation.
-- The final response must remain valid JSON.
-- Escape LaTeX backslashes according to standard JSON string escaping.
+
+# QUESTION & EXPLANATION CONSTRAINTS
+
+1. Generate exactly four options ("option_a", "option_b", "option_c", "option_d").
+2. "correct_answer" must be exactly one of: "A", "B", "C", or "D". Options must be plausible, unique, and unambiguous.
+3. EXPLANATION RULE: Provide a brief explanation stating ONLY why the correct answer is correct. Do NOT explain why the other options are wrong. Keep it concise, direct, and short.
+4. ZERO INTERNAL INFORMATION: Do NOT include internal calculations, scratchpad work, planning steps, thought processes, step-by-step mathematical derivations, or self-dialogue inside ANY JSON field or anywhere in the response.
+5. Each question must be generated independently. Do not copy visual structures, numerical values, or set labels across questions.
+6. Do not invent unsupported facts or extra concepts outside the source content.
 
 
-# QUESTION RULES
+# VISUAL OUTPUT RULES & TAXONOMY
 
-1. Generate questions from the provided source content.
+Set "visual_required": true ONLY when a generated question depends directly on a visual element to be understood or solved. Otherwise, set "visual_required": false and "visual_type": null (and omit the "visual" payload).
 
-2. Questions may be text-based, mathematical, reasoning-based, figure-based,
-   diagram-based, graph-based, or another appropriate educational type.
+Every visual payload MUST be purely semantic. Do NOT generate SVG, HTML, CSS, bounding boxes, or raw coordinate layouts.
 
-3. Do not create a visual merely because the source contains a figure.
+Every visual payload MUST include a top-level "figure" object containing explicit "type", "subtype", and optional "feature" fields:
 
-4. A visual is required only when the generated question itself depends on
-   a visual to understand or answer the question.
+For chord_properties questions that compare TWO chords (e.g., "chord AB and chord CD are equal in length"), the visual payload MUST include ALL points, segments, and relationships for BOTH chords — not just the one the question's numeric answer is derived from. Every named chord mentioned in the question_text must have its own points, its own forms_chord relationship, and its own perpendicular-distance construction if referenced.
 
-5. When a visual is required:
+SEGMENT ELEMENT SCOPING (applies to all geometry visuals):
+Only include a segment element in "elements" if it is either:
+  (a) directly referenced by name in the question_text, OR
+  (b) structurally necessary to construct/draw the figure (e.g., a chord itself, a radius used to form a right triangle, a perpendicular segment defining the construction).
 
-   "visual_required": true
+Do NOT include a segment element solely because its value can be trivially derived from another segment already declared (e.g., a half-chord segment like "MB" when the full chord "AB" is already given and M is its stated midpoint — MB's length is redundant once AB and the midpoint property are shown, and adding it only clutters the diagram). If a value is only mentioned in the explanation as a derived intermediate step, it does not need its own visual element unless the question_text explicitly asks about that specific segment.
 
-   and select the appropriate "visual_type".
+When in doubt, prefer fewer labeled segments: a diagram should show only what a student needs to see to understand and solve the problem, not every true fact about the figure.
 
-6. When a visual is not required:
+VISUAL ELEMENT VALUE FIELDS — PLAIN NUMERIC ONLY:
 
-   "visual_required": false,
-   "visual_type": null
+The "value" field on any visual.elements[] entry (points, segments, angles, arcs, etc.) is a machine-parsed field consumed directly by the rendering engine and is never shown to the user as raw text. It must NOT contain LaTeX, delimiters, units words, or symbols. This is separate from the LaTeX formatting rule above, which governs question_text, options, and explanation only — those continue to use LaTeX normally.
 
-7. The visual represents the figure presented WITH THAT QUESTION.
+- Angle "value" fields must be a bare number representing DEGREES ONLY, e.g. "60", "90", "120". Never "\\\\(\\\\frac{{\\\\pi}}{{3}}\\\\)", never "90^\\\\circ", never any LaTeX delimiters, never the word "rad" or "deg" inside "value".
+- If a question is phrased using radians (e.g. "central angle of pi/3 radians"), still convert and store the DEGREE-EQUIVALENT bare number in "value" (e.g. "60"). The radian phrasing belongs only in question_text, explanation, and the element's own "label" field (e.g. "label": "\\\\(\\\\theta = \\\\frac{{\\\\pi}}{{3}}\\\\text{{ rad}}\\\\)"), which follow the LaTeX rule as normal.
+- Segment "value" fields must be a bare number or a number plus a short unit string (e.g. "10 cm", "6 in") — never LaTeX, never a fraction, never a symbol.
+- This rule applies uniformly across every figure.type / figure.feature combination.
 
-8. The visual must represent the question, not its solution or explanation.
+SEGMENT CONNECTIVITY — EXPLICIT ENDPOINTS REQUIRED:
 
-9. Each generated question independently determines its own visual.
-   Do not automatically reuse another question's visual.
+Every segment element that represents a radius must have its own explicit "forms_segment" relationship stating its two endpoint points, in addition to any "is_radius_of" relationship. Do NOT rely on the segment's "id" string (e.g. "segment_oa") to imply its endpoints — endpoints must always be stated as an explicit relationship, exactly like chord segments are already required to do.
 
-10. Do not reuse another question's visual structure, labels, values, or
-    relationships unless the current question genuinely requires the same
-    unchanged visual.
+Example (required shape for a radius):
+{{ "elements": ["point_o", "point_a"], "target": "segment_oa", "type": "forms_segment" }},
+{{ "elements": ["segment_oa"], "target": "circle_c1", "type": "is_radius_of" }}
 
-11. If a question changes or modifies a visual situation, only generate it
-    when the resulting visual can be completely represented by the supported
-    visual semantic data.
+--------------------------------------------------
+1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
+--------------------------------------------------
+- "type": "triangle"            -> "subtype": "equilateral" | "isosceles" | "scalene" | "right" | "general"
+                                   "feature": "none" | "parallel_segment" | "altitude" | "median" | "angle_bisector" | "incircle" | "excircle" | "exterior_angle" | "circumcenter | cevian_concurrency | transversal"
+- "type": "trapezoid"           -> "subtype": "isosceles" | "scalene" | "right"
+                                   "feature": "none" | "median" | "diagonals" | "diagonal_proportionality" | "incircle"
+- "type": "parallelogram"       -> "subtype": "general" | "rectangle" | "rhombus" | "square"
+                                   "feature": "none" | "diagonals" | "altitude" | "inscribed_circle"
+- "type": "quadrilateral"       -> "subtype": "general" | "kite" | "cyclic" | "dart"
+                                   "feature": "none" | "diagonals" | "diagonal_area_split" | "axis_of_symmetry" | "inscribed_in_circle" | "exterior_angle"
+- "type": "polygon"             -> "subtype": "regular_n_gon" | "irregular_n_gon" | "star_polygon"
+                                   "feature": "none" | "diagonals" | "inscribed_circle" | "circumscribed_circle"
+- "type": "circle"              -> "subtype": "standard" | "concentric" | "intersecting"
+                                   "feature": "none" | "sector" | "segment" | "inscribed_polygon" | "central_inscribed_angle" | "chord_properties" |
+                                              "tangent_properties" | "tangent_chord_angle" | "intersecting_chords" | "secant_secant" | "tangent_secant"
+- "type": "coordinate_geometry" -> "subtype": "cartesian_plane" | "distance_formula_segment" | "midpoint_segment" | "slope_line" | "transformation_reflection" | "transformation_translation"
+                                   "feature": "none" | "grid_lines" | "vector_arrow" | "angle_indicator"
 
-12. Do not invent unsupported facts or educational relationships.
+--------------------------------------------------
+2. SET THEORY & DATA TAXONOMY
+--------------------------------------------------
+- "type": "venn_diagram"    -> "subtype": "2_set" | "3_set" | "disjoint" | "subset"
+- "type": "graph"           -> "subtype": "line_graph" | "bar_graph" | "coordinate_graph" | "function_graph" | "number_line"
+- "type": "chart"           -> "subtype": "pie" | "donut"
+- "type": "table"           -> "subtype": "data_matrix" | "frequency_table"
 
-13. Questions must be self-contained.
+--------------------------------------------------
+3. SCIENCE & CHEMISTRY TAXONOMY
+--------------------------------------------------
+- "type": "chemistry"       -> "subtype": "molecular_2d" | "lewis_structure" | "skeletal_formula" | "titration_setup" | "galvanic_cell"
+- "type": "physics"         -> "subtype": "circuit_series" | "circuit_parallel" | "circuit_bridge" | "free_body_diagram" | "inclined_plane" | "ray_diagram_lens" | "ray_diagram_mirror"
 
-14. Generate exactly four options.
-
-15. Only one option may be correct.
-
-16. "correct_answer" must be one of:
-    "A", "B", "C", "D"
-
-17. Options must be plausible and unambiguous.
-
-18. Do not duplicate options.
-
-
-# EXPLANATION RULES
-
-The explanation must concisely(in short) explain why the correct answer is correct.
-
-Do not explain why the other options are wrong.
-
-Do not refer to options as "Option A", "Option B", etc. unless absolutely
-necessary.
-
-The explanation must be consistent with the generated question and visual.
-
-- Return only the final, corrected explanation and solution.
-Do NOT include extra fields for analysis, reasoning, planning, notes,
-validation, or commentary.
-
-Do NOT write phrases such as:
-"I will..."
-"Let me..."
-"Let's..."
-"Final check..."
-"Re-ordering..."
-"Seems good..."
-"I need exactly..."
-"I'll ensure..."
-"My earlier..."
-"This would require..."
-"Let me re-confirm..."
-"I will use..."
-- If you detect an error while solving, silently correct it and return only the final correct solution.
-- Keep the explanation concise and logically ordered.
-- Use escaped newline characters (`\n`) inside JSON string values. Never insert literal line breaks inside a JSON string.
+--------------------------------------------------
+4. PHASE 2: COMPOSITE / IMO / ISO TAXONOMY
+--------------------------------------------------
+- "type": "composite"       -> "subtype": "multi_layer" (Include a "subfigures": [...] array listing each child subfigure with its own explicit "type", "subtype", and optional "feature")
 
 
-# VISUAL OUTPUT
+# VISUAL JSON PAYLOAD CONTRACTS
 
-Currently supported visual types:
+When "visual_required": true, return the corresponding semantic "visual" payload structure:
 
-- "venn"
-- "geometry"
-- "graph"
-
-Future visual types will be added independently.
-
-Do not apply the rules of one visual type to another visual type.
-
-A visual must contain semantic educational information only.
-
-Do NOT generate:
-
-- SVG
-- HTML
-- CSS
-- coordinates
-- pixel positions
-- bounding boxes
-- renderer instructions
-- styling instructions
-- drawing instructions
-
-The frontend is responsible for rendering the semantic data.
-
-
-# VISUAL TYPE: VENN
-
-When:
-
-"visual_required": true
-
-and:
-
-"visual_type": "venn"
-
-return:
-
+--- TRIANGLE GEOMETRY PAYLOAD ---
 "visual": {{
-    "elements": [...],
-    "relationships": [...]
-}}
-
-The Venn semantic data must describe the exact Venn diagram required by
-the generated question.
-
-The number of sets is determined by the question. It may be 2 sets, 3 sets,
-or another supported structure.
-
-Set names, values, and regions must be generated for the current question.
-Do not assume a fixed Venn diagram.
-
-For each meaningful value or label, explicitly describe its set membership
-and non-membership.
-
-Do not rely on visual proximity to determine membership.
-
-Elements may use:
-
-- circle
-- square
-- rectangle
-- triangle
-- polygon
-- dot
-- label
-
-An element may contain relevant properties such as:
-
-- id
-- type
-- label
-- text
-- value
-
-Relationships may describe:
-
-- overlaps
-- belongs_to_region
-- not_in_region
-- inside
-- outside
-
-For a value inside multiple sets, list every containing set.
-
-For a value outside a set, explicitly include that set in "not_in".
-
-Do not include sets, values, regions, or relationships that do not exist
-in the question's required figure.
-
-
-# GEOMETRY VISUAL
-
-When the question depends on a geometric figure:
-
-"visual_required": true,
-"visual_type": "geometry"
-
-Return:
-
-"visual": {{
-  "elements": [],
-  "relationships": []
-}}
-
-The geometry visual must describe the figure semantically.
-Do not generate SVG, coordinates, CSS, HTML, styling, or drawing instructions.
-
-## Supported geometry elements
-
-Supported element types:
-
-- "point"
-- "line"
-- "segment"
-- "ray"
-- "triangle"
-- "rectangle"
-- "square"
-- "circle"
-- "angle"
-- "label"
-
-Each element should contain only the properties required by the question:
-
-- "id"
-- "type"
-- "label"
-- "text"
-- "value"
-- "value_expression"
-
-Use stable IDs based on the element itself.
-
-Examples:
-
-{{
-  "id": "point_a",
-  "label": "A",
-  "type": "point"
-}}
-
-{{
-  "id": "segment_ab",
-  "label": "AB",
-  "type": "segment"
-}}
-
-{{
-  "id": "angle_abc",
-  "label": "∠ABC",
-  "type": "angle",
-  "value": 40
-}}
-
-{{
-  "id": "segment_ab",
-  "label": "AB",
-  "type": "segment",
-  "value_expression": "2x + 5"
-}}
-
-## Supported relationships
-
-Use only relationships required to describe the figure:
-
-Supported relationships:
-
-- "forms_triangle"
-- "connected_to"
-- "lies_on"
-- "collinear"
-- "parallel_to"
-- "perpendicular_to"
-- "equal_to"
-- "midpoint_of"
-- "intersects"
-- "has_angle"
-- "has_length"
-- "has_radius"
-- "has_value"
-- "has_length_relationship"
-
-A relationship uses the following general structure:
-
-{{
-  "elements": ["element_id_1", "element_id_2"],
-  "type": "relationship_type"
-}}
-
-For a relationship involving one element:
-
-{{
-  "element_id": "element_id",
-  "type": "relationship_type",
-  "value": 90
-}}
-
-For a relationship involving a target:
-
-{{
-  "elements": ["element_id_1", "element_id_2"],
-  "target": "element_id",
-  "type": "relationship_type"
-}}
-
-## Measurement rules
-
-Use:
-
-- "value" for a known numeric measurement.
-- "value_expression" for an algebraic measurement.
-
-Examples:
-
-{{
-  "element_id": "angle_a",
-  "type": "has_angle",
-  "value": 90
-}}
-
-{{
-  "element_id": "segment_ab",
-  "type": "has_length",
-  "value": 8
-}}
-
-{{
-  "element_id": "segment_ab",
-  "type": "has_length",
-  "value_expression": "3x + 5"
-}}
-
-{{
-  "elements": ["point_a", "point_d"],
-  "type": "connected_to"
-}}
-
-## Geometry representation rules
-
-1. Represent the actual figure required by the question.
-
-2. Include enough semantic information for the figure to be reconstructed.
-
-3. Include only information relevant to the question.
-
-4. Never include coordinates, SVG, styling, layout instructions, or renderer instructions.
-
-5. Never encode the solution into the figure.
-
-6. Preserve every given geometric measurement and relationship exactly.
-
-7. If a point lies on a segment, explicitly represent it with "lies_on".
-
-8. If multiple points lie on the same line, explicitly represent them with "collinear".
-
-9. If two segments are parallel, explicitly represent "parallel_to".
-
-10. If two segments are perpendicular, explicitly represent "perpendicular_to".
-
-11. If two segments or angles are equal, explicitly represent "equal_to".
-
-12. If a point is a midpoint, explicitly represent "midpoint_of".
-
-13. If two lines or segments intersect at a named point, explicitly represent "intersects".
-
-14. If a triangle is present, explicitly identify its three vertices using "forms_triangle".
-
-15. Additional points on a triangle must not replace the triangle's three vertices.
-
-16. An extension of a triangle side must be represented using a point/line/segment relationship such as "collinear" and must not replace the triangle itself.
-
-17. A point lying on a triangle side must be represented separately using "lies_on".
-
-18. Do not assume a relationship merely because it is mathematically implied. Include relationships that are explicitly needed to reconstruct the stated figure.
-
-19. The visual must represent the question, not the answer.
-
-20. Generate the geometry independently for each question.
-
-21. Never copy geometry measurements or relationships from another question.
-
-22. Mathematical correctness has priority over visual variation.
-
-
-## Triangle rules
-
-For every triangle:
-
-- Include the three triangle vertices as points.
-- Include the three triangle sides as segments when they are needed to reconstruct the figure.
-- Include one "forms_triangle" relationship containing exactly the three triangle vertex IDs.
-- Every segment that represents an explicitly drawn geometric connection between two points must have a corresponding "connected_to" relationship containing those two point IDs.
-
-Example:
-
-{{
+  "figure": {{ 
+    "type": "triangle", 
+    "subtype": "scalene", 
+    "feature": "parallel_segment" 
+  }},
   "elements": [
-    {{
-      "id": "point_a",
-      "label": "A",
-      "type": "point"
-    }},
-    {{
-      "id": "point_b",
-      "label": "B",
-      "type": "point"
-    }},
-    {{
-      "id": "point_c",
-      "label": "C",
-      "type": "point"
-    }}
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_e", "type": "point", "label": "E" }},
+    {{ "id": "segment_ad", "type": "segment", "label": "AD", "value": "4" }},
+    {{ "id": "segment_db", "type": "segment", "label": "DB", "value": "6" }},
+    {{ "id": "segment_ae", "type": "segment", "label": "AE", "value": "5" }},
+    {{ "id": "segment_ec", "type": "segment", "label": "EC" }},
+    {{ "id": "line_de", "type": "line", "label": "DE" }},
+    {{ "id": "line_bc", "type": "line", "label": "BC" }}
   ],
   "relationships": [
-    {{
-      "elements": [
-        "point_a",
-        "point_b",
-        "point_c"
-      ],
-      "type": "forms_triangle"
-    }}
+    {{ "type": "forms_segment", "elements": ["point_a", "point_d"], "target": "segment_ad" }},
+    {{ "type": "forms_segment", "elements": ["point_d", "point_b"], "target": "segment_db" }},
+    {{ "type": "forms_segment", "elements": ["point_a", "point_e"], "target": "segment_ae" }},
+    {{ "type": "forms_segment", "elements": ["point_e", "point_c"], "target": "segment_ec" }},
+    {{ "type": "parallel_to", "elements": ["line_de", "line_bc"] }},
+    {{ "type": "is_on_segment", "elements": ["point_d"], "target": "segment_ab" }},
+    {{ "type": "is_on_segment", "elements": ["point_e"], "target": "segment_ac" }}
   ]
 }}
 
-### Structural Completeness Rule
-
-The visual must contain every segment required to actually draw the stated geometry.
-
-If a triangle or polygon is declared through a `forms_triangle` relationship, the corresponding boundary segments must also be present in `elements` and represented by `connected_to` relationships.
-
-For example, if:
-{{
-  "elements": ["point_a", "point_b", "point_c"],
-  "type": "forms_triangle"
-}}
-
-then the visual must contain:
-- segment_ab
-- segment_bc
-- segment_ca
-
-and corresponding:
-- A-B connected_to
-- B-C connected_to
-- C-A connected_to
-
-For composite figures, include all explicitly drawn internal segments and all segments required to connect stated points.
-
-Do not rely on `forms_triangle` alone to imply drawable segments.
-
-For intersections:
-- include the intersecting segments;
-- include the intersection point;
-- include the four resulting point-to-intersection connections when those portions are part of the visible figure.
-
-The visual JSON must be sufficient for the frontend to reconstruct the complete figure without guessing missing segments.
-
-## Important
-
-The geometry JSON is a semantic description only.
-
-The frontend is responsible for:
-
-- geometry detection
-- coordinate calculation
-- figure orientation
-- positioning
-- labels
-- measurements
-- SVG rendering
-
-Do not generate frontend-specific information.
-
-The frontend is responsible for converting this semantic geometry JSON into the visual figure.
-
-### Visual Consistency Rules
-
-- Every drawn segment connecting two named points must have a corresponding `connected_to` relationship containing those two point IDs.
-- Do not include extra points, segments, diagonals, cevians, or construction lines unless they are explicitly required by the question or required to construct the target figure.
-- Every visual element must have a clear purpose supported by the question or by another stated relationship.
-
-Rules:
-- "expression" must be the complete equation in LaTeX.
-- "variables" describes only meaningful unknown variables.
-- "relationships" describes only important mathematical relationships.
-- Generate the equation independently for the current question.
-- Do not copy an equation or its values from another question.
-- The equation, question, options, answer, and explanation must remain consistent.
-- Do not generate SVG, coordinates, styling, or renderer instructions.
-- The frontend is responsible for rendering the equation.
-
-
-GRAPH VISUAL RULE
-
-When a question requires a graph, set:
-
-"visual_required": true,
-"visual_type": "graph"
-
-and return a "visual" object using ONLY the following structure:
-
+--- CIRCUMCENTER PAYLOAD ---
 "visual": {{
-  "graph_type": "...",
-  "elements": [...],
-  "relationships": [...]
+  "figure": {{ 
+    "type": "triangle", 
+    "subtype": "scalene", 
+    "feature": "circumcenter" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "line_l1", "type": "line", "label": "l_1" }},
+    {{ "id": "line_l2", "type": "line", "label": "l_2" }},
+    {{ "id": "line_l3", "type": "line", "label": "l_3" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "Circumcircle" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_triangle", "elements": ["point_a", "point_b", "point_c"], "target": "triangle_abc" }},
+    {{ "type": "is_perpendicular_bisector_of", "elements": ["line_l1"], "target": "segment_bc" }},
+    {{ "type": "is_perpendicular_bisector_of", "elements": ["line_l2"], "target": "segment_ac" }},
+    {{ "type": "is_perpendicular_bisector_of", "elements": ["line_l3"], "target": "segment_ab" }},
+    {{ "type": "intersect_at", "elements": ["line_l1", "line_l2", "line_l3"], "target": "point_o" }},
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "passes_through", "elements": ["circle_c1"], "target": ["point_a", "point_b", "point_c"] }}
+  ]
 }}
 
-Supported graph_type values:
-
-- "line_graph"
-- "bar_graph"
-- "coordinate_graph"
-- "function_graph"
-- "number_line"
-
-Supported element types:
-
-- "axis"
-- "point"
-- "line"
-- "curve"
-- "bar"
-- "label"
-- "intersection"
-- "highlight"
-
-Supported relationship types:
-
-- "plotted_on"
-- "connected_to"
-- "intersects"
-- "passes_through"
-- "parallel_to"
-- "perpendicular_to"
-- "equal_to"
-- "highlighted"
-- "has_value"
-- "has_label"
-
-Example - line graph
-{{
-  "visual_required": true,
-  "visual_type": "graph",
-  "visual": {{
-    "graph_type": "line_graph",
-    "elements": [
-      {{
-        "id": "axis_x",
-        "type": "axis",
-        "label": "Time (hours)"
-      }},
-      {{
-        "id": "axis_y",
-        "type": "axis",
-        "label": "Distance (km)"
-      }},
-      {{
-        "id": "point_1",
-        "type": "point",
-        "label": "(0,0)",
-        "x": 0,
-        "y": 0
-      }},
-      {{
-        "id": "point_2",
-        "type": "point",
-        "label": "(2,10)",
-        "x": 2,
-        "y": 10
-      }},
-      {{
-        "id": "line_1",
-        "type": "line",
-        "label": "Distance"
-      }}
-    ],
-    "relationships": [
-      {{
-        "elements": ["point_1", "line_1"],
-        "type": "plotted_on"
-      }},
-      {{
-        "elements": ["point_2", "line_1"],
-        "type": "plotted_on"
-      }}
-    ]
-  }}
-}}
-Example - bar graph
-{{
-  "visual_required": true,
-  "visual_type": "graph",
-  "visual": {{
-    "graph_type": "bar_graph",
-    "elements": [
-      {{
-        "id": "category_math",
-        "type": "bar",
-        "label": "Math",
-        "value": 40
-      }},
-      {{
-        "id": "category_science",
-        "type": "bar",
-        "label": "Science",
-        "value": 30
-      }},
-      {{
-        "id": "category_english",
-        "type": "bar",
-        "label": "English",
-        "value": 50
-      }}
-    ],
-    "relationships": [
-      {{
-        "elements": ["category_math"],
-        "type": "has_value",
-        "value": 40
-      }},
-      {{
-        "elements": ["category_science"],
-        "type": "has_value",
-        "value": 30
-      }},
-      {{
-        "elements": ["category_english"],
-        "type": "has_value",
-        "value": 50
-      }}
-    ]
-  }}
-}}
-
-For every graph, provide enough semantic information for the frontend renderer to reconstruct the graph.
-
-IMPORTANT:
-- Do NOT generate SVG.
-- Do NOT generate HTML.
-- Do NOT provide pixel coordinates.
-- Do NOT describe visual appearance in natural language.
-- Use only the supported graph_type, element types, and relationship types.
-- If the question does not require a graph, use:
-  "visual_required": false,
-  "visual_type": null
-  and do not include a visual object.
-- Do not create a graph merely because numbers appear in the question.
-- The graph must represent information that is necessary or useful for solving or understanding the question.
-# FUTURE VISUAL TYPES
-
-Additional visual types will be added here:
-
- 
-- circuit
-- chart
-- table
-- other
-
-Each visual type will receive its own small semantic contract.
-
-Do not apply Venn-specific rules to future visual types.
-
-
-# VISUAL VARIATION
-
-When multiple questions require visuals, independently construct the visual
-for each question.
-
-Never reuse another question's complete visual data.
-
-For Venn diagrams:
-
-- Use 2 or 3 sets according to the current question.
-- Vary set names when appropriate.
-- Vary numerical region values when appropriate.
-- Generate memberships from the current question.
-- Do not reuse the same complete elements, values, and memberships from
-  another question.
-- Do not change a visual merely to create variation if that would make the
-  question incorrect or ambiguous.
-
-Before returning each question, verify that its visual independently matches
-its own question, answer, and explanation.
-
-
-
-# FINAL JSON FORMAT
-
-Return ONLY valid JSON.
-
-The top-level structure MUST be:
-
-{{
-    "data": [
-        {{
-            "question_text": "...",
-            "option_a": "...",
-            "option_b": "...",
-            "option_c": "...",
-            "option_d": "...",
-            "correct_answer": "A",
-            "explanation": "...",
-            "visual_required": false,
-            "visual_type": null
-        }}
-    ]
-}}
-
-1. Parse JSON
-2. Check correct_answer is A/B/C/D
-3. Compare correct_answer against the option values
-4. If explanation contains an obvious final numeric answer, compare it
-5. If mismatch → repair/regenerate only that question
-
-When a question requires a visual, add:
-
-When a question requires a Venn diagram, include:
-"visual_required": true,
-"visual_type": "venn",
+--- TRAPEZOID GEOMETRY PAYLOAD ---
 "visual": {{
-    "elements": [...],
-    "relationships": [...]
+  "figure": {{ 
+    "type": "trapezoid", 
+    "subtype": "isosceles", 
+    "feature": "diagonals" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "segment_ac", "type": "segment", "label": "AC" }},
+    {{ "id": "segment_bd", "type": "segment", "label": "BD" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_trapezoid", "elements": ["point_a", "point_b", "point_c", "point_d"], "target": "trapezoid_abcd" }},
+    {{ "type": "parallel_to", "elements": ["segment_ab", "segment_dc"] }},
+    {{ "type": "forms_segment", "elements": ["point_a", "point_c"], "target": "segment_ac" }},
+    {{ "type": "forms_segment", "elements": ["point_b", "point_d"], "target": "segment_bd" }},
+    {{ "type": "equal_length", "elements": ["segment_ac", "segment_bd"] }}
+  ]
 }}
 
-When a question requires a geometry figure, include:
-"visual_required": true,
-"visual_type": "geometry",
+--- TRAPEZOID DIAGONAL PROPORTIONALITY PAYLOAD ---
 "visual": {{
-    "elements": [...],
-    "relationships": [...]
+  "figure": {{ 
+    "type": "trapezoid", 
+    "subtype": "scalene", 
+    "feature": "diagonal_proportionality" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_p", "type": "point", "label": "P" }},
+    {{ "id": "segment_ap", "type": "segment", "label": "AP", "value": "6" }},
+    {{ "id": "segment_pc", "type": "segment", "label": "PC", "value": "9" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_trapezoid", "elements": ["point_a", "point_b", "point_c", "point_d"], "target": "trapezoid_abcd" }},
+    {{ "type": "parallel_to", "elements": ["segment_ab", "segment_dc"] }},
+    {{ "type": "intersect_at", "elements": ["segment_ac", "segment_bd"], "target": "point_p" }},
+    {{ "type": "forms_segment", "elements": ["point_a", "point_p"], "target": "segment_ap" }},
+    {{ "type": "forms_segment", "elements": ["point_p", "point_c"], "target": "segment_pc" }}
+  ]
 }}
 
-When a question requires a graph, include:
-"visual_required": true,
-"visual_type": "graph",
+--- PARALLELOGRAM GEOMETRY PAYLOAD ---
 "visual": {{
-    "elements": [...],
-    "relationships": [...]
+  "figure": {{ 
+    "type": "parallelogram", 
+    "subtype": "general", 
+    "feature": "diagonals" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "segment_ac", "type": "segment", "label": "AC" }},
+    {{ "id": "segment_bd", "type": "segment", "label": "BD" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_parallelogram", "elements": ["point_a", "point_b", "point_c", "point_d"], "target": "parallelogram_abcd" }},
+    {{ "type": "parallel_to", "elements": ["segment_ab", "segment_dc"] }},
+    {{ "type": "parallel_to", "elements": ["segment_ad", "segment_bc"] }},
+    {{ "type": "forms_segment", "elements": ["point_a", "point_c"], "target": "segment_ac" }},
+    {{ "type": "forms_segment", "elements": ["point_b", "point_d"], "target": "segment_bd" }},
+    {{ "type": "intersect_at", "elements": ["segment_ac", "segment_bd"], "target": "point_o" }},
+    {{ "type": "bisects", "elements": ["point_o"], "target": ["segment_ac", "segment_bd"] }}
+  ]
 }}
 
-When a question does not require a visual:
+--- RHOMBUS GEOMETRY PAYLOAD (parallelogram subtype variant) ---
+"visual": {{
+  "figure": {{ 
+    "type": "parallelogram", 
+    "subtype": "rhombus", 
+    "feature": "diagonals" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "angle_aob", "type": "angle", "label": "\\\\(\\\\angle AOB\\\\)", "value": "90" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_parallelogram", "elements": ["point_a", "point_b", "point_c", "point_d"], "target": "parallelogram_abcd" }},
+    {{ "type": "parallel_to", "elements": ["segment_ab", "segment_dc"] }},
+    {{ "type": "parallel_to", "elements": ["segment_ad", "segment_bc"] }},
+    {{ "type": "equal_length", "elements": ["segment_ab", "segment_bc", "segment_cd", "segment_da"] }},
+    {{ "type": "intersect_at", "elements": ["segment_ac", "segment_bd"], "target": "point_o" }},
+    {{ "type": "forms_angle", "elements": ["point_a", "point_o", "point_b"], "target": "angle_aob" }},
+    {{ "type": "is_perpendicular_to", "elements": ["segment_ac", "segment_bd"] }}
+  ]
+}}
 
-"visual_required": false,
-"visual_type": null
+--- QUADRILATERAL (KITE) GEOMETRY PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "quadrilateral", 
+    "subtype": "kite", 
+    "feature": "axis_of_symmetry" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_e", "type": "point", "label": "E" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_quadrilateral", "elements": ["point_a", "point_b", "point_c", "point_d"], "target": "quadrilateral_abcd" }},
+    {{ "type": "equal_length", "elements": ["segment_ab", "segment_ad"] }},
+    {{ "type": "equal_length", "elements": ["segment_cb", "segment_cd"] }},
+    {{ "type": "intersect_at", "elements": ["segment_ac", "segment_bd"], "target": "point_e" }},
+    {{ "type": "is_perpendicular_to", "elements": ["segment_ac", "segment_bd"] }},
+    {{ "type": "bisects", "elements": ["point_e"], "target": ["segment_bd"] }}
+  ]
+}}
 
-Do NOT include "visual" when visual_required is false.
+--- QUADRILATERAL (CYCLIC) GEOMETRY PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "quadrilateral", 
+    "subtype": "cyclic", 
+    "feature": "inscribed_in_circle" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }},
+    {{ "id": "angle_abc", "type": "angle", "label": "\\\\(\\\\angle ABC\\\\)", "value": "110" }},
+    {{ "id": "angle_adc", "type": "angle", "label": "\\\\(\\\\angle ADC\\\\)", "value": "?" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_quadrilateral", "elements": ["point_a", "point_b", "point_c", "point_d"], "target": "quadrilateral_abcd" }},
+    {{ "type": "passes_through", "elements": ["circle_c1"], "target": ["point_a", "point_b", "point_c", "point_d"] }},
+    {{ "type": "forms_angle", "elements": ["point_a", "point_b", "point_c"], "target": "angle_abc" }},
+    {{ "type": "forms_angle", "elements": ["point_a", "point_d", "point_c"], "target": "angle_adc" }},
+    {{ "type": "opposite_angles_supplementary", "elements": ["angle_abc", "angle_adc"] }}
+  ]
+}}
 
-Never return an empty visual object.
+--- CIRCLE: BASIC PROPERTIES PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "circle", 
+    "subtype": "standard", 
+    "feature": "none" 
+  }},
+  "elements": [
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "point_r", "type": "point", "label": "R" }},
+    {{ "id": "segment_or", "type": "segment", "label": "Radius", "value": "30 cm" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }}
+  ],
+  "relationships": [
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "forms_segment", "elements": ["point_o", "point_r"], "target": "segment_or" }},
+    {{ "type": "is_radius_of", "elements": ["segment_or"], "target": "circle_c1" }},
+    {{ "type": "is_on_circumference", "elements": ["point_r"], "target": "circle_c1" }}
+  ]
+}}
 
-Never return visual data for decorative purposes.
+--- CIRCLE: TWO EQUAL CHORDS PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "circle", 
+    "subtype": "standard", 
+    "feature": "chord_properties" 
+  }},
+  "elements": [
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_m", "type": "point", "label": "M" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_n", "type": "point", "label": "N" }},
+    {{ "id": "segment_ab", "type": "segment", "label": "AB" }},
+    {{ "id": "segment_cd", "type": "segment", "label": "CD" }},
+    {{ "id": "segment_ob", "type": "segment", "label": "Radius OB", "value": "13 cm" }},
+    {{ "id": "segment_om", "type": "segment", "label": "Distance OM", "value": "5 cm" }},
+    {{ "id": "segment_on", "type": "segment", "label": "Distance ON" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }}
+  ],
+  "relationships": [
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "forms_chord", "elements": ["point_a", "point_b"], "target": "segment_ab" }},
+    {{ "type": "forms_chord", "elements": ["point_c", "point_d"], "target": "segment_cd" }},
+    {{ "type": "is_on_segment", "elements": ["point_m"], "target": "segment_ab" }},
+    {{ "type": "is_on_segment", "elements": ["point_n"], "target": "segment_cd" }},
+    {{ "type": "is_perpendicular_to", "elements": ["segment_om", "segment_ab"] }},
+    {{ "type": "is_perpendicular_to", "elements": ["segment_on", "segment_cd"] }},
+    {{ "type": "is_radius_of", "elements": ["segment_ob"], "target": "circle_c1" }},
+    {{ "type": "equal_length", "elements": ["segment_ab", "segment_cd"] }}
+  ]
+}}
+--- CIRCLE: CENTRAL VS INSCRIBED ANGLE PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "circle", 
+    "subtype": "standard", 
+    "feature": "central_inscribed_angle" 
+  }},
+  "elements": [
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }},
+    {{ "id": "angle_aob", "type": "angle", "label": "\\\\(\\\\angle AOB\\\\)", "value": "80" }},
+    {{ "id": "angle_acb", "type": "angle", "label": "\\\\(\\\\angle ACB\\\\)", "value": "?" }}
+  ],
+  "relationships": [
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "passes_through", "elements": ["circle_c1"], "target": ["point_a", "point_b", "point_c"] }},
+    {{ "type": "forms_angle", "elements": ["point_a", "point_o", "point_b"], "target": "angle_aob" }},
+    {{ "type": "forms_angle", "elements": ["point_a", "point_c", "point_b"], "target": "angle_acb" }},
+    {{ "type": "subtends_same_arc", "elements": ["angle_aob", "angle_acb"], "target": "arc_ab" }},
+    {{ "type": "inscribed_angle_half_central", "elements": ["angle_acb", "angle_aob"] }}
+  ]
+}}
 
-Never return Markdown, comments, headings, or text outside the JSON.
+--- CIRCLE: TANGENT PROPERTIES PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "circle", 
+    "subtype": "standard", 
+    "feature": "tangent_properties" 
+  }},
+  "elements": [
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "point_p", "type": "point", "label": "P" }},
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }},
+    {{ "id": "segment_pa", "type": "segment", "label": "PA", "value": "12" }},
+    {{ "id": "segment_pb", "type": "segment", "label": "PB", "value": "?" }},
+    {{ "id": "angle_oap", "type": "angle", "label": "\\\\(\\\\angle OAP\\\\)", "value": "90" }}
+  ],
+  "relationships": [
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "passes_through", "elements": ["circle_c1"], "target": ["point_a", "point_b"] }},
+    {{ "type": "is_tangent_to", "elements": ["segment_pa"], "target": "circle_c1", "at_point": "point_a" }},
+    {{ "type": "is_tangent_to", "elements": ["segment_pb"], "target": "circle_c1", "at_point": "point_b" }},
+    {{ "type": "forms_segment", "elements": ["point_p", "point_a"], "target": "segment_pa" }},
+    {{ "type": "forms_segment", "elements": ["point_p", "point_b"], "target": "segment_pb" }},
+    {{ "type": "forms_angle", "elements": ["point_o", "point_a", "point_p"], "target": "angle_oap" }},
+    {{ "type": "equal_length", "elements": ["segment_pa", "segment_pb"] }}
+  ]
+}}
 
-# LANGUAGE
+--- CIRCLE: INTERSECTING CHORDS PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "circle", 
+    "subtype": "intersecting", 
+    "feature": "intersecting_chords" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_e", "type": "point", "label": "E" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }},
+    {{ "id": "segment_ae", "type": "segment", "label": "AE", "value": "6" }},
+    {{ "id": "segment_eb", "type": "segment", "label": "EB", "value": "4" }},
+    {{ "id": "segment_ce", "type": "segment", "label": "CE", "value": "3" }},
+    {{ "id": "segment_ed", "type": "segment", "label": "ED", "value": "?" }}
+  ],
+  "relationships": [
+    {{ "type": "passes_through", "elements": ["circle_c1"], "target": ["point_a", "point_b", "point_c", "point_d"] }},
+    {{ "type": "forms_segment", "elements": ["point_a", "point_e"], "target": "segment_ae" }},
+    {{ "type": "forms_segment", "elements": ["point_e", "point_b"], "target": "segment_eb" }},
+    {{ "type": "forms_segment", "elements": ["point_c", "point_e"], "target": "segment_ce" }},
+    {{ "type": "forms_segment", "elements": ["point_e", "point_d"], "target": "segment_ed" }},
+    {{ "type": "intersect_at", "elements": ["segment_ab", "segment_cd"], "target": "point_e" }},
+    {{ "type": "intersecting_chords_product_equal", "elements": ["segment_ae", "segment_eb", "segment_ce", "segment_ed"] }}
+  ]
+}}
 
-The following fields MUST be written in {language}:
+--- COORDINATE GEOMETRY PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "coordinate_geometry", "subtype": "distance_formula_segment", "feature": "grid_lines" }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A(2, 3)", "value": "(2, 3)" }},
+    {{ "id": "point_b", "type": "point", "label": "B(7, 9)", "value": "(7, 9)" }},
+    {{ "id": "segment_ab", "type": "segment", "label": "AB" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_to", "elements": ["point_a", "point_b"] }},
+    {{ "type": "plotted_on", "target": "cartesian_plane", "elements": ["point_a", "point_b"] }}
+  ]
+}}
 
-- question_text
-- option_a
-- option_b
-- option_c
-- option_d
-- explanation
-- visual labels/text when applicable
+--- VENN DIAGRAM PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "venn_diagram", "subtype": "2_set" }},
+  "elements": [
+    {{ "id": "set_a", "type": "circle", "label": "Math" }},
+    {{ "id": "set_b", "type": "circle", "label": "Science" }},
+    {{ "id": "val_1", "type": "label", "value": "15" }},
+    {{ "id": "val_2", "type": "label", "value": "8" }}
+  ],
+  "relationships": [
+    {{ "type": "belongs_to_region", "element_id": "val_1", "target": "set_a", "not_in": ["set_b"] }},
+    {{ "type": "overlaps", "elements": ["set_a", "set_b"], "contains": ["val_2"] }}
+  ]
+}}
 
-STRICT OUTPUT CONTRACT:
+--- PIE CHART PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "chart", "subtype": "pie" }},
+  "title": "Expense Distribution",
+  "elements": [
+    {{ "id": "s1", "type": "slice", "label": "Rent", "value": 40, "unit": "%" }},
+    {{ "id": "s2", "type": "slice", "label": "Food", "value": 30, "unit": "%" }},
+    {{ "id": "s3", "type": "slice", "label": "Savings", "value": 30, "unit": "%" }}
+  ],
+  "relationships": [
+    {{ "type": "sum_total", "value": 100 }}
+  ]
+}}
 
-Return ONLY the final requested JSON object.
+--- DATA TABLE PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "table", "subtype": "data_matrix" }},
+  "title": "Kinematics Trial Data",
+  "headers": ["Trial", "Time (s)", "Velocity (m/s)"],
+  "rows": [
+    ["1", "2.0", "10.0"],
+    ["2", "4.0", "20.0"],
+    ["3", "6.0", "30.0"]
+  ]
+}}
 
-Do NOT include analysis, reasoning, planning, internal thinking, self-review,
-verification, question-selection discussion, ordering discussion, or commentary
-anywhere in the response.
 
-Do NOT expose your reasoning process inside ANY JSON field.
+# SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 
-Do NOT use JSON fields to store reasoning, planning, notes, validation,
-drafting thoughts, or internal decisions.
+Before generating the final JSON response, perform a silent internal check to verify that:
+1. Question text, options, correct answer, and explanation are internally consistent.
+2. The correct option letter strictly matches the correct answer value.
+3. The explanation contains ONLY a brief verification of the correct option (no wrong option breakdowns).
+4. No scratchpad work, intermediate calculation steps, or internal dialogue are included in any field.
+5. All LaTeX backslashes are properly escaped (e.g., "\\\\frac").
 
-Every JSON field must contain ONLY the final user-facing content required
-by the requested schema.
 
---------------------------------------------------
-JSON REQUIREMENTS
---------------------------------------------------
+# STRICT OUTPUT FORMAT CONTRACT
 
-The response MUST be valid JSON.
+Return ONLY a single valid JSON object.
+Do NOT include Markdown fences (e.g., ```json), preambles, internal reasoning, notes, calculation logs, or commentary.
 
-The response must be directly parseable using JSON.parse().
+REQUIRED TOP-LEVEL JSON STRUCTURE:
 
-Do NOT include Markdown code fences.
-
-Do NOT include any text before or after the JSON object.
-
---------------------------------------------------
-LATEX / BACKSLASH REQUIREMENTS
---------------------------------------------------
-
-LaTeX may appear inside JSON string values.
-
-Every LaTeX backslash MUST be escaped correctly for JSON.
-
-For example:
-
-CORRECT:
-"$\\sqrt{15}$"
-
-CORRECT:
-"$\\angle ABC$"
-
-CORRECT:
-"$\\frac{1}{2}$"
-
-CORRECT:
-"$\\pi r^2$"
-
-Any backslash used inside a JSON string must be represented as `\\`.
-
---------------------------------------------------
-FINAL VALIDATION
---------------------------------------------------
-
-Before returning the response, internally verify that:
-
-1. Output ONLY valid, parseable JSON. Do not include any conversational text, internal monologues, preambles, or postscripts. 
-2.Do not explain your thought process outside of the designated JSON fields.
-3. Every JSON string is properly escaped.
-4. Every LaTeX backslash inside a JSON string is escaped.
-5. No reasoning or planning appears in any field.
-6. No extra fields have been added.
-7. No Markdown or commentary surrounds the JSON.
-8. The final response contains only the requested JSON.
+{{
+  "data": [
+    {{
+      "question_text": "...",
+      "option_a": "...",
+      "option_b": "...",
+      "option_c": "...",
+      "option_d": "...",
+      "correct_answer": "A",
+      "explanation": "Brief explanation of why A is correct.",
+      "visual_required": false,
+      "visual_type": null
+    }},
+    {{
+      "question_text": "...",
+      "option_a": "...",
+      "option_b": "...",
+      "option_c": "...",
+      "option_d": "...",
+      "correct_answer": "B",
+      "explanation": "Brief explanation of why B is correct.",
+      "visual_required": true,
+      "visual_type": "geometry",
+      "visual": {{
+        "figure": {{
+          "type": "triangle",
+          "subtype": "scalene",
+          "feature": "parallel_segment"
+        }},
+        "elements": [...],
+        "relationships": [...]
+      }}
+    }}
+  ]
+}}
 """

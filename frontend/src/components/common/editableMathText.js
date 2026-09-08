@@ -4,8 +4,8 @@ const SYMBOLS = [
   { plain: '∘', latex: '^{\\circ}' },
   { plain: 'π', latex: '\\pi', regex: /π|(?<![a-z])pi(?![a-z])/gi },
   { plain: '×', latex: '\\times', regex: /×/g },
-  { plain: '∠', latex: '\\angle ', regex: /∠|\\?angle\b/gi },
-  { plain: '△', latex: '\\triangle ', regex: /△|\\?triangle\b/gi },
+  { plain: '∠', latex: '\\angle ', regex: /∠|\\?(?<![a-zA-Z])angle\b/gi },      // ⬅️ changed
+  { plain: '△', latex: '\\triangle ', regex: /△|\\?(?<![a-zA-Z])triangle\b/gi }, // ⬅️ changed
   { plain: '∞', latex: '\\infty', regex: /∞|infty\b/gi },
   { plain: 'α', latex: '\\alpha', regex: /α|alpha\b/gi },
   { plain: 'β', latex: '\\beta', regex: /β|beta\b/gi },
@@ -22,7 +22,12 @@ export function latexToNormal(latexStr = '') {
 
   let res = latexStr;
 
+  // Strip LaTeX delimiters ($ $$ \( \) \[ \]) before any content conversion,
+  // so leftover delimiter characters don't get mistaken for literal parens/brackets.
   res = res.replace(/\$\$?/g, '');
+  res = res.replace(/\\\[|\\\]/g, '');
+  res = res.replace(/\\\(|\\\)/g, '');
+
   res = res.replace(/\^\{([^}]+)\}/g, '^$1');
   res = res.replace(/_\{([^}]+)\}/g, '_$1');
   res = res.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/gi, '($1/$2)');
@@ -79,13 +84,20 @@ export function normalToLatex(textStr = '') {
 export function prepareForKaTeX(text = '') {
   if (!text) return '';
 
-  // If already tagged with $, normalize internal spacing and return
-  if (text.includes('$')) {
-    return text.replace(/\s+/g, ' ').trim();
+  // Normalize LaTeX's own \( \) and \[ \] delimiters into $ $ up front.
+  // This must happen before the '$' check below, otherwise text using
+  // \( \) never gets recognized as "already math" and gets incorrectly
+  // re-tokenized by the plain-text conversion path further down.
+  let normalized = text
+    .replace(/\\\[(.*?)\\\]/gs, (_, inner) => `$${inner.trim()}$`)
+    .replace(/\\\((.*?)\\\)/gs, (_, inner) => `$${inner.trim()}$`);
+
+  if (normalized.includes('$')) {
+    return normalized.replace(/\s+/g, ' ').trim();
   }
 
-  // Pre-process LaTeX conversion while maintaining original word spacing
-  const formattedText = normalToLatex(text);
+  const formattedText = normalToLatex(normalized);
+  // ...rest of the function unchanged, just using `normalized` in place of `text`
 
   // Split on spaces to process token by token, preserving original whitespaces
   const parts = formattedText.split(/(\s+)/);
@@ -95,7 +107,7 @@ export function prepareForKaTeX(text = '') {
     if (/^\s+$/.test(part)) return part;
 
     // Check if token contains mathematical notation or equations
-    const isMath = /\\angle|\\frac|\\sqrt|\\times|\\pi|\^{\\circ}|\^\{|_\{|=|\+|-/g.test(part);
+    const isMath = /\\[a-zA-Z]+|\^\{|_\{|=|\+|-/.test(part);   // ⬅️ changed (was the hardcoded whitelist)
 
     if (isMath) {
       // Separate trailing punctuation from math block (e.g., "$x=5$." instead of "$x=5.$")
