@@ -122,7 +122,7 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
               y={labelPos.y}
               textAnchor={isSmall ? (Math.cos(slice.midAngle) > 0 ? "start" : "end") : "middle"}
               dominantBaseline="middle"
-              fontSize={fontSize * isMobile ? 0.95: 1.15}
+              fontSize={fontSize * (isMobile ? 0.95: 1.15)}
               className={isSmall ? "fill-slate-700 font-semibold" : "fill-white font-semibold"}
             >
               {labelText}

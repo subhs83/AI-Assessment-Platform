@@ -1283,8 +1283,8 @@ export function renderCoordinateGrid(plane, isMobile = false) {
               vectorEffect="non-scaling-stroke"
             />
             <text
-              x={p.x} y={p.y + TICK_LENGTH + isMobile ? 20: 10}
-              textAnchor="middle" fontSize={fontSize * isMobile ? 0.95: 0.80}
+              x={p.x} y={p.y + TICK_LENGTH + (isMobile ? 20: 10)}
+              textAnchor="middle" fontSize={fontSize * (isMobile ? 0.95: 0.80)}
               className="fill-slate-600 select-none"
             >
               {x}
@@ -1305,8 +1305,8 @@ export function renderCoordinateGrid(plane, isMobile = false) {
               vectorEffect="non-scaling-stroke"
             />
             <text
-              x={p.x - TICK_LENGTH - isMobile ? 12: 6} y={p.y}
-              textAnchor="end" dominantBaseline="middle" fontSize={fontSize * isMobile ? 0.95: 0.80}
+              x={p.x - TICK_LENGTH - (isMobile ? 12: 6)} y={p.y}
+              textAnchor="end" dominantBaseline="middle" fontSize={fontSize * (isMobile ? 0.95: 0.80)}
               className="fill-slate-600 select-none"
             >
               {y}
@@ -1317,7 +1317,7 @@ export function renderCoordinateGrid(plane, isMobile = false) {
 
       {/* Origin label */}
       <text
-        x={origin.x -4} y={origin.y + isMobile ? 20: 10}
+        x={origin.x -4} y={origin.y + (isMobile ? 20: 10)}
         textAnchor="end" fontSize={fontSize}
         className="fill-slate-800 select-none"
       >
@@ -1325,8 +1325,8 @@ export function renderCoordinateGrid(plane, isMobile = false) {
       </text>
 
       {/* Axis end arrows/labels */}
-      <text x={xAxisEnd.x + isMobile ? 12: 8} y={xAxisEnd.y} dominantBaseline="middle" fontSize={fontSize} className="fill-slate-800 font-semibold">x</text>
-      <text x={yAxisEnd.x} y={yAxisEnd.y - isMobile ? 12: 8} textAnchor="middle" fontSize={fontSize} className="fill-slate-800 font-semibold">y</text>
+      <text x={xAxisEnd.x + (isMobile ? 12: 8)} y={xAxisEnd.y} dominantBaseline="middle" fontSize={fontSize} className="fill-slate-800 font-semibold">x</text>
+      <text x={yAxisEnd.x} y={yAxisEnd.y - (isMobile ? 12: 8)} textAnchor="middle" fontSize={fontSize} className="fill-slate-800 font-semibold">y</text>
     </g>
   );
 }
