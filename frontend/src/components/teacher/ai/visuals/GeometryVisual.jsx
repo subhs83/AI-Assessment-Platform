@@ -66,7 +66,6 @@ export default function GeometryVisual({ visual }) {
       ...parsed,
       figure,
       isMobile,
-      isCoordinateGeometry
     });
     positions = result.positions;
     plane = result.plane;
@@ -75,11 +74,10 @@ export default function GeometryVisual({ visual }) {
       ...parsed,
       figure,
       isMobile,
-      isCoordinateGeometry
     });
   }
 
-  const { width, height } = getSvgDimensions(isMobile, isCoordinateGeometry);
+  const { width, height } = getSvgDimensions(isMobile);
   if (!visual) return null;
 
   /*
@@ -87,12 +85,12 @@ export default function GeometryVisual({ visual }) {
    * DEBUG
    * --------------------------------------------------
    */
-  const DEBUG_GEOMETRY = true;
+  const DEBUG_GEOMETRY = false;
 
   if (DEBUG_GEOMETRY) {
     console.log("========== GEOMETRY DEBUG ==========");
     console.log("figure:", figure);
-    console.log("isCoordinateGeometry:", isCoordinateGeometry);
+    // console.log("isCoordinateGeometry:", isCoordinateGeometry);
     console.log("points:", Object.keys(points));
     console.log("segments:", segments.map((segment) => segment.id));
     console.log("angles:", angles);

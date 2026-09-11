@@ -88,7 +88,7 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
       {slices.map((slice, i) => {
         const sweep = slice.endAngle - slice.startAngle;
         const labelText = `${slice.label} (${Math.round(slice.percentage)}%)`;
-        const textWidth = estimateTextWidth(labelText, fontSize * 1.15);
+        const textWidth = estimateTextWidth(labelText, fontSize * isMobile ? 0.95: 1.15);
 
         // Available straight-line width for a label centered at
         // insideLabelRadius, spanning this slice's angular sweep —
@@ -122,7 +122,7 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
               y={labelPos.y}
               textAnchor={isSmall ? (Math.cos(slice.midAngle) > 0 ? "start" : "end") : "middle"}
               dominantBaseline="middle"
-              fontSize={fontSize * 1.15}
+              fontSize={fontSize * isMobile ? 0.95: 1.15}
               className={isSmall ? "fill-slate-700 font-semibold" : "fill-white font-semibold"}
             >
               {labelText}

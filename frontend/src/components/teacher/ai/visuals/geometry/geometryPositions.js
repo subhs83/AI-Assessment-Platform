@@ -28,13 +28,12 @@ export function calculateGeometryPositions({
   figure,
   circles,
   isMobile = false,
-  isCoordinateGeometry
 }) {
 
   const pointIds = Object.keys(points);
   const positions = {};
 
-  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY} = getSvgDimensions(isMobile, isCoordinateGeometry);
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY} = getSvgDimensions(isMobile);
   //console.log("getSvgDimensions: ",SVG_WIDTH,SVG_HEIGHT)
   const centerX = SVG_WIDTH/2;
   const centerY = SVG_HEIGHT/2;

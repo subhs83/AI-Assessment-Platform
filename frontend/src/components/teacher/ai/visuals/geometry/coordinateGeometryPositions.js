@@ -30,9 +30,8 @@ export function calculateCoordinateGeometryPositions({
   relationships,
   figure,
   isMobile = false,
-  isCoordinateGeometry
 }) {
-  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile, isCoordinateGeometry);
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
   const positions = {};
 
   // --------------------------------------------------

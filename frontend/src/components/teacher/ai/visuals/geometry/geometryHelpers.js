@@ -2019,7 +2019,7 @@ export function parseCoordinate(raw) {
 
 
   // At the top of your geometry helper file/module:
-export const getSvgDimensions = (isMobile = false, isCoordinateGeometry = false) => {
+export const getSvgDimensions = (isMobile = false) => {
   if (isMobile) {
     return {
       width: 380,

@@ -29,7 +29,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
             <line x1={x} y1={centerY - 5} x2={x} y2={centerY + 5}
               stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800"
               vectorEffect="non-scaling-stroke" />
-            <text x={x} y={centerY + 20} textAnchor="middle" fontSize={fontSize*1.15}
+            <text x={x} y={centerY + isMobile ? 30: 20} textAnchor="middle" fontSize={fontSize*isMobile ? 0.95: 1.15}
               className="fill-slate-800 select-none">
               {v}
             </text>
@@ -80,7 +80,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
             <g key={el.id}>
             <circle cx={pos.x} cy={pos.y} r="3.5" fill="currentColor" className="text-slate-800" />
             {el.label && (
-                <text x={pos.x} y={pos.y - 14} textAnchor="middle" fontSize={fontSize*1.15}
+                <text x={pos.x} y={pos.y - isMobile ? 20: 14} textAnchor="middle" fontSize={fontSize*isMobile ? 0.95: 1.15}
                 className="fill-slate-800 font-bold select-none">
                 {el.label}
                 </text>
@@ -127,8 +127,8 @@ export function renderBarGraph(plane, title, xAxisLabel, yAxisLabel, isMobile = 
             <line x1={chartLeft} y1={y} x2={chartRight} y2={y}
               stroke="currentColor" strokeWidth={strokeWidth * 0.4}
               className="text-slate-200" vectorEffect="non-scaling-stroke" />
-            <text x={chartLeft - 8} y={y} textAnchor="end" dominantBaseline="middle"
-              fontSize={fontSize * 1.15} className="fill-slate-600 select-none">
+            <text x={chartLeft - isMobile ? 14: 8} y={y} textAnchor="end" dominantBaseline="middle"
+              fontSize={fontSize * isMobile ? 0.95: 1.15} className="fill-slate-600 select-none">
               {v}
             </text>
           </g>
@@ -148,12 +148,12 @@ export function renderBarGraph(plane, title, xAxisLabel, yAxisLabel, isMobile = 
         <g key={`bar-${i}`}>
           <rect x={bar.x} y={bar.y} width={bar.width} height={bar.height}
             fill="currentColor" className="text-blue-500" rx="2" />
-          <text x={bar.x + bar.width / 2} y={bar.y - 6} textAnchor="middle"
-            fontSize={fontSize * 1.15} className="fill-slate-700 font-semibold select-none">
+          <text x={bar.x + bar.width / 2} y={bar.y - isMobile ? 10: 6} textAnchor="middle"
+            fontSize={fontSize * isMobile ? 0.95: 1.15} className="fill-slate-700 font-semibold select-none">
             {bar.value}
           </text>
-          <text x={bar.x + bar.width / 2} y={chartBottom + 16} textAnchor="middle"
-            fontSize={fontSize * 1.15} className="fill-slate-700 select-none">
+          <text x={bar.x + bar.width / 2} y={chartBottom + isMobile ? 20: 16} textAnchor="middle"
+            fontSize={fontSize * isMobile ? 0.95: 1.15} className="fill-slate-700 select-none">
             {bar.label}
           </text>
         </g>
@@ -165,7 +165,7 @@ export function renderBarGraph(plane, title, xAxisLabel, yAxisLabel, isMobile = 
             x={chartLeft - 35}
             y={(chartTop + chartBottom) / 2}
             textAnchor="middle"
-            fontSize={fontSize * 0.98}
+            fontSize={fontSize * 0.95}
             className="fill-slate-600 font-semibold select-none"
             transform={`rotate(-90, ${chartLeft - 35}, ${(chartTop + chartBottom) / 2})`}
         >
@@ -174,7 +174,7 @@ export function renderBarGraph(plane, title, xAxisLabel, yAxisLabel, isMobile = 
         )}
       {xAxisLabel && (
         <text x={(chartLeft + chartRight) / 2} y={chartBottom + 34} textAnchor="middle"
-          fontSize={fontSize * 1.15} className="fill-slate-600 font-semibold select-none">
+          fontSize={fontSize * isMobile ? 0.95: 1.15} className="fill-slate-600 font-semibold select-none">
           {xAxisLabel}
         </text>
       )}

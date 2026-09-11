@@ -37,7 +37,7 @@ export default function GraphVisual({ visual }) {
   }
   // ⬆️ END NEW BRANCH ⬆️
 
-  const DEBUG_GRAPH = true;
+  const DEBUG_GRAPH = false;
 
   if (DEBUG_GRAPH) {
     console.log("========== GRAPH DEBUG ==========");
