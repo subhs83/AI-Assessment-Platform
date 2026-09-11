@@ -2023,19 +2023,19 @@ export const getSvgDimensions = (isMobile = false, isCoordinateGeometry = false)
   if (isMobile) {
     return {
       width: 380,
-      height: isCoordinateGeometry ? 340 : 220, // taller for coordinate planes
+      height:  240, // taller for coordinate planes
       paddingX: 20,
       paddingY: 20,
-      strokeWidth: 3.5,
-      fontSize: 20,
+      strokeWidth: 3,
+      fontSize: 16,
     };
   }
 
   return {
-    width: isCoordinateGeometry ? 380 : 520,
-    height: isCoordinateGeometry ? 240 : 200,
-    paddingX: isCoordinateGeometry ? 40 : 60,
-    paddingY: isCoordinateGeometry ? 20 : 25,
+    width:  520,
+    height:  200,
+    paddingX:  60,
+    paddingY:  25,
     strokeWidth: 2,
     fontSize: 10,
   };
