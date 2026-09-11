@@ -8,7 +8,8 @@ export function calculatePieChartPositions({ elements, isMobile = false }) {
   const SVG_AVAILABLE_WIDTH = SVG_WIDTH - paddingX * 2;
   const SVG_AVAILABLE_HEIGHT = SVG_HEIGHT -  paddingY * 2;
   const maxRadius = Math.min(SVG_AVAILABLE_WIDTH / 2, SVG_AVAILABLE_HEIGHT / 2)
-  const radius = Math.max(maxRadius * 0.3, maxRadius);
+  const radius = Math.max(maxRadius * 0.3, (maxRadius * (isMobile ? 0.85 : 1)));
+ 
 
 
   const total = elements.reduce((sum, el) => sum + (Number(el.value) || 0), 0);

@@ -3,14 +3,31 @@ import MathText from "../../../common/MathText"
 export default function DataTableVisual({ visual }) {
   if (!visual) return null;
 
+   const figure = visual?.figure || { type: "generic" };
   const { title, headers, rows } = visual;
 
   if (!Array.isArray(headers) || !Array.isArray(rows)) {
     return null;
   }
+  // ⬆️ END NEW BRANCH ⬆️
 
+  const DEBUG_TABLE = false;
+
+  if (DEBUG_TABLE) {
+    console.log("========== DATA TABLE DEBUG ==========");
+    console.log("figure:", figure);
+    console.log("headers:", headers);
+    console.log("rows:", rows);
+
+    console.log("==================================");
+  }
   return (
     <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+      {DEBUG_TABLE && (
+        <div className="mb-2 rounded bg-slate-900 p-2 text-xs text-white">
+          Table: {figure?.type || "generic"}, {figure?.subtype}
+        </div>
+      )}
       {title && (
         <div className="mb-3 text-sm font-semibold text-slate-700">
           {title}

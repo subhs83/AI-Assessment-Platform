@@ -47,7 +47,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
             key={el.id}
             x1={startX} y1={centerY} x2={endX} y2={centerY}
             stroke="currentColor"
-            strokeWidth={strokeWidth * 2.2}
+            strokeWidth={strokeWidth * (isMobile ? 1 : 2)}
             className={el.is_shaded ? "text-blue-600" : "text-slate-400"}
             vectorEffect="non-scaling-stroke"
             markerEnd="url(#arrow-end)"
