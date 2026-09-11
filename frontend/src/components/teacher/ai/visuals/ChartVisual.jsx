@@ -23,9 +23,9 @@ export default function ChartVisual({ visual }) {
 
   return (
     <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
-      {visual?.title && (
+      {/* {visual?.title && (
         <div className="mb-3 text-sm font-semibold text-slate-700">{visual.title}</div>
-      )}
+      )} */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start justify-center gap-4 w-full overflow-x-auto">
         <div className="flex justify-center w-full sm:w-auto sm:flex-1 sm:max-w-lg">
           <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" role="img" aria-label="Chart figure">

@@ -8,7 +8,7 @@ export function calculatePieChartPositions({ elements, isMobile = false }) {
   const SVG_AVAILABLE_WIDTH = SVG_WIDTH - paddingX * 2;
   const SVG_AVAILABLE_HEIGHT = SVG_HEIGHT -  paddingY * 2;
   const maxRadius = Math.min(SVG_AVAILABLE_WIDTH / 2, SVG_AVAILABLE_HEIGHT / 2)
-  const radius = Math.max(maxRadius * 0.3, (maxRadius * (isMobile ? 0.85 : 1)));
+  const radius = maxRadius * (isMobile ? 0.75 : 0.95);
  
 
 
@@ -97,7 +97,7 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
         // isolation. A wide slice with long text can still fail this;
         // a narrow slice with short text can still pass it.
         const availableChordWidth = 2 * insideLabelRadius * Math.sin(sweep / 2);
-        const isSmall = isDonut ? true :textWidth > availableChordWidth * 0.85; // small safety margin
+        const isSmall = (isDonut || isMobile) ? true :textWidth > availableChordWidth * 0.85; // small safety margin
 
         const labelRadius = isSmall ? radius * 1.25 : insideLabelRadius;
         const labelPos = polarToXY(slice.midAngle, labelRadius);

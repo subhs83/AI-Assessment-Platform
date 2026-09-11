@@ -18,7 +18,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
     <g>
       {/* Base line with arrowheads at both ends */}
       <line x1={lineStart} y1={centerY} x2={lineEnd} y2={centerY}
-        stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800"
+        stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-600"
         vectorEffect="non-scaling-stroke" markerEnd="url(#arrow-end)" markerStart="url(#arrow-start)" />
 
       {/* Tick marks + numbers */}
@@ -26,10 +26,10 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
         const x = toPixelX(v);
         return (
           <g key={`tick-${v}`}>
-            <line x1={x} y1={centerY - 5} x2={x} y2={centerY + 5}
+            <line x1={x} y1={centerY - (isMobile ? 8:5)} x2={x} y2={centerY + (isMobile ? 8 :5)}
               stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800"
               vectorEffect="non-scaling-stroke" />
-            <text x={x} y={centerY + (isMobile ? 30: 20)} textAnchor="middle" fontSize={fontSize*(isMobile ? 0.95: 1.15)}
+            <text x={x} y={centerY + (isMobile ? 30: 20)} textAnchor="middle" fontSize={fontSize*(isMobile ? 1: 1.15)}
               className="fill-slate-800 select-none">
               {v}
             </text>
@@ -47,7 +47,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
             key={el.id}
             x1={startX} y1={centerY} x2={endX} y2={centerY}
             stroke="currentColor"
-            strokeWidth={strokeWidth * (isMobile ? 1 : 2)}
+            strokeWidth={strokeWidth * (isMobile ? 1.3 : 2)}
             className={el.is_shaded ? "text-blue-600" : "text-slate-400"}
             vectorEffect="non-scaling-stroke"
             markerEnd="url(#arrow-end)"
@@ -59,7 +59,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
           return (
             <circle
               key={el.id}
-              cx={x} cy={centerY} r="6"
+              cx={x} cy={centerY} r="8"
               fill={el.is_hollow ? "white" : "currentColor"}
               stroke="currentColor"
               strokeWidth={strokeWidth}
@@ -80,7 +80,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
             <g key={el.id}>
             <circle cx={pos.x} cy={pos.y} r="3.5" fill="currentColor" className="text-slate-800" />
             {el.label && (
-                <text x={pos.x} y={pos.y - (isMobile ? 20: 14)} textAnchor="middle" fontSize={fontSize* (isMobile ? 0.95: 1.15)}
+                <text x={pos.x} y={pos.y - (isMobile ? 20: 14)} textAnchor="middle" fontSize={fontSize* (isMobile ? 1.1: 1.15)}
                 className="fill-slate-800 font-bold select-none">
                 {el.label}
                 </text>
