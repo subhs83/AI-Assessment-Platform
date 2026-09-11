@@ -1940,26 +1940,104 @@ export function tangentPointFromExternalPoint(center, radius, externalPoint, sid
   };
 }
 
+
+// Compute nice tick interval targeting a MINIMUM pixel spacing,
+// using the shared scale (not an independent per-axis range target).
+// This guarantees consistent visual tick density on both axes,
+// regardless of how their real-world ranges compare to each other.
+function niceTickIntervalForScale(scale, minPixelSpacing = 18) {
+  const minRealSpacing = minPixelSpacing / scale;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(minRealSpacing)));
+  const normalized = minRealSpacing / magnitude;
+  let nice;
+  if (normalized <= 1) nice = 1;
+  else if (normalized <= 2) nice = 2;
+  else if (normalized <= 5) nice = 5;
+  else nice = 10;
+  return nice * magnitude;
+}
+
+
+export function computeCoordinatePlane(bounds, dataPoints, svgWidth, svgHeight, paddingX, paddingY) {
+ 
+  let minX, maxX, minY, maxY;
+  if (bounds) {
+    ({ x_min: minX, x_max: maxX, y_min: minY, y_max: maxY } = bounds);
+  } else {
+    const xs = dataPoints.map((p) => p.x);
+    const ys = dataPoints.map((p) => p.y);
+    minX = Math.min(0, ...xs);
+    maxX = Math.max(0, ...xs);
+    minY = Math.min(0, ...ys);
+    maxY = Math.max(0, ...ys);
+    maxX = maxY>maxX ? maxY : maxX
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
+    minX -= rangeX * 0.15;
+    maxX += rangeX * 0.15;
+    minY -= rangeY * 0.15;
+    maxY += rangeY * 0.15;
+  }
+  maxX = maxY>maxX ? maxY : maxX
+  const availW = svgWidth - paddingX * 2;
+  const availH = svgHeight - paddingY * 2;
+  const scaleX = availW / (maxX - minX);
+  const scaleY = availH / (maxY - minY);
+  const scale = Math.min(scaleX, scaleY);
+
+  // Center the used portion within the available canvas, rather than
+  // anchoring it to one corner — distributes any unused margin (from
+  // the aspect-ratio mismatch between data range and canvas) evenly.
+  const usedW = (maxX - minX) * scale;
+  const usedH = (maxY - minY) * scale;
+  const offsetX = paddingX + (availW - usedW) / 2;
+  const offsetY = paddingY + (availH - usedH) / 2;
+
+  const tickX = niceTickIntervalForScale(scale);
+  const tickY = niceTickIntervalForScale(scale);
+
+  const toPixel = (x, y) => ({
+    x: offsetX + (x - minX) * scale,
+    y: svgHeight - offsetY - (y - minY) * scale,
+  });
+
+  return { minX, maxX, minY, maxY, tickX, tickY, scale, toPixel };
+}
+
+/*
+ * ------------------------------------------
+ * COORDINATE PARSING (fallback only — most points now carry x/y
+ * directly on the element, per the current prompt format)
+ * ------------------------------------------
+ */
+export function parseCoordinate(raw) {
+  if (!raw) return null;
+  const match = /\(?\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*\)?/.exec(String(raw));
+  if (!match) return null;
+  return { x: parseFloat(match[1]), y: parseFloat(match[2]) };
+}
+
+
   // At the top of your geometry helper file/module:
-export const getSvgDimensions = (isMobile = false) => {
+export const getSvgDimensions = (isMobile = false, isCoordinateGeometry = false) => {
   if (isMobile) {
     return {
       width: 380,
-      height: 220,
-      paddingX: 20, // Horizontal padding for mobile
-      paddingY: 20, // Vertical padding for mobile
+      height: isCoordinateGeometry ? 340 : 220, // taller for coordinate planes
+      paddingX: 20,
+      paddingY: 20,
       strokeWidth: 3.5,
       fontSize: 20,
     };
   }
 
   return {
-    width: 520,
-    height: 180,
-    paddingX: 60, // Horizontal padding for desktop
-    paddingY: 25, // Vertical padding for desktop
+    width: isCoordinateGeometry ? 380 : 520,
+    height: isCoordinateGeometry ? 240 : 200,
+    paddingX: isCoordinateGeometry ? 40 : 60,
+    paddingY: isCoordinateGeometry ? 20 : 25,
     strokeWidth: 2,
-    fontSize: 13,
+    fontSize: 10,
   };
 };
 

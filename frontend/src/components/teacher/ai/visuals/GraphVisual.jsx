@@ -1,421 +1,75 @@
+import { calculateNumberLinePositions, calculateBarGraphPositions } from "./graph/graphPositions";
+import { renderNumberLine, renderBarGraph } from "./graph/graphRerenders";
+import { getSvgDimensions } from "./geometry/geometryHelpers";
+import { useIsMobile } from "../../../../hooks/useIsMobile";
+
 export default function GraphVisual({ visual }) {
+  const isMobile = useIsMobile();
+  const { width, height } = getSvgDimensions(isMobile);
+
+  if (!visual) return null;
+
+  const figure = visual?.figure || { type: "generic" };
   const elements = visual?.elements || [];
 
-  const axes = elements.filter((e) => e.type === "axis");
-  const points = elements.filter((e) => e.type === "point");
-  const bars = elements.filter((e) => e.type === "bar");
+  let plane = null;
+  let positions = {};
+  let content = null;
 
-  const graphType = visual?.graph_type || "";
-
-  if (graphType === "line_graph") {
-    return <LineGraph visual={visual} axes={axes} points={points} />;
+  if (figure.subtype === "number_line") {
+    const result = calculateNumberLinePositions({ elements, figure, isMobile });
+    positions = result.positions;
+    plane = result;
+    content = renderNumberLine(elements, positions, plane, isMobile);
   }
 
-  if (graphType === "bar_graph") {
-    return <BarGraph visual={visual} axes={axes} bars={bars} />;
+  // ⬇️ ADD THIS NEW BRANCH ⬇️
+  else if (figure.subtype === "bar_graph") {
+    const categories = visual?.categories || [];
+    plane = calculateBarGraphPositions({ categories, figure: visual, isMobile });
+    content = renderBarGraph(
+      plane,
+      visual?.title,
+      visual?.x_axis_label,
+      visual?.y_axis_label,
+      isMobile
+    );
+  }
+  // ⬆️ END NEW BRANCH ⬆️
+
+  const DEBUG_GRAPH = true;
+
+  if (DEBUG_GRAPH) {
+    console.log("========== GRAPH DEBUG ==========");
+    console.log("figure:", figure);
+    console.log("elements:", elements);
+    console.log("positions:", positions);
+    console.log("plane:", plane);
+    console.log("==================================");
   }
 
-  return null;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Line Graph */
-/* -------------------------------------------------------------------------- */
-
-function LineGraph({ axes, points }) {
-  if (!points.length) return null;
-
-  const xAxis = axes.find((axis) => axis.id === "axis_x");
-  const yAxis = axes.find((axis) => axis.id === "axis_y");
-
-  const width = 520;
-  const height = 300;
-
-  const margin = {
-    top: 25,
-    right: 25,
-    bottom: 55,
-    left: 60,
-  };
-
-  const graphWidth = width - margin.left - margin.right;
-  const graphHeight = height - margin.top - margin.bottom;
-
-  const values = points.map((point) => Number(point.y_value) || 0);
-
-  const minY = Math.min(0, ...values);
-  const maxY = Math.max(...values);
-
-  const range = maxY - minY || 1;
-
-  const xStep =
-    points.length === 1
-      ? graphWidth
-      : graphWidth / (points.length - 1);
-
-  const getX = (index) =>
-    margin.left + index * xStep;
-
-  const getY = (value) =>
-    margin.top +
-    graphHeight -
-    ((value - minY) / range) * graphHeight;
-
-  const coordinates = points.map((point, index) => ({
-    ...point,
-    x: getX(index),
-    y: getY(Number(point.y_value) || 0),
-  }));
-
-  const polylinePoints = coordinates
-    .map((point) => `${point.x},${point.y}`)
-    .join(" ");
-
-  const yTicks = 5;
+  if (!content) {
+    return null;
+  }
 
   return (
-    <FigureContainer>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full max-w-2xl text-slate-700"
-      >
-        {/* Y-axis */}
-        <line
-          x1={margin.left}
-          y1={margin.top}
-          x2={margin.left}
-          y2={margin.top + graphHeight}
-          stroke="currentColor"
-          strokeWidth="2.5" /* Base thickness */
-          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
-        />
+    <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+      {DEBUG_GRAPH && (
+        <div className="mb-2 rounded bg-slate-900 p-2 text-xs text-white">
+          Graph: {figure?.type || "generic"}, {figure?.subtype}
+        </div>
+      )}
 
-        {/* X-axis */}
-        <line
-          x1={margin.left}
-          y1={margin.top + graphHeight}
-          x2={margin.left + graphWidth}
-          y2={margin.top + graphHeight}
-          stroke="currentColor"
-          strokeWidth="2.5" /* Base thickness */
-          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
-        />
-
-        {/* Y-axis ticks/grid */}
-        {Array.from({ length: yTicks + 1 }).map((_, index) => {
-          const value =
-            minY + ((maxY - minY) / yTicks) * index;
-
-          const y = getY(value);
-
-          return (
-            <g key={`y-tick-${index}`}>
-              <line
-                x1={margin.left}
-                y1={y}
-                x2={margin.left + graphWidth}
-                y2={y}
-                stroke="currentColor"
-                strokeOpacity="0.12"
-                strokeWidth="2.5" /* Base thickness */
-                vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
-              />
-
-              <text
-                x={margin.left - 8}
-                y={y}
-                textAnchor="end"
-                dominantBaseline="middle"
-                className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-              >
-                {formatNumber(value)}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* X labels */}
-        {coordinates.map((point, index) => (
-          <text
-            key={`x-label-${point.id || index}`}
-            x={point.x}
-            y={height - margin.bottom + 25}
-            textAnchor="middle"
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-          >
-            {point.x_label || point.label}
-          </text>
-        ))}
-
-        {/* Graph line */}
-        <polyline
-          points={polylinePoints}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-
-        {/* Points */}
-        {coordinates.map((point, index) => (
-          <g key={`point-${point.id || index}`}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r="5"
-              fill="currentColor"
-            />
-
-            <text
-              x={point.x}
-              y={point.y - 10}
-              textAnchor="middle"
-              className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-            >
-              {formatNumber(point.y_value)}
-            </text>
-          </g>
-        ))}
-
-        {/* Axis labels */}
-        {xAxis?.label && (
-          <text
-            x={margin.left + graphWidth / 2}
-            y={height - 8}
-            textAnchor="middle"
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-          >
-            {xAxis.label}
-          </text>
-        )}
-
-        {yAxis?.label && (
-          <text
-            x="15"
-            y={margin.top + graphHeight / 2}
-            textAnchor="middle"
-            transform={`rotate(-90 15 ${
-              margin.top + graphHeight / 2
-            })`}
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-          >
-            {yAxis.label}
-          </text>
-        )}
-      </svg>
-    </FigureContainer>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Bar Graph */
-/* -------------------------------------------------------------------------- */
-
-function BarGraph({ axes, bars }) {
-  if (!bars.length) return null;
-
-  const xAxis = axes.find((axis) => axis.id === "axis_x");
-  const yAxis = axes.find((axis) => axis.id === "axis_y");
-
-  const width = 520;
-  const height = 300;
-
-  const margin = {
-    top: 25,
-    right: 25,
-    bottom: 65,
-    left: 60,
-  };
-
-  const graphWidth = width - margin.left - margin.right;
-  const graphHeight = height - margin.top - margin.bottom;
-
-  const values = bars.map(
-    (bar) =>  Number(bar.value ?? bar.y_value ?? 0)
-  );
-
-  const maxValue = Math.max(0, ...values) || 1;
-
-  const barGap = 25;
-
-  const barWidth =
-    (graphWidth - barGap * (bars.length - 1)) /
-    bars.length;
-
-  const getHeight = (value) =>
-    (value / maxValue) * graphHeight;
-
-  const yTicks = 5;
-
-  return (
-    <FigureContainer>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full max-w-2xl text-slate-700"
-      >
-        {/* Y-axis */}
-        <line
-          x1={margin.left}
-          y1={margin.top}
-          x2={margin.left}
-          y2={margin.top + graphHeight}
-          stroke="currentColor"
-          strokeWidth="2.5" /* Base thickness */
-          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
-        />
-
-        {/* X-axis */}
-        <line
-          x1={margin.left}
-          y1={margin.top + graphHeight}
-          x2={margin.left + graphWidth}
-          y2={margin.top + graphHeight}
-          stroke="currentColor"
-          strokeWidth="2.5" /* Base thickness */
-          vectorEffect="non-scaling-stroke" /* Keeps lines thick on mobile */
-        />
-
-        {/* Y ticks */}
-        {Array.from({ length: yTicks + 1 }).map(
-          (_, index) => {
-            const value =
-              (maxValue / yTicks) * index;
-
-            const y =
-              margin.top +
-              graphHeight -
-              (value / maxValue) * graphHeight;
-
-            return (
-              <g key={`bar-y-tick-${index}`}>
-                <line
-                  x1={margin.left}
-                  y1={y}
-                  x2={margin.left + graphWidth}
-                  y2={y}
-                  stroke="currentColor"
-                  strokeOpacity="0.12"
-                  vectorEffect="non-scaling-stroke" /* Prevents the stroke from thinning when SVG scales down */
-                />
-
-                <text
-                  x={margin.left - 8}
-                  y={y}
-                  textAnchor="end"
-                  dominantBaseline="middle"
-                  className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-                >
-                  {formatNumber(value)}
-                </text>
-              </g>
-            );
-          }
-        )}
-
-        {/* Bars */}
-        {bars.map((bar, index) => {
-          const value = Number(bar.value ?? bar.y_value ?? 0);
-
-          const barHeight = getHeight(value);
-
-          const x =
-            margin.left +
-            index * (barWidth + barGap);
-
-          const y =
-            margin.top +
-            graphHeight -
-            barHeight;
-
-          return (
-            <g key={`bar-${bar.id || index}`}>
-              <rect
-                x={x}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                rx="4"
-                fill="currentColor"
-                opacity="0.8"
-              />
-
-              {/* Value */}
-              <text
-                x={x + barWidth / 2}
-                y={y - 7}
-                textAnchor="middle"
-                className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-              >
-                {formatNumber(value)}
-              </text>
-
-              {/* Category */}
-              <text
-                x={x + barWidth / 2}
-                y={height - margin.bottom + 25}
-                textAnchor="middle"
-                className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-              >
-                {bar.label}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* Axis labels */}
-        {xAxis?.label && (
-          <text
-            x={margin.left + graphWidth / 2}
-            y={height - 8}
-            textAnchor="middle"
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-          >
-            {xAxis.label}
-          </text>
-        )}
-
-        {yAxis?.label && (
-          <text
-            x="15"
-            y={margin.top + graphHeight / 2}
-            textAnchor="middle"
-            transform={`rotate(-90 15 ${
-              margin.top + graphHeight / 2
-            })`}
-            className="fill-slate-900 font-bold text-base sm:text-sm [text-shadow:_0_0_3px_#fff,_0_0_3px_#fff]"
-          >
-            {yAxis.label}
-          </text>
-        )}
-      </svg>
-    </FigureContainer>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Shared wrapper */
-/* -------------------------------------------------------------------------- */
-
-function FigureContainer({ children }) {
-  return (
-    <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        Figure
-      </div>
-
-      <div className="flex justify-center">
-        {children}
+      <div className="flex justify-center w-full overflow-x-auto">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-auto w-full max-w-xl text-slate-800 dark:text-slate-100 overflow-visible"
+          role="img"
+          aria-label="Graph figure"
+        >
+          {content}
+        </svg>
       </div>
     </div>
   );
 }
-
-function formatNumber(value) {
-  if (Number.isInteger(value)) {
-    return value;
-  }
-
-  return Number(value).toFixed(1);
-}
-

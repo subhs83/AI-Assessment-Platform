@@ -270,11 +270,14 @@ export function renderPoints(
     const position = positions?.[id];
 
     // Coordinate safety check
-    if (
-      !position ||
-      !Number.isFinite(Number(position.x)) ||
-      !Number.isFinite(Number(position.y))
-    ) {
+    if (!position || !Number.isFinite(Number(position.x)) || !Number.isFinite(Number(position.y))) {
+      return null;
+    }
+
+    // Skip synthetic line-extension points entirely — they exist only
+    // to give the line-drawing code a far-off endpoint to draw toward,
+    // and should never render a dot or label of their own.
+    if (point.__synthetic) {
       return null;
     }
 
@@ -1198,6 +1201,134 @@ export function renderArcs(
       </g>
     );
   });
+}
+
+
+export function renderCoordinateGrid(plane, isMobile = false) {
+  if (!plane) return null;
+
+  const { minX, maxX, minY, maxY, tickX, tickY, toPixel } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+
+  const xTicks = [];
+  for (let x = Math.ceil(minX / tickX) * tickX; x <= maxX; x += tickX) {
+    xTicks.push(Math.round(x * 1e6) / 1e6); // avoid float drift like 2.9999999
+  }
+  const yTicks = [];
+  for (let y = Math.ceil(minY / tickY) * tickY; y <= maxY; y += tickY) {
+    yTicks.push(Math.round(y * 1e6) / 1e6);
+  }
+
+  const origin = toPixel(0, 0);
+  const xAxisStart = toPixel(minX, 0);
+  const xAxisEnd = toPixel(maxX, 0);
+  const yAxisStart = toPixel(0, minY);
+  const yAxisEnd = toPixel(0, maxY);
+
+  const TICK_LENGTH = 5;
+
+  return (
+    <g className="coordinate-grid">
+      {/* Light gridlines */}
+      {xTicks.map((x) => {
+        const top = toPixel(x, maxY);
+        const bottom = toPixel(x, minY);
+        return (
+          <line
+            key={`grid-v-${x}`}
+            x1={top.x} y1={top.y} x2={bottom.x} y2={bottom.y}
+            stroke="currentColor"
+            strokeWidth={strokeWidth * 0.75}
+            className="text-slate-200 dark:text-slate-700"
+            vectorEffect="non-scaling-stroke"
+          />
+        );
+      })}
+      {yTicks.map((y) => {
+        const left = toPixel(minX, y);
+        const right = toPixel(maxX, y);
+        return (
+          <line
+            key={`grid-h-${y}`}
+            x1={left.x} y1={left.y} x2={right.x} y2={right.y}
+            stroke="currentColor"
+            strokeWidth={strokeWidth * 0.4}
+            className="text-slate-200 dark:text-slate-700"
+            vectorEffect="non-scaling-stroke"
+          />
+        );
+      })}
+
+      {/* Axes */}
+      <line
+        x1={xAxisStart.x} y1={xAxisStart.y} x2={xAxisEnd.x} y2={xAxisEnd.y}
+        stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800 dark:text-slate-100"
+        vectorEffect="non-scaling-stroke"
+      />
+      <line
+        x1={yAxisStart.x} y1={yAxisStart.y} x2={yAxisEnd.x} y2={yAxisEnd.y}
+        stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800 dark:text-slate-100"
+        vectorEffect="non-scaling-stroke"
+      />
+
+      {/* Tick marks + number labels on x-axis */}
+      {xTicks.map((x) => {
+        if (x === 0) return null; // skip origin label, drawn separately
+        const p = toPixel(x, 0);
+        return (
+          <g key={`xtick-${x}`}>
+            <line
+              x1={p.x} y1={p.y - TICK_LENGTH} x2={p.x} y2={p.y + TICK_LENGTH}
+              stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800 dark:text-slate-100"
+              vectorEffect="non-scaling-stroke"
+            />
+            <text
+              x={p.x} y={p.y + TICK_LENGTH + 10}
+              textAnchor="middle" fontSize={fontSize * 0.80}
+              className="fill-slate-600 select-none"
+            >
+              {x}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Tick marks + number labels on y-axis */}
+      {yTicks.map((y) => {
+        if (y === 0) return null;
+        const p = toPixel(0, y);
+        return (
+          <g key={`ytick-${y}`}>
+            <line
+              x1={p.x - TICK_LENGTH} y1={p.y} x2={p.x + TICK_LENGTH} y2={p.y}
+              stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800 dark:text-slate-100"
+              vectorEffect="non-scaling-stroke"
+            />
+            <text
+              x={p.x - TICK_LENGTH - 6} y={p.y}
+              textAnchor="end" dominantBaseline="middle" fontSize={fontSize * 0.80}
+              className="fill-slate-600 select-none"
+            >
+              {y}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Origin label */}
+      <text
+        x={origin.x -4} y={origin.y + 10}
+        textAnchor="end" fontSize={fontSize}
+        className="fill-slate-800 select-none"
+      >
+        O
+      </text>
+
+      {/* Axis end arrows/labels */}
+      <text x={xAxisEnd.x + 8} y={xAxisEnd.y} dominantBaseline="middle" fontSize={fontSize} className="fill-slate-800 font-semibold">x</text>
+      <text x={yAxisEnd.x} y={yAxisEnd.y - 8} textAnchor="middle" fontSize={fontSize} className="fill-slate-800 font-semibold">y</text>
+    </g>
+  );
 }
 
 export function renderCollinear(

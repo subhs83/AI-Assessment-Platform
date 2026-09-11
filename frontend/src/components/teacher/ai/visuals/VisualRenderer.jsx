@@ -7,6 +7,7 @@ export default function VisualRenderer({ question }) {
 
   switch (question.visual_type) {
     case "geometry":
+    case "coordinate_geometry":
       return <GeometryRenderer visual={question.visual} />;
 
     default:

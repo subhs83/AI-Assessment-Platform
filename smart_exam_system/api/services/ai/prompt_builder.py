@@ -158,6 +158,22 @@ Example (required shape for a radius):
 {{ "elements": ["segment_oa"], "target": "circle_c1", "type": "is_radius_of" }}
 
 --------------------------------------------------
+COORDINATE GEOMETRY — ADDITIONAL REQUIRED FIELDS
+--------------------------------------------------
+For "type": "coordinate_geometry", every point element MUST include explicit numeric "x" and "y" fields (plain numbers, never LaTeX, never strings) — this is unlike every other geometry type, where positions are computed by the renderer. Example: {{ "id": "point_a", "type": "point", "label": "A", "x": 2, "y": 5 }}.
+
+The "figure" object MUST include a "bounds" field stating the intended visible axis range, chosen so every point element fits comfortably inside it with margin:
+{{ "type": "coordinate_geometry", "subtype": "...", "feature": "...", "bounds": {{ "x_min": -6, "x_max": 6, "y_min": -6, "y_max": 6 }} }}
+
+For "transformation_reflection" and "transformation_translation" questions, include BOTH the original point(s) and the transformed (image) point(s) as separate elements (e.g. point_a and point_a_prime), each with its own "x"/"y". State the transformation itself as a relationship:
+- Reflection: {{ "type": "reflects_over", "elements": ["point_a"], "target": "point_a_prime", "axis": "x-axis" }}  (axis is one of "x-axis", "y-axis", or a line id like "line_y_eq_x")
+- Translation: {{ "type": "translated_by", "elements": ["point_a"], "target": "point_a_prime", "vector": [3, -2] }}  (vector is a plain [dx, dy] numeric array, never LaTeX)
+
+All numeric fields (x, y, vector components, bounds) follow the same plain-numeric-value rule already established for circle features: no LaTeX, no units baked into the number, no symbolic fractions.
+
+RANGE NOTATION IN TABLES: Write numeric ranges as "45 - 50" (plain, no symbols). Only use "$150 \\le h < 155$" style inequality notation when consecutive class intervals share a boundary number and you must clarify which class that boundary belongs to. Never combine a hyphen with "<" (e.g. "150 - <155" is invalid).
+
+--------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
 --------------------------------------------------
 - "type": "triangle"            -> "subtype": "equilateral" | "isosceles" | "scalene" | "right" | "general"
@@ -550,17 +566,153 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+
+--- POLYGON: REGULAR N-GON WITH CIRCUMSCRIBED CIRCLE PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "polygon", 
+    "subtype": "regular_n_gon", 
+    "feature": "circumscribed_circle" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_e", "type": "point", "label": "E" }},
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }},
+    {{ "id": "segment_oa", "type": "segment", "label": "Radius OA", "value": "6 cm" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_polygon", "elements": ["point_a", "point_b", "point_c", "point_d", "point_e"], "target": "polygon_abcde", "polygon_type": "regular", "properties": {{ "sides": 5 }} }},
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "passes_through", "elements": ["circle_c1"], "target": ["point_a", "point_b", "point_c", "point_d", "point_e"] }},
+    {{ "type": "forms_segment", "elements": ["point_o", "point_a"], "target": "segment_oa" }},
+    {{ "type": "is_radius_of", "elements": ["segment_oa"], "target": "circle_c1" }}
+  ]
+}}
+
+--- POLYGON: REGULAR N-GON WITH DIAGONALS PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "polygon", 
+    "subtype": "regular_n_gon", 
+    "feature": "diagonals" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_e", "type": "point", "label": "E" }},
+    {{ "id": "point_f", "type": "point", "label": "F" }},
+    {{ "id": "segment_ad", "type": "segment", "label": "AD" }},
+    {{ "id": "segment_be", "type": "segment", "label": "BE" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_polygon", "elements": ["point_a", "point_b", "point_c", "point_d", "point_e", "point_f"], "target": "polygon_abcdef", "polygon_type": "regular", "properties": {{ "sides": 6 }} }},
+    {{ "type": "forms_segment", "elements": ["point_a", "point_d"], "target": "segment_ad" }},
+    {{ "type": "forms_segment", "elements": ["point_b", "point_e"], "target": "segment_be" }},
+    {{ "type": "is_diagonal_of", "elements": ["segment_ad"], "target": "polygon_abcdef" }},
+    {{ "type": "is_diagonal_of", "elements": ["segment_be"], "target": "polygon_abcdef" }}
+  ]
+}}
+
+--- POLYGON: REGULAR N-GON WITH INSCRIBED CIRCLE PAYLOAD ---
+"visual": {{
+  "figure": {{ 
+    "type": "polygon", 
+    "subtype": "regular_n_gon", 
+    "feature": "inscribed_circle" 
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A" }},
+    {{ "id": "point_b", "type": "point", "label": "B" }},
+    {{ "id": "point_c", "type": "point", "label": "C" }},
+    {{ "id": "point_d", "type": "point", "label": "D" }},
+    {{ "id": "point_e", "type": "point", "label": "E" }},
+    {{ "id": "point_f", "type": "point", "label": "F" }},
+    {{ "id": "point_o", "type": "point", "label": "O" }},
+    {{ "id": "circle_c1", "type": "circle", "label": "" }},
+    {{ "id": "segment_om", "type": "segment", "label": "Apothem", "value": "?" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_polygon", "elements": ["point_a", "point_b", "point_c", "point_d", "point_e", "point_f"], "target": "polygon_abcdef", "polygon_type": "regular", "properties": {{ "sides": 6 }} }},
+    {{ "type": "is_center_of", "elements": ["point_o"], "target": "circle_c1" }},
+    {{ "type": "is_tangent_to", "elements": ["circle_c1"], "target": "polygon_abcdef" }},
+    {{ "type": "is_apothem_of", "elements": ["segment_om"], "target": "polygon_abcdef" }}
+  ]
+}}
+
+
+--- COORDINATE GEOMETRY PAYLOAD (cartesian_plane) ---
+"visual": {{
+  "figure": {{
+    "type": "coordinate_geometry",
+    "subtype": "cartesian_plane",
+    "feature": "grid_lines",
+    "bounds": {{ "x_min": -6, "x_max": 6, "y_min": -6, "y_max": 6 }}
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A", "x": -4, "y": 3 }},
+    {{ "id": "point_b", "type": "point", "label": "B", "x": 2, "y": -5 }}
+  ],
+  "relationships": []
+}}
+
 --- COORDINATE GEOMETRY PAYLOAD ---
 "visual": {{
-  "figure": {{ "type": "coordinate_geometry", "subtype": "distance_formula_segment", "feature": "grid_lines" }},
+  "figure": {{
+    "type": "coordinate_geometry",
+    "subtype": "distance_formula_segment",
+    "feature": "grid_lines",
+    "bounds": {{ "x_min": -2, "x_max": 10, "y_min": -2, "y_max": 10 }}
+  }},
   "elements": [
-    {{ "id": "point_a", "type": "point", "label": "A(2, 3)", "value": "(2, 3)" }},
-    {{ "id": "point_b", "type": "point", "label": "B(7, 9)", "value": "(7, 9)" }},
+    {{ "id": "point_a", "type": "point", "label": "A", "x": 2, "y": 3 }},
+    {{ "id": "point_b", "type": "point", "label": "B", "x": 7, "y": 9 }},
+    {{ "id": "segment_ab", "type": "segment", "label": "AB", "value": "?" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_segment", "elements": ["point_a", "point_b"], "target": "segment_ab" }}
+  ]
+}}
+
+--- COORDINATE GEOMETRY PAYLOAD (midpoint_segment) ---
+"visual": {{
+  "figure": {{
+    "type": "coordinate_geometry",
+    "subtype": "midpoint_segment",
+    "feature": "grid_lines",
+    "bounds": {{ "x_min": -2, "x_max": 8, "y_min": -2, "y_max": 8 }}
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A", "x": 1, "y": 2 }},
+    {{ "id": "point_b", "type": "point", "label": "B", "x": 6, "y": 6 }},
+    {{ "id": "point_m", "type": "point", "label": "M", "x": 3.5, "y": 4 }},
     {{ "id": "segment_ab", "type": "segment", "label": "AB" }}
   ],
   "relationships": [
-    {{ "type": "connected_to", "elements": ["point_a", "point_b"] }},
-    {{ "type": "plotted_on", "target": "cartesian_plane", "elements": ["point_a", "point_b"] }}
+    {{ "type": "forms_segment", "elements": ["point_a", "point_b"], "target": "segment_ab" }},
+    {{ "type": "is_midpoint_of", "elements": ["point_m"], "target": "segment_ab" }}
+  ]
+}}
+
+--- COORDINATE GEOMETRY PAYLOAD (transformation_translation) ---
+"visual": {{
+  "figure": {{
+    "type": "coordinate_geometry",
+    "subtype": "transformation_translation",
+    "feature": "vector_arrow",
+    "bounds": {{ "x_min": -6, "x_max": 6, "y_min": -6, "y_max": 6 }}
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A", "x": -3, "y": 1 }},
+    {{ "id": "point_a_prime", "type": "point", "label": "A'", "x": 1, "y": -2 }}
+  ],
+  "relationships": [
+    {{ "type": "translated_by", "elements": ["point_a"], "target": "point_a_prime", "vector": [4, -3] }}
   ]
 }}
 
@@ -578,6 +730,8 @@ When "visual_required": true, return the corresponding semantic "visual" payload
     {{ "type": "overlaps", "elements": ["set_a", "set_b"], "contains": ["val_2"] }}
   ]
 }}
+
+
 
 --- PIE CHART PAYLOAD ---
 "visual": {{
@@ -605,6 +759,50 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+--- NUMBER LINE PAYLOAD ---
+"visual": {{
+  "figure": {{
+    "type": "graph",
+    "subtype": "number_line",
+    "bounds": {{ "min": -5, "max": 10 }}
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "A", "x": 3 }},
+    {{ "id": "point_b", "type": "point", "label": "B", "x": -2 }}
+  ],
+  "relationships": []
+}}
+
+
+--- NUMBER LINE PAYLOAD (inequality) ---
+"visual": {{
+  "figure": {{
+    "type": "graph",
+    "subtype": "number_line",
+    "bounds": {{ "min": -5, "max": 10 }}
+  }},
+  "elements": [
+    {{ "id": "point_a", "type": "point", "label": "", "x": 3, "closed": false }}
+  ],
+  "relationships": [
+    {{ "type": "shades_ray", "elements": ["point_a"], "direction": "right" }}
+  ]
+}}
+
+--- BAR GRAPH PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "graph", "subtype": "bar_graph" }},
+  "title": "Monthly Rainfall",
+  "x_axis_label": "Month",
+  "y_axis_label": "Rainfall (mm)",
+  "categories": [
+    {{ "label": "Jan", "value": 45 }},
+    {{ "label": "Feb", "value": 60 }},
+    {{ "label": "Mar", "value": 30 }},
+    {{ "label": "Apr", "value": 80 }}
+  ]
+}}
+
 
 # SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 
@@ -622,6 +820,14 @@ Return ONLY a single valid JSON object.
 Do NOT include Markdown fences (e.g., ```json), preambles, internal reasoning, notes, calculation logs, or commentary.
 
 REQUIRED TOP-LEVEL JSON STRUCTURE:
+
+"visual_type" must match the visual's category based on "figure.type":
+  - "geometry" for triangle, quadrilateral, circle, polygon, coordinate_geometry
+  - "data_table" for table
+  - "chart" for chart
+  - "graph" for graph
+  - "venn_diagram" for venn_diagram
+When "visual_required" is false, "visual_type" MUST be null.
 
 {{
   "data": [
@@ -655,7 +861,30 @@ REQUIRED TOP-LEVEL JSON STRUCTURE:
         "elements": [...],
         "relationships": [...]
       }}
-    }}
+    }},
+    {{
+          "question_text": "...",
+          "option_a": "...",
+          "option_b": "...",
+          "option_c": "...",
+          "option_d": "...",
+          "correct_answer": "B",
+          "explanation": "Brief explanation of why B is correct.",
+          "visual_required": true,
+      "visual_type": "data_table",
+      "visual": {{
+        "figure": {{ "type": "table", "subtype": "data_matrix" }},
+        "title": "Kinematics Trial Data",
+        "headers": ["Trial", "Time (s)", "Velocity (m/s)"],
+        "rows": [
+          ["1", "2.0", "10.0"],
+          ["2", "4.0", "20.0"],
+          ["3", "6.0", "30.0"]
+        ]
+          }}
+        }}
   ]
 }}
+
+
 """

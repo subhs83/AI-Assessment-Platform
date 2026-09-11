@@ -28,12 +28,13 @@ export function calculateGeometryPositions({
   figure,
   circles,
   isMobile = false,
+  isCoordinateGeometry
 }) {
 
   const pointIds = Object.keys(points);
   const positions = {};
 
-  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY} = getSvgDimensions(isMobile);
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY} = getSvgDimensions(isMobile, isCoordinateGeometry);
   //console.log("getSvgDimensions: ",SVG_WIDTH,SVG_HEIGHT)
   const centerX = SVG_WIDTH/2;
   const centerY = SVG_HEIGHT/2;
@@ -435,31 +436,122 @@ export function calculateGeometryPositions({
           }
         } 
         else if (hasIntersectingChordsFeature) {
-        const passesRel = relationships.find((r) => r.type === "passes_through");
-        const chordPointIds = (passesRel?.target || []);
-        if (chordPointIds.length === 4) {
-          const [aId, bId, cId, dId] = chordPointIds;
-
-          // Place two chords at fixed schematic angles, crossing near the
-          // circle's center — angle-pairs chosen so the chords visibly cross.
-          const CHORD1_ANGLES = [Math.PI * 0.65, Math.PI * -0.25]; // A, B
-          const CHORD2_ANGLES = [Math.PI * 0.25, Math.PI * -0.65]; // C, D
-
-          positions[aId] = { x: centerX + Math.cos(CHORD1_ANGLES[0]) * radius, y: centerY + Math.sin(CHORD1_ANGLES[0]) * radius, labelAnchor: "auto" };
-          positions[bId] = { x: centerX + Math.cos(CHORD1_ANGLES[1]) * radius, y: centerY + Math.sin(CHORD1_ANGLES[1]) * radius, labelAnchor: "auto" };
-          positions[cId] = { x: centerX + Math.cos(CHORD2_ANGLES[0]) * radius, y: centerY + Math.sin(CHORD2_ANGLES[0]) * radius, labelAnchor: "auto" };
-          positions[dId] = { x: centerX + Math.cos(CHORD2_ANGLES[1]) * radius, y: centerY + Math.sin(CHORD2_ANGLES[1]) * radius, labelAnchor: "auto" };
-
-          // E = actual intersection of chord AB and chord CD (computed from
-          // the fixed schematic points above — the crossing point falls out
-          // naturally from wherever these two lines actually cross).
+          const passesRel = relationships.find((r) => r.type === "passes_through");
+          const chordPointIds = passesRel?.target || [];
           const intersectRel = relationships.find((r) => r.type === "intersect_at");
-          if (intersectRel?.target) {
-            const e = lineIntersection(positions[aId], positions[bId], positions[cId], positions[dId]);
-            if (e) positions[intersectRel.target] = { ...e, labelAnchor: "auto" };
+          const eId = intersectRel?.target;
+
+          const getSegVal = (segId) => {
+            const segEl = segments.find((s) => s.id === segId);
+            const num = parseFloat(segEl?.value);
+            return Number.isFinite(num) ? num : null;
+          };
+          const findSegIdBetween = (p1, p2) =>
+            relationships.find(
+              (r) => r.type === "forms_segment" && r.elements?.includes(p1) && r.elements?.includes(p2)
+            )?.target || null;
+
+          let solvedOk = false;
+
+          if (chordPointIds.length === 4 && eId) {
+            const [aId, bId, cId, dId] = chordPointIds;
+
+            let p1 = getSegVal(findSegIdBetween(aId, eId)); // AE
+            let q1 = getSegVal(findSegIdBetween(eId, bId)); // EB
+            let p2 = getSegVal(findSegIdBetween(cId, eId)); // CE
+            let q2 = getSegVal(findSegIdBetween(eId, dId)); // ED
+
+            // Solve the single unknown (marked "?") via the intersecting-chords
+            // theorem: AE * EB = CE * ED.
+            const nullCount = [p1, q1, p2, q2].filter((v) => v === null).length;
+            if (nullCount === 1) {
+              if (p1 === null) p1 = (p2 * q2) / q1;
+              else if (q1 === null) q1 = (p2 * q2) / p1;
+              else if (p2 === null) p2 = (p1 * q1) / q2;
+              else if (q2 === null) q2 = (p1 * q1) / p2;
+            }
+
+            if ([p1, q1, p2, q2].every((v) => Number.isFinite(v) && v > 0)) {
+              const L1 = (p1 + q1) / 2, s1 = (p1 - q1) / 2; // chord AB, local to its own line
+              const L2 = (p2 + q2) / 2, s2 = (p2 - q2) / 2; // chord CD
+
+              // Scale both chords (preserving their ratios) so the larger one
+              // fits comfortably inside the circle.
+              const k = (radius * 0.85) / Math.max(L1, L2);
+              const L1s = L1 * k, s1s = s1 * k;
+              const p2s = p2 * k, q2s = q2 * k;
+
+              const h1 = Math.sqrt(Math.max(radius * radius - L1s * L1s, 0));
+              const theta1 = (5 * Math.PI) / 6; // fixed schematic direction for chord AB
+              const perp1 = theta1 + Math.PI / 2;
+
+              // Foot of perpendicular from center to chord AB.
+              const F1 = {
+                x: centerX + Math.cos(perp1) * h1,
+                y: centerY + Math.sin(perp1) * h1,
+              };
+              const u1 = { x: Math.cos(theta1), y: Math.sin(theta1) };
+
+              const A = { x: F1.x - u1.x * L1s, y: F1.y - u1.y * L1s };
+              const B = { x: F1.x + u1.x * L1s, y: F1.y + u1.y * L1s };
+              const E = { x: F1.x + u1.x * s1s, y: F1.y + u1.y * s1s };
+
+              // Chord CD's direction is NOT free — it must pass through the
+              // SAME point E and split into exactly p2s/q2s. Solve for the
+              // unit direction v satisfying (E-O)·v = s2s (derived from
+              // requiring both C and D to lie on the circle).
+              const e = { x: E.x - centerX, y: E.y - centerY };
+              const eLen = Math.hypot(e.x, e.y);
+              const c = s2 * k / eLen; // note: uses s2*k = s2s, same scale
+
+              if (eLen > 0 && Math.abs(c) <= 1) {
+                const ehat = { x: e.x / eLen, y: e.y / eLen };
+                const nhat = { x: -ehat.y, y: ehat.x };
+                const sinTerm = Math.sqrt(Math.max(0, 1 - c * c));
+
+                // Two possible directions (±); pick whichever crosses chord1
+                // at a clearer angle (avoid near-parallel chords).
+                const buildV = (sign) => ({
+                  x: c * ehat.x + sign * sinTerm * nhat.x,
+                  y: c * ehat.y + sign * sinTerm * nhat.y,
+                });
+                let v2 = buildV(1);
+                const dotWithU1 = Math.abs(v2.x * u1.x + v2.y * u1.y);
+                if (dotWithU1 > 0.95) v2 = buildV(-1);
+
+                const C = { x: E.x - v2.x * p2s, y: E.y - v2.y * p2s };
+                const D = { x: E.x + v2.x * q2s, y: E.y + v2.y * q2s };
+
+                positions[aId] = { ...A, labelAnchor: "auto" };
+                positions[bId] = { ...B, labelAnchor: "auto" };
+                positions[cId] = { ...C, labelAnchor: "auto" };
+                positions[dId] = { ...D, labelAnchor: "auto" };
+                positions[eId] = { ...E, labelAnchor: "auto" };
+                solvedOk = true;
+              }
+            }
+          }
+
+          // Fallback: if lengths are missing/inconsistent (e.g. more than one
+          // "?" so the theorem can't solve it, or the resulting direction is
+          // degenerate), keep the old fixed-angle schematic as a safety net
+          // rather than rendering nothing.
+          if (!solvedOk && chordPointIds.length === 4) {
+            const [aId, bId, cId, dId] = chordPointIds;
+            const CHORD1_ANGLES = [Math.PI * 0.65, Math.PI * -0.25];
+            const CHORD2_ANGLES = [Math.PI * 0.25, Math.PI * -0.65];
+
+            positions[aId] = { x: centerX + Math.cos(CHORD1_ANGLES[0]) * radius, y: centerY + Math.sin(CHORD1_ANGLES[0]) * radius, labelAnchor: "auto" };
+            positions[bId] = { x: centerX + Math.cos(CHORD1_ANGLES[1]) * radius, y: centerY + Math.sin(CHORD1_ANGLES[1]) * radius, labelAnchor: "auto" };
+            positions[cId] = { x: centerX + Math.cos(CHORD2_ANGLES[0]) * radius, y: centerY + Math.sin(CHORD2_ANGLES[0]) * radius, labelAnchor: "auto" };
+            positions[dId] = { x: centerX + Math.cos(CHORD2_ANGLES[1]) * radius, y: centerY + Math.sin(CHORD2_ANGLES[1]) * radius, labelAnchor: "auto" };
+
+            if (eId) {
+              const e = lineIntersection(positions[aId], positions[bId], positions[cId], positions[dId]);
+              if (e) positions[eId] = { ...e, labelAnchor: "auto" };
+            }
           }
         }
-        } 
         else if (hasTangentSecantFeature) {
         const tangentRel = relationships.find((r) => r.type === "is_tangent_to");
         const secantRel = relationships.find((r) => r.type === "forms_secant_through_points");
@@ -759,6 +851,211 @@ export function calculateGeometryPositions({
 
           fitPositionsToBounds(positions,{ width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY }, circles);
 
+      }
+
+
+      /*
+      * ------------------------------------------
+      * POLYGON FAMILY DETECTION FLAGS
+      * ------------------------------------------
+      */
+      const isPolygonFamily = figureType === "polygon";
+
+      const hasPolygonCircumscribedCircleFeature =
+        isPolygonFamily && feature === "circumscribed_circle";
+
+      const hasPolygonInscribedCircleFeature =
+        isPolygonFamily && feature === "inscribed_circle";
+
+      const hasPolygonDiagonalsFeature =
+        isPolygonFamily && feature === "diagonals";
+
+      /*
+      * ------------------------------------------
+      * POLYGON FAMILY POSITIONING (separate from triangle/quadrilateral/circle chains)
+      * ------------------------------------------
+      */
+      if (isPolygonFamily) {
+        console.log("[DEBUG] Entered polygon branch", { figureType, feature });
+
+        const formsRel = relationships.find((r) => r.type === "forms_polygon");
+        const vertexIds = formsRel?.elements || [];
+        const sideCount = formsRel?.properties?.sides || vertexIds.length;
+
+        // --------------------------------------------------
+        // BASE LAYOUT — N vertices evenly spaced around a fixed circle,
+        // generalizing the same even-spacing pattern already used for
+        // circumference points and cyclic quadrilaterals.
+        // --------------------------------------------------
+        if (vertexIds.length >= 3) {
+          const POLY_RADIUS = Math.max(radius, 70); // reuse circle radius constant if available, else fallback
+          const angleStep = (2 * Math.PI) / sideCount;
+          const START_ANGLE = -Math.PI / 2; // first vertex at top
+
+          vertexIds.forEach((vid, i) => {
+            const theta = START_ANGLE + i * angleStep;
+            positions[vid] = {
+              x: centerX + Math.cos(theta) * POLY_RADIUS,
+              y: centerY + Math.sin(theta) * POLY_RADIUS,
+              labelAnchor: "auto",
+            };
+          });
+
+          // Auto-draw the N sides, connecting consecutive vertices.
+          for (let i = 0; i < sideCount; i++) {
+            const from = vertexIds[i];
+            const to = vertexIds[(i + 1) % vertexIds.length];
+            const fromLetter = from.replace("point_", "");
+            const toLetter = to.replace("point_", "");
+            const segId = `segment_${fromLetter}${toLetter}`;
+            const exists = segments.some(
+              (s) =>
+                (s.start === from && s.end === to) ||
+                (s.start === to && s.end === from) ||
+                s.id === segId
+            );
+            if (!exists) {
+              segments.push({ id: segId, type: "segment", start: from, end: to });
+            }
+          }
+        }
+          // --------------------------------------------------
+          // DIAGONAL INTERSECTION POINTS — compute the true geometric
+          // intersection for any point declared via intersect_at between
+          // two segments, now that all polygon vertices have real
+          // positions. Without this, a point like P (diagonals AD x BE)
+          // never gets a position at all, so its own label/dot and any
+          // angle formed at it (e.g. angle_apb) silently fail to render.
+          // --------------------------------------------------
+          relationships
+            .filter((r) => r.type === "intersect_at")
+            .forEach((rel) => {
+              const [segIdA, segIdB] = rel.elements || [];
+              const pointId = rel.target;
+              if (!segIdA || !segIdB || !pointId) return;
+
+              const segRelA = relationships.find((r) => r.type === "forms_segment" && r.target === segIdA);
+              const segRelB = relationships.find((r) => r.type === "forms_segment" && r.target === segIdB);
+              const [a1, a2] = segRelA?.elements || [];
+              const [b1, b2] = segRelB?.elements || [];
+
+              const p1 = positions[a1], p2 = positions[a2];
+              const p3 = positions[b1], p4 = positions[b2];
+              if (!p1 || !p2 || !p3 || !p4) return;
+
+              const intersection = lineIntersection(p1, p2, p3, p4);
+              if (intersection) {
+                positions[pointId] = { ...intersection, labelAnchor: "auto" };
+              }
+            });
+        // --------------------------------------------------
+        // FEATURE BRANCHES
+        // --------------------------------------------------
+        if (hasPolygonCircumscribedCircleFeature) {
+          // Circumcircle: center = polygon's own center, radius = distance to
+          // any vertex. Since vertices are already evenly placed around
+          // (centerX, centerY) at POLY_RADIUS, this is nearly free.
+          const centerOfRel = relationships.find((r) => r.type === "is_center_of");
+          const centerPointId = centerOfRel?.elements?.[0];
+          if (centerPointId && !positions[centerPointId]) {
+            positions[centerPointId] = { x: centerX, y: centerY, labelAnchor: "auto" };
+          }
+
+          const passesRel = relationships.find((r) => r.type === "passes_through");
+          if (passesRel?.elements?.[0]) {
+            const circleId = passesRel.elements[0];
+            const circleObj = circles.find((c) => c.id === circleId);
+            if (circleObj && vertexIds.length > 0) {
+              const anyVertex = positions[vertexIds[0]];
+              circleObj.__renderCenter = { x: centerX, y: centerY };
+              circleObj.__renderRadius = Math.hypot(anyVertex.x - centerX, anyVertex.y - centerY);
+            }
+          }
+        }
+
+        else if (hasPolygonInscribedCircleFeature) {
+          // Incircle: tangent to every side's midpoint. Radius = apothem =
+          // POLY_RADIUS * cos(pi / n) for a regular n-gon.
+          const centerOfRel = relationships.find((r) => r.type === "is_center_of");
+          const centerPointId = centerOfRel?.elements?.[0];
+          if (centerPointId && !positions[centerPointId]) {
+            positions[centerPointId] = { x: centerX, y: centerY, labelAnchor: "auto" };
+          }
+
+          const tangentRel = relationships.find((r) => r.type === "is_tangent_to");
+          const circleId = tangentRel?.elements?.[0];
+          const circleObj = circles.find((c) => c.id === circleId);
+          if (circleObj && vertexIds.length >= 3) {
+            const anyVertex = positions[vertexIds[0]];
+            const outerRadius = Math.hypot(anyVertex.x - centerX, anyVertex.y - centerY);
+            const apothem = outerRadius * Math.cos(Math.PI / sideCount);
+            circleObj.__renderCenter = { x: centerX, y: centerY };
+            circleObj.__renderRadius = apothem;
+          }
+        }
+
+        else if (hasPolygonDiagonalsFeature) {
+          // No special logic needed here: vertices come from the base layout
+          // above, named diagonal segments are drawn by the generic
+          // forms_segment/forms_chord wiring below, and any diagonal
+          // intersection point (e.g. P where two diagonals cross) is computed
+          // by the generic intersect_at handling above the feature branches.
+          // This branch would need real logic only if a future "diagonals"
+          // question requires something those three don't cover — e.g. a
+          // shaded enclosed-region fill, or a parallel/equal-length tick mark
+          // between two diagonals.
+        }
+
+        // --------------------------------------------------
+        // GENERIC forms_segment / forms_angle WIRING (same pattern as
+        // quadrilateral/circle families)
+        // --------------------------------------------------
+        relationships
+          .filter((r) => r.type === "forms_segment" || r.type === "forms_chord")
+          .forEach((rel) => {
+            const [ptA, ptB] = rel.elements || [];
+            const segId = rel.target;
+            if (!ptA || !ptB || !segId) return;
+            if (!positions[ptA] || !positions[ptB]) return;
+
+            let segObj = segments.find((s) => s.id === segId);
+            if (segObj) {
+              segObj.start = ptA;
+              segObj.end = ptB;
+              segObj.type = "segment";
+            } else {
+              segments.push({ id: segId, type: "segment", start: ptA, end: ptB });
+            }
+          });
+
+        relationships
+          .filter((r) => r.type === "forms_angle")
+          .forEach((rel) => {
+            const [firstId, vertexId, secondId] = rel.elements || [];
+            const angleId = rel.target;
+            if (!firstId || !vertexId || !secondId || !angleId) return;
+
+            const firstLabel = points[firstId]?.label;
+            const vertexLabel = points[vertexId]?.label;
+            const secondLabel = points[secondId]?.label;
+            if (!firstLabel || !vertexLabel || !secondLabel) return;
+
+            let angleObj = angles.find((a) => a.id === angleId);
+            if (angleObj) {
+              angleObj.elements = [firstLabel, vertexLabel, secondLabel];
+            } else {
+              angles.push({ id: angleId, type: "angle", elements: [firstLabel, vertexLabel, secondLabel] });
+            }
+          });
+
+        // --------------------------------------------------
+        // FINAL BOUNDS FIT
+        // --------------------------------------------------
+        fitPositionsToBounds(
+          positions,
+          { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY },
+          circles
+        );
       }
 
       
