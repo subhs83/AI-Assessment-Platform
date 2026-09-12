@@ -75,3 +75,57 @@ export function calculateBarGraphPositions({ categories, figure, isMobile = fals
     title: figure?.title,
   };
 }
+
+
+
+export function calculateLineGraphPositions({ series, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+
+  const allValues = series.flatMap((s) => s.data.map((d) => d.value));
+  const maxValue = Math.max(...allValues, 0);
+  const minValue = Math.min(...allValues, 0);
+  const yMax = maxValue * 1.15;
+  const yMin = minValue < 0 ? minValue * 1.15 : 0;
+
+  // Reserve a label margin on BOTH sides now — chartLeft/chartRight are
+  // the actual axis boundary positions guide lines stop at; labels sit
+  // just outside them, in this reserved space.
+  const LABEL_MARGIN = isMobile ? 34 : 46;
+  const chartLeft = paddingX + LABEL_MARGIN;
+  const chartRight = SVG_WIDTH - paddingX - LABEL_MARGIN;
+  const chartTop = paddingY + 10;
+  const chartBottom = SVG_HEIGHT - paddingY;
+
+  const chartWidth = chartRight - chartLeft;
+  const chartHeight = chartBottom - chartTop;
+
+  const categories = series[0]?.data.map((d) => d.label) || [];
+  const n = categories.length;
+  const slotWidth = n > 1 ? chartWidth / (n - 1) : chartWidth;
+
+  const tick = niceTickIntervalForScale(chartHeight / (yMax - yMin), 30);
+  const valueToY = (v) => chartBottom - ((v - yMin) / (yMax - yMin)) * chartHeight;
+
+  const plottedSeries = series.map((s) => ({
+    label: s.label,
+    points: s.data.map((d, i) => ({
+      x: chartLeft + i * slotWidth,
+      y: valueToY(d.value),
+      value: d.value,
+      categoryLabel: d.label,
+    })),
+  }));
+
+  return {
+    plottedSeries,
+    categories,
+    chartLeft,
+    chartRight,
+    chartTop,
+    chartBottom,
+    yMax,
+    yMin,
+    tick,
+    slotWidth,
+  };
+}

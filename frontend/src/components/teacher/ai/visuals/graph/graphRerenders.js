@@ -181,3 +181,176 @@ export function renderBarGraph(plane, title, xAxisLabel, yAxisLabel, isMobile = 
     </g>
   );
 }
+
+
+
+export function renderLineGraph(plane, xAxisLabel, yAxisLabel, isMobile = false) {
+  if (!plane) return null;
+
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+  const { plottedSeries, categories, chartLeft, chartRight, chartTop, chartBottom, yMax, yMin, tick } = plane;
+
+  const COLORS = ["#378add", "#D4537E", "#1D9E75", "#EF9F27"];
+  const AXIS_OVERHANG_RIGHT = isMobile ? 10 : 20;
+
+  const yTicks = [];
+  for (let v = Math.ceil(yMin / tick) * tick; v <= yMax; v += tick) {
+    yTicks.push(Math.round(v * 1e6) / 1e6);
+  }
+  const valueToY = (v) => chartBottom - ((v - yMin) / (yMax - yMin)) * (chartBottom - chartTop);
+
+  const showLegend = plottedSeries.length > 1;
+
+  const allDataValues = [...new Set(
+    plottedSeries.flatMap((s) => s.points.map((p) => p.value))
+  )];
+
+  const sortedByY = [...allDataValues].sort((a, b) => valueToY(a) - valueToY(b));
+  const sideForValue = {};
+  sortedByY.forEach((v, i) => { sideForValue[v] = i % 2 === 0 ? "left" : "right"; });
+
+  const MIN_LABEL_GAP_PX = fontSize * 1.2;
+
+  const declutter = (values) => {
+    const items = values
+      .map((v) => ({ value: v, trueY: valueToY(v), y: valueToY(v) }))
+      .sort((a, b) => a.trueY - b.trueY);
+    for (let i = 1; i < items.length; i++) {
+      const minY = items[i - 1].y + MIN_LABEL_GAP_PX;
+      if (items[i].y < minY) items[i].y = minY;
+    }
+    if (items.length > 1) {
+      const trueCenter = items.reduce((s, d) => s + d.trueY, 0) / items.length;
+      const shiftedCenter = items.reduce((s, d) => s + d.y, 0) / items.length;
+      const shift = trueCenter - shiftedCenter;
+      items.forEach((d) => { d.y += shift; });
+    }
+    return items;
+  };
+
+  const leftItems = declutter(allDataValues.filter((v) => sideForValue[v] === "left"));
+  const rightItems = declutter(allDataValues.filter((v) => sideForValue[v] === "right"));
+
+  const labelYFor = (v) => {
+    const list = sideForValue[v] === "left" ? leftItems : rightItems;
+    return list.find((d) => d.value === v)?.y ?? valueToY(v);
+  };
+
+  return (
+    <g>
+      {/* Horizontal gridlines */}
+      {yTicks.map((v) => {
+        const y = valueToY(v);
+        return (
+          <line key={`ytick-${v}`} x1={chartLeft} y1={y} x2={chartRight} y2={y}
+            stroke="currentColor" strokeWidth={strokeWidth * 0.4}
+            className="text-slate-200" vectorEffect="non-scaling-stroke" />
+        );
+      })}
+
+      {/* Vertical guide lines — one per category (not per series),
+          full-height, light — marks "this is where each x-tick is"
+          without per-series clutter. */}
+        {plottedSeries[0]?.points.map((p, i) => (
+        <line key={`vguide-${i}`} x1={p.x} y1={chartTop} x2={p.x} y2={chartBottom}
+          stroke="#cbd5e1" strokeWidth={strokeWidth * 0.8}
+          strokeDasharray="2,3" opacity={0.8}
+          vectorEffect="non-scaling-stroke" />
+      ))}
+
+      {/* Y-axis (left) — unchanged */}
+      <line x1={chartLeft} y1={chartTop} x2={chartLeft} y2={chartBottom}
+        stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800"
+        vectorEffect="non-scaling-stroke" />
+
+      {/* X-axis (bottom) — extended on the RIGHT side only */}
+      <line x1={chartLeft} y1={chartBottom} x2={chartRight + AXIS_OVERHANG_RIGHT} y2={chartBottom}
+        stroke="currentColor" strokeWidth={strokeWidth} className="text-slate-800"
+        vectorEffect="non-scaling-stroke" />
+
+      {categories.map((label, i) => (
+        <text key={`xcat-${i}`} x={plottedSeries[0].points[i].x} y={chartBottom + 16}
+          textAnchor="middle" fontSize={fontSize * 0.85} className="fill-slate-700 select-none">
+          {label}
+        </text>
+      ))}
+
+      {/* Horizontal guide lines — stop exactly at chartLeft/chartRight */}
+      {plottedSeries.map((s, si) =>
+        s.points.map((p, i) => (
+          <line key={`guide-${si}-${i}`} x1={chartLeft} y1={p.y} x2={chartRight} y2={p.y}
+            stroke={COLORS[si % COLORS.length]} strokeWidth={strokeWidth * 0.4}
+            strokeDasharray="3,3" opacity="0.5" vectorEffect="non-scaling-stroke" />
+        ))
+      )}
+
+      {plottedSeries.map((s, si) => {
+        const pathD = s.points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+        return (
+          <g key={`series-${si}`}>
+            <path d={pathD} fill="none" stroke={COLORS[si % COLORS.length]}
+              strokeWidth={strokeWidth * 1.5} vectorEffect="non-scaling-stroke" />
+            {s.points.map((p, i) => (
+              <circle key={`pt-${si}-${i}`} cx={p.x} cy={p.y} r="4"
+                fill={COLORS[si % COLORS.length]} stroke="white" strokeWidth={strokeWidth * 0.6} />
+            ))}
+          </g>
+        );
+      })}
+
+      {/* Value labels — alternating left/right, sitting just outside
+          the axis boundary */}
+      {allDataValues.map((v) => {
+        const side = sideForValue[v];
+        const trueY = valueToY(v);
+        const labelY = labelYFor(v);
+        const moved = Math.abs(labelY - trueY) > 1;
+
+        const axisX = side === "left" ? chartLeft : chartRight;
+        const labelX = side === "left" ? chartLeft - 8 : chartRight + 8;
+        const anchor = side === "left" ? "end" : "start";
+
+        return (
+          <g key={`dval-${v}`}>
+            {moved && (
+              <path d={`M ${axisX} ${trueY} L ${labelX} ${labelY}`}
+                stroke="currentColor" strokeWidth={strokeWidth * 0.5}
+                className="text-slate-400" fill="none" vectorEffect="non-scaling-stroke" />
+            )}
+            <text x={labelX} y={labelY} textAnchor={anchor} dominantBaseline="middle"
+              fontSize={fontSize * 0.78} className="fill-slate-600 font-semibold select-none">
+              {v}
+            </text>
+          </g>
+        );
+      })}
+
+      {yAxisLabel && (
+        <text x={chartLeft - 35} y={(chartTop + chartBottom) / 2} textAnchor="middle"
+          fontSize={fontSize * 0.85} className="fill-slate-600 font-semibold select-none"
+          transform={`rotate(-90, ${chartLeft - 35}, ${(chartTop + chartBottom) / 2})`}>
+          {yAxisLabel}
+        </text>
+      )}
+      {xAxisLabel && (
+        <text x={(chartLeft + chartRight) / 2} y={chartBottom + 34} textAnchor="middle"
+          fontSize={fontSize * 0.85} className="fill-slate-600 font-semibold select-none">
+          {xAxisLabel}
+        </text>
+      )}
+
+      {showLegend && (
+        <g>
+          {plottedSeries.map((s, i) => (
+            <g key={`legend-${i}`} transform={`translate(${chartLeft+20 + i * 100}, ${chartTop - 5})`}>
+              <rect width="10" height="10" fill={COLORS[i % COLORS.length]} rx="2" />
+              <text x="14" y="9" fontSize={fontSize * 0.8} className="fill-slate-700 select-none">
+                {s.label}
+              </text>
+            </g>
+          ))}
+        </g>
+      )}
+    </g>
+  );
+}

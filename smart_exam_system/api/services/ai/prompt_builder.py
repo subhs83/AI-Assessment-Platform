@@ -853,6 +853,56 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+--- LINE GRAPH PAYLOAD (single series) ---
+"visual": {{
+  "figure": {{ "type": "graph", "subtype": "line_graph" }},
+  "title": "Temperature Over the Week",
+  "x_axis_label": "Day",
+  "y_axis_label": "Temperature (°C)",
+  "series": [
+    {{
+      "label": "Temperature",
+      "data": [
+        {{ "label": "Mon", "value": 18 }},
+        {{ "label": "Tue", "value": 21 }},
+        {{ "label": "Wed", "value": 19 }},
+        {{ "label": "Thu", "value": 23 }},
+        {{ "label": "Fri", "value": 25 }}
+      ]
+    }}
+  ]
+}}
+
+--- LINE GRAPH PAYLOAD (multi-series) ---
+"visual": {{
+  "figure": {{ "type": "graph", "subtype": "line_graph" }},
+  "title": "Temperature Comparison: City A vs City B",
+  "x_axis_label": "Day",
+  "y_axis_label": "Temperature (°C)",
+  "series": [
+    {{
+      "label": "City A",
+      "data": [
+        {{ "label": "Mon", "value": 18 }},
+        {{ "label": "Tue", "value": 21 }},
+        {{ "label": "Wed", "value": 19 }},
+        {{ "label": "Thu", "value": 23 }},
+        {{ "label": "Fri", "value": 25 }}
+      ]
+    }},
+    {{
+      "label": "City B",
+      "data": [
+        {{ "label": "Mon", "value": 22 }},
+        {{ "label": "Tue", "value": 24 }},
+        {{ "label": "Wed", "value": 20 }},
+        {{ "label": "Thu", "value": 19 }},
+        {{ "label": "Fri", "value": 27 }}
+      ]
+    }}
+  ]
+}}
+
 
 # SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 

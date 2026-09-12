@@ -1,5 +1,5 @@
-import { calculateNumberLinePositions, calculateBarGraphPositions } from "./graph/graphPositions";
-import { renderNumberLine, renderBarGraph } from "./graph/graphRerenders";
+import { calculateNumberLinePositions, calculateBarGraphPositions, calculateLineGraphPositions } from "./graph/graphPositions";
+import { renderNumberLine, renderBarGraph, renderLineGraph } from "./graph/graphRerenders";
 import { getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile";
 
@@ -23,7 +23,6 @@ export default function GraphVisual({ visual }) {
     content = renderNumberLine(elements, positions, plane, isMobile);
   }
 
-  // ⬇️ ADD THIS NEW BRANCH ⬇️
   else if (figure.subtype === "bar_graph") {
     const categories = visual?.categories || [];
     plane = calculateBarGraphPositions({ categories, figure: visual, isMobile });
@@ -35,9 +34,21 @@ export default function GraphVisual({ visual }) {
       isMobile
     );
   }
+
+  // ⬇️ ADD THIS NEW BRANCH ⬇️
+  else if (figure.subtype === "line_graph") {
+    const series = visual?.series || [];
+    plane = calculateLineGraphPositions({ series, isMobile });
+    content = renderLineGraph(
+      plane,
+      visual?.x_axis_label,
+      visual?.y_axis_label,
+      isMobile
+    );
+  }
   // ⬆️ END NEW BRANCH ⬆️
 
-  const DEBUG_GRAPH = false;
+  const DEBUG_GRAPH = true;
 
   if (DEBUG_GRAPH) {
     console.log("========== GRAPH DEBUG ==========");
