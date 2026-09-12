@@ -13,6 +13,7 @@ export function renderNumberLine(elements, positions, plane, isMobile = false) {
 
   const lineStart = toPixelX(min);
   const lineEnd = toPixelX(max);
+  
 
   return (
     <g>
@@ -190,8 +191,9 @@ export function renderLineGraph(plane, xAxisLabel, yAxisLabel, isMobile = false)
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
   const { plottedSeries, categories, chartLeft, chartRight, chartTop, chartBottom, yMax, yMin, tick } = plane;
 
-  const COLORS = ["#378add", "#D4537E", "#1D9E75", "#EF9F27"];
+  const COLORS = ["#378add", "#D4537E", "#1D9E75", "rgb(239, 159, 39)"];
   const AXIS_OVERHANG_RIGHT = isMobile ? 10 : 20;
+  const CIRCLE_RADIUS = isMobile ? "6" : "4"
 
   const yTicks = [];
   for (let v = Math.ceil(yMin / tick) * tick; v <= yMax; v += tick) {
@@ -291,8 +293,8 @@ export function renderLineGraph(plane, xAxisLabel, yAxisLabel, isMobile = false)
             <path d={pathD} fill="none" stroke={COLORS[si % COLORS.length]}
               strokeWidth={strokeWidth * 1.5} vectorEffect="non-scaling-stroke" />
             {s.points.map((p, i) => (
-              <circle key={`pt-${si}-${i}`} cx={p.x} cy={p.y} r="4"
-                fill={COLORS[si % COLORS.length]} stroke="white" strokeWidth={strokeWidth * 0.6} />
+              <circle key={`pt-${si}-${i}`} cx={p.x} cy={p.y} r = {CIRCLE_RADIUS}
+                fill={COLORS[si % COLORS.length]} stroke={COLORS[si % COLORS.length]} strokeWidth={strokeWidth * 0.6} />
             ))}
           </g>
         );
@@ -342,9 +344,9 @@ export function renderLineGraph(plane, xAxisLabel, yAxisLabel, isMobile = false)
       {showLegend && (
         <g>
           {plottedSeries.map((s, i) => (
-            <g key={`legend-${i}`} transform={`translate(${chartLeft+20 + i * 100}, ${chartTop - 5})`}>
-              <rect width="10" height="10" fill={COLORS[i % COLORS.length]} rx="2" />
-              <text x="14" y="9" fontSize={fontSize * 0.8} className="fill-slate-700 select-none">
+            <g key={`legend-${i}`} transform={`translate(${chartLeft+20 + i * 100}, ${chartTop - 12})`}>
+              <rect width="13" height="13" fill={COLORS[i % COLORS.length]} rx="2" />
+              <text x="20" y="10" fontSize={fontSize * (isMobile ? 1.1 : 1.2)} className="fill-slate-700 select-none">
                 {s.label}
               </text>
             </g>
