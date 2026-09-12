@@ -94,7 +94,7 @@ export function calculateLineGraphPositions({ series, isMobile = false }) {
   const chartLeft = paddingX + LABEL_MARGIN;
   const chartRight = SVG_WIDTH - paddingX - LABEL_MARGIN;
   const chartTop = paddingY + 10;
-  const chartBottom = SVG_HEIGHT - paddingY;
+  const chartBottom = SVG_HEIGHT - paddingY-10;
 
   const chartWidth = chartRight - chartLeft;
   const chartHeight = chartBottom - chartTop;
