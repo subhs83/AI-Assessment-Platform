@@ -344,9 +344,9 @@ export function renderLineGraph(plane, xAxisLabel, yAxisLabel, isMobile = false)
       {showLegend && (
         <g>
           {plottedSeries.map((s, i) => (
-            <g key={`legend-${i}`} transform={`translate(${chartLeft+20 + i * 150}, ${chartTop - 12})`}>
+            <g key={`legend-${i}`} transform={`translate(${chartLeft+20 + i * 130}, ${chartTop - 12})`}>
               <rect width="13" height="13" fill={COLORS[i % COLORS.length]} rx="2" />
-              <text x="20" y="10" fontSize={fontSize * (isMobile ? 1.1 : 1.2)} className="fill-slate-700 select-none">
+              <text x="20" y="12" fontSize={fontSize * (isMobile ? 1 : 1.2)} className="fill-slate-800 select-none">
                 {s.label}
               </text>
             </g>
