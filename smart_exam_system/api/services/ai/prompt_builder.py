@@ -716,18 +716,68 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
---- VENN DIAGRAM PAYLOAD ---
+--- VENN DIAGRAM PAYLOAD (2-SET) ---
 "visual": {{
   "figure": {{ "type": "venn_diagram", "subtype": "2_set" }},
-  "elements": [
-    {{ "id": "set_a", "type": "circle", "label": "Math" }},
-    {{ "id": "set_b", "type": "circle", "label": "Science" }},
-    {{ "id": "val_1", "type": "label", "value": "15" }},
-    {{ "id": "val_2", "type": "label", "value": "8" }}
+  "title": "Favorite Subjects Survey",
+  "sets": [
+    {{ "id": "set_a", "label": "Math" }},
+    {{ "id": "set_b", "label": "Science" }}
   ],
-  "relationships": [
-    {{ "type": "belongs_to_region", "element_id": "val_1", "target": "set_a", "not_in": ["set_b"] }},
-    {{ "type": "overlaps", "elements": ["set_a", "set_b"], "contains": ["val_2"] }}
+  "regions": [
+    {{ "in": ["set_a"], "value": 15 }},
+    {{ "in": ["set_b"], "value": 12 }},
+    {{ "in": ["set_a", "set_b"], "value": 8 }},
+    {{ "in": [], "value": 5 }}
+  ]
+}}
+
+--- VENN DIAGRAM PAYLOAD (3-SET) ---
+"visual": {{
+  "figure": {{ "type": "venn_diagram", "subtype": "3_set" }},
+  "title": "Sports Participation",
+  "sets": [
+    {{ "id": "set_a", "label": "Soccer" }},
+    {{ "id": "set_b", "label": "Basketball" }},
+    {{ "id": "set_c", "label": "Tennis" }}
+  ],
+  "regions": [
+    {{ "in": ["set_a"], "value": 10 }},
+    {{ "in": ["set_b"], "value": 8 }},
+    {{ "in": ["set_c"], "value": 6 }},
+    {{ "in": ["set_a", "set_b"], "value": 4 }},
+    {{ "in": ["set_a", "set_c"], "value": 3 }},
+    {{ "in": ["set_b", "set_c"], "value": 2 }},
+    {{ "in": ["set_a", "set_b", "set_c"], "value": 1 }},
+    {{ "in": [], "value": 5 }}
+  ]
+}}
+
+--- VENN DIAGRAM PAYLOAD (DISJOINT) ---
+"visual": {{
+  "figure": {{ "type": "venn_diagram", "subtype": "disjoint" }},
+  "title": "Students Taking French or German",
+  "sets": [
+    {{ "id": "set_a", "label": "French" }},
+    {{ "id": "set_b", "label": "German" }}
+  ],
+  "regions": [
+    {{ "in": ["set_a"], "value": 20 }},
+    {{ "in": ["set_b"], "value": 18 }}
+  ]
+}}
+
+--- VENN DIAGRAM PAYLOAD (SUBSET) ---
+"visual": {{
+  "figure": {{ "type": "venn_diagram", "subtype": "subset" }},
+  "title": "Animals: Mammals within Vertebrates",
+  "sets": [
+    {{ "id": "set_a", "label": "Vertebrates" }},
+    {{ "id": "set_b", "label": "Mammals" }}
+  ],
+  "regions": [
+    {{ "in": ["set_b"], "value": 12 }},
+    {{ "in": ["set_a"], "value": 30 }}
   ]
 }}
 

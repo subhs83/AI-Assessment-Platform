@@ -139,7 +139,7 @@ export function calculateGeometryPositions({
       * ------------------------------------------
       */
       if (isCircleFamily) {
-        console.log("[DEBUG] Entered circle branch", { figureType, feature, centerId });
+        //console.log("[DEBUG] Entered circle branch", { figureType, feature, centerId });
 
         // --------------------------------------------------
         // BASE LAYOUT — place the center (if one exists) and stamp the

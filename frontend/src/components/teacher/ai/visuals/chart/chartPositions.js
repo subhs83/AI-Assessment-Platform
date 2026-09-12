@@ -8,8 +8,16 @@ export function calculatePieChartPositions({ elements, isMobile = false }) {
   const SVG_AVAILABLE_WIDTH = SVG_WIDTH - paddingX * 2;
   const SVG_AVAILABLE_HEIGHT = SVG_HEIGHT -  paddingY * 2;
   const maxRadius = Math.min(SVG_AVAILABLE_WIDTH / 2, SVG_AVAILABLE_HEIGHT / 2)
-  const radius = maxRadius * (isMobile ? 0.65 : 0.85);
- 
+  // Outside labels sit at radius * 1.25 (see renderPieChart), plus need
+  // room for the label text itself extending further outward. Divide
+  // by 1.25 upfront so the LABEL radius (not the pie's own edge) is
+  // what actually fits within maxRadius — guaranteeing labels never
+  // reach the canvas boundary, regardless of pie fill factor.
+  const OUTSIDE_LABEL_MULTIPLIER = 1.25;
+  const TEXT_MARGIN = isMobile ? 15 : 10; // extra px for the label text's own width
+  
+  const fillFactor = isMobile ? 0.70 : 0.90;
+  const radius = Math.min( (maxRadius * fillFactor),(maxRadius - TEXT_MARGIN) / OUTSIDE_LABEL_MULTIPLIER);
 
 
   const total = elements.reduce((sum, el) => sum + (Number(el.value) || 0), 0);
@@ -196,7 +204,7 @@ export function renderPieChartLegend(slices, isMobile = false) {
   };
 
   return (
-    <div className="pt-4 flex flex-col gap-2 text-sm">
+    <div className="flex flex-col gap-2 text-sm">
       {slices.map((slice, i) => (
         <div key={slice.id || i} className="flex items-center gap-2">
           <span

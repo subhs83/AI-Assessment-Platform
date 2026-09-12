@@ -2022,10 +2022,10 @@ export function parseCoordinate(raw) {
 export const getSvgDimensions = (isMobile = false) => {
   if (isMobile) {
     return {
-      width: 380,
+      width: 400,
       height:  240, // taller for coordinate planes
       paddingX: 20,
-      paddingY: 20,
+      paddingY: 10,
       strokeWidth: 3,
       fontSize: 16,
     };
