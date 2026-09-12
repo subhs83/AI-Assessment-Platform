@@ -8,7 +8,7 @@ export function calculatePieChartPositions({ elements, isMobile = false }) {
   const SVG_AVAILABLE_WIDTH = SVG_WIDTH - paddingX * 2;
   const SVG_AVAILABLE_HEIGHT = SVG_HEIGHT -  paddingY * 2;
   const maxRadius = Math.min(SVG_AVAILABLE_WIDTH / 2, SVG_AVAILABLE_HEIGHT / 2)
-  const radius = maxRadius * (isMobile ? 0.75 : 0.95);
+  const radius = maxRadius * (isMobile ? 0.65 : 0.85);
  
 
 
@@ -77,30 +77,74 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
     ].join(" ");
   };
 
-  // Rough average character width for a bold sans-serif label at this
-  // fontSize — good enough to decide "does this text fit" without
-  // needing an actual canvas measureText call inside SVG render.
-  const estimateTextWidth = (text, size) => text.length * size * 0.55;
-
+  const estimateTextWidth = (text, size) => text.length * size * 0.58;
   const insideLabelRadius = (radius + innerRadius) / 2;
+  const outsideLabelRadius = radius * 1.25;
+  const LINE_HEIGHT = fontSize * 1.4; // minimum vertical gap between two outside labels
+
+  // --------------------------------------------------
+  // PASS 1: decide inside vs. outside for every slice, and compute
+  // each outside label's initial (un-collision-resolved) position.
+  // --------------------------------------------------
+  const labelData = slices.map((slice) => {
+    const sweep = slice.endAngle - slice.startAngle;
+    const labelText = `${slice.label} (${Math.round(slice.percentage)}%)`;
+    const textWidth = estimateTextWidth(labelText, fontSize * 0.95);
+    const availableChordWidth = 2 * insideLabelRadius * Math.sin(sweep / 2);
+    const isSmall = (isDonut || isMobile) ? true : textWidth > availableChordWidth * 0.85;
+
+    const anchorPoint = polarToXY(slice.midAngle, radius); // where the leader line starts, on the arc
+    const idealOutsidePos = polarToXY(slice.midAngle, outsideLabelRadius);
+    const insidePos = polarToXY(slice.midAngle, insideLabelRadius);
+
+    return {
+      slice,
+      labelText,
+      isSmall,
+      anchorPoint,
+      side: Math.cos(slice.midAngle) >= 0 ? "right" : "left",
+      // y starts as the ideal position; PASS 2 below may adjust this
+      x: isSmall ? idealOutsidePos.x : insidePos.x,
+      y: isSmall ? idealOutsidePos.y : insidePos.y,
+    };
+  });
+
+  // --------------------------------------------------
+  // PASS 2: resolve vertical collisions between outside labels that
+  // share the same side (left/right of center). Sort top-to-bottom,
+  // then push any label down that's too close to the one above it.
+  // Mirrors the classic pie/donut label-declutter technique.
+  // --------------------------------------------------
+  ["left", "right"].forEach((side) => {
+    const group = labelData
+      .filter((d) => d.isSmall && d.side === side)
+      .sort((a, b) => a.y - b.y);
+
+    for (let i = 1; i < group.length; i++) {
+      const prev = group[i - 1];
+      const curr = group[i];
+      const minY = prev.y + LINE_HEIGHT;
+      if (curr.y < minY) {
+        curr.y = minY;
+      }
+    }
+
+    // Re-center the whole group vertically around its own average, so
+    // a cluster of small slices doesn't drift entirely toward the
+    // bottom of the chart after repeated pushing.
+    if (group.length > 1) {
+      const originalCenter =
+        group.reduce((sum, d) => sum + polarToXY(d.slice.midAngle, outsideLabelRadius).y, 0) / group.length;
+      const newCenter = group.reduce((sum, d) => sum + d.y, 0) / group.length;
+      const shift = originalCenter - newCenter;
+      group.forEach((d) => { d.y += shift; });
+    }
+  });
 
   return (
     <g>
-      {slices.map((slice, i) => {
-        const sweep = slice.endAngle - slice.startAngle;
-        const labelText = `${slice.label} (${Math.round(slice.percentage)}%)`;
-        const textWidth = estimateTextWidth(labelText, fontSize * isMobile ? 0.95: 1.15);
-
-        // Available straight-line width for a label centered at
-        // insideLabelRadius, spanning this slice's angular sweep —
-        // the actual constraint that matters, not the sweep angle in
-        // isolation. A wide slice with long text can still fail this;
-        // a narrow slice with short text can still pass it.
-        const availableChordWidth = 2 * insideLabelRadius * Math.sin(sweep / 2);
-        const isSmall = (isDonut || isMobile) ? true :textWidth > availableChordWidth * 0.85; // small safety margin
-
-        const labelRadius = isSmall ? radius * 1.25 : insideLabelRadius;
-        const labelPos = polarToXY(slice.midAngle, labelRadius);
+      {labelData.map((d, i) => {
+        const { slice, labelText, isSmall, anchorPoint, x, y } = d;
 
         return (
           <g key={slice.id || i}>
@@ -108,10 +152,10 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
 
             {isSmall && (
               <line
-                x1={polarToXY(slice.midAngle, radius).x}
-                y1={polarToXY(slice.midAngle, radius).y}
-                x2={labelPos.x}
-                y2={labelPos.y}
+                x1={anchorPoint.x}
+                y1={anchorPoint.y}
+                x2={x}
+                y2={y}
                 stroke="currentColor"
                 strokeWidth={strokeWidth * 0.8}
                 className="text-slate-400"
@@ -119,11 +163,11 @@ export function renderPieChart(plane, isDonut = false, isMobile = false) {
             )}
 
             <text
-              x={labelPos.x}
-              y={labelPos.y}
+              x={x}
+              y={y}
               textAnchor={isSmall ? (Math.cos(slice.midAngle) > 0 ? "start" : "end") : "middle"}
               dominantBaseline="middle"
-              fontSize={fontSize * (isMobile ? 0.95: 1.15)}
+              fontSize={fontSize * (isMobile ? 0.95 : 1.15)}
               className={isSmall ? "fill-slate-700 font-semibold" : "fill-white font-semibold"}
             >
               {labelText}
@@ -152,7 +196,7 @@ export function renderPieChartLegend(slices, isMobile = false) {
   };
 
   return (
-    <div className="flex flex-col gap-2 text-sm">
+    <div className="pt-4 flex flex-col gap-2 text-sm">
       {slices.map((slice, i) => (
         <div key={slice.id || i} className="flex items-center gap-2">
           <span
