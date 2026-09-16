@@ -173,6 +173,35 @@ All numeric fields (x, y, vector components, bounds) follow the same plain-numer
 
 RANGE NOTATION IN TABLES: Write numeric ranges as "45 - 50" (plain, no symbols). Only use "$150 \\le h < 155$" style inequality notation when consecutive class intervals share a boundary number and you must clarify which class that boundary belongs to. Never combine a hyphen with "<" (e.g. "150 - <155" is invalid).
 
+PHYSICS VISUAL ELEMENT SCOPING (applies to all physics figure types):
+Only include a visual element (vector, force, current, ray, wire, component, angle, weight, etc.) if it is explicitly named or directly relevant to the SPECIFIC QUESTION BEING ASKED — not every element needed to derive the answer through intermediate steps in the explanation. A diagram should show what the question asks the student to observe or reason about, not the full solution path.
+
+For example:
+- A free body diagram asking for "net horizontal force" given an applied force and friction should show only those two force vectors — even though gravity and normal force are needed in the explanation to calculate the friction force, they are solution-path details, not part of the question's own visual setup.
+- A circuit question asking for "the current through R2" should show the circuit's actual components (resistors, battery), but should not add extra annotation elements (like intermediate voltage-drop labels) that only appear in the step-by-step derivation, unless the question explicitly references them.
+- An optics question asking "where does the image form" should show the lens/mirror, the object, and the relevant principal rays — not every auxiliary construction line used only to justify the answer in prose.
+
+PHYSICS VECTOR ANGLE CORRECTNESS (inclined-plane figures specifically):
+
+For "type": "physics", "subtype": "inclined_plane" figures, every force vector's "angle" field must be geometrically consistent with the SAME angle convention already used for force_normal in these figures: normal force = 90 + incline_angle (perpendicular to the slope surface, pointing away from it). Given that convention, forces acting ALONG the slope surface (friction, and any applied force directed along the incline) must be exactly perpendicular to the normal — i.e. (normal_angle - 90) or (normal_angle + 90), never (normal_angle + 180) or any other offset.
+
+To pick the correct one of the two perpendicular directions for a given force:
+- Friction always opposes the direction the object is moving or tends to move. If the object slides/tends to slide DOWN the incline, friction points UP-slope. If pulled/pushed UP the incline, kinetic friction points DOWN-slope.
+- An applied force stated as moving the object "up the incline" must point up-slope; "down the incline" must point down-slope.
+- Gravity (force_gravity) is always straight down: angle = 270, regardless of incline_angle — never adjust gravity's own angle to the slope.
+
+Before finalizing a force's "angle" value, verify it is exactly 90 degrees away from force_normal's angle, in the direction consistent with the physical scenario described in question_text. Do not derive a friction or applied-force angle by simply adding or subtracting 180 from another force's angle — this produces a direction perpendicular to the slope instead of along it, which is physically wrong.
+
+INCLINE ANGLE ELEMENT — WHEN TO INCLUDE IT:
+
+If the incline's angle (incline_angle) is stated as a GIVEN, known quantity in question_text (e.g. "an angle of 45° with the horizontal"), the visual MUST include an "angle" type element for it, with its actual numeric value shown (e.g. "value": "45"), so the figure displays the given angle just like any other given quantity. Do not omit the angle element just because the question is asking about a different force or quantity.
+
+If the incline's angle is itself the UNKNOWN the student must solve for, include the "angle" element (still needed to correctly draw the incline's slope) but set its label to the symbol only (e.g. "\\(\\theta\\)") with no numeric value shown — this defers to your shared visual-element scoping rule on not leaking solved values.
+When in doubt, prefer fewer visual elements: a diagram should show only what a student needs to see to understand and solve the problem as stated, not every true fact used in the explanation.
+
+PULLEY SYSTEM SUBTYPE SELECTION: If BOTH masses simply hang vertically from either side of the pulley, use "subtype": "pulley_system". If ONE mass sits on an inclined surface (connected via rope over a pulley to a second mass that hangs freely), use "subtype": "incline_pulley_system" instead, and include "incline_angle" plus the on-incline object's "side" as "on_incline" (not "left"/"right", which are reserved for pulley_system). Do not generate an incline+pulley combination under "subtype": "pulley_system" — these are visually and structurally different figures.
+
+PROJECTILE MOTION — PEAK POINT INCLUSION: Only include a "peak_point" element (the trajectory's maximum height, marked with a point and typically a dashed vertical reference line to the ground) when the question specifically asks about maximum height or the apex of the trajectory. For questions asking about range, time of flight, or landing velocity, do NOT include a peak_point — it is a derivation-only visual aid that isn't part of what those questions ask the student to find.
 --------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
 --------------------------------------------------
@@ -203,8 +232,27 @@ RANGE NOTATION IN TABLES: Write numeric ranges as "45 - 50" (plain, no symbols).
 --------------------------------------------------
 3. SCIENCE & CHEMISTRY TAXONOMY
 --------------------------------------------------
+--------------------------------------------------
+5. PHYSICS TAXONOMY
+--------------------------------------------------
+- "type": "physics"
+  -> "subtype": "free_body_diagram" | "inclined_plane" | "pulley_system" | "incline_pulley_system" | "projectile_motion"
+     "feature": "none" | "multiple_forces" | "friction" | "tension" | "net_force" | "horizontal_launch" | "angled_launch" | "angled_launch_from_height"
+
+  -> "subtype": "circuit_series" | "circuit_parallel" | "circuit_bridge"
+     "feature": "none" | "resistors" | "battery_and_switch" | "ammeter_voltmeter"
+
+  -> "subtype": "ray_diagram_lens" | "ray_diagram_mirror" | "refraction" | "total_internal_reflection"
+     "feature": "none" | "convex" | "concave" | "plane" | "image_formation"
+
+  -> "subtype": "wave_transverse" | "wave_longitudinal" | "standing_wave"
+     "feature": "none" | "amplitude_wavelength" | "nodes_antinodes" | "doppler_effect"
+
+  -> "subtype": "electric_field" | "magnetic_field"
+     "feature": "none" | "point_charge" | "current_carrying_wire" | "bar_magnet"
+
+
 - "type": "chemistry"       -> "subtype": "molecular_2d" | "lewis_structure" | "skeletal_formula" | "titration_setup" | "galvanic_cell"
-- "type": "physics"         -> "subtype": "circuit_series" | "circuit_parallel" | "circuit_bridge" | "free_body_diagram" | "inclined_plane" | "ray_diagram_lens" | "ray_diagram_mirror"
 
 --------------------------------------------------
 4. PHASE 2: COMPOSITE / IMO / ISO TAXONOMY
@@ -904,6 +952,177 @@ When "visual_required": true, return the corresponding semantic "visual" payload
 }}
 
 
+--- PHYSICS: FREE BODY DIAGRAM PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "free_body_diagram", "feature": "multiple_forces" }},
+  "elements": [
+    {{ "id": "object", "type": "shape", "shape": "box", "label": "Box" }},
+    {{ "id": "force_gravity", "type": "vector", "label": "Fg = 50 N", "angle": 270, "length": "medium" }},
+    {{ "id": "force_normal", "type": "vector", "label": "N = 50 N", "angle": 90, "length": "medium" }},
+    {{ "id": "force_applied", "type": "vector", "label": "F = 20 N", "angle": 0, "length": "short" }},
+    {{ "id": "force_friction", "type": "vector", "label": "f = 8 N", "angle": 180, "length": "short" }}
+  ],
+  "relationships": [
+    {{ "type": "acts_on", "elements": ["force_gravity", "force_normal", "force_applied", "force_friction"], "target": "object" }}
+  ]
+}}
+
+
+--- PHYSICS: INCLINED PLANE PAYLOAD ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "inclined_plane", "feature": "net_force" }},
+  "incline_angle": 30,
+  "elements": [
+    {{ "id": "object", "label": "Block", "shape": "box", "type": "shape" }},
+    {{ "id": "force_gravity", "label": "Fg = 98 N", "angle": 270, "length": "medium", "type": "vector" }},
+    {{ "id": "force_normal", "label": "N", "angle": 120, "length": "medium", "type": "vector" }},
+    {{ "id": "force_gravity_parallel", "label": "Fg,∥", "angle": 210, "length": "short", "type": "vector", "dashed": true }},
+    {{ "id": "force_gravity_perpendicular", "label": "Fg,⊥", "angle": 300, "length": "short", "type": "vector", "dashed": true }}
+  ],
+  "relationships": [
+    {{ "type": "acts_on", "elements": ["force_gravity", "force_normal"], "target": "object" }},
+    {{ "type": "component_of", "elements": ["force_gravity_parallel", "force_gravity_perpendicular"], "target": "force_gravity" }}
+  ]
+}}
+
+
+--- PHYSICS: PULLEY SYSTEM PAYLOAD (single fixed pulley) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "pulley_system", "feature": "tension" }},
+  "elements": [
+    {{ "id": "pulley_1", "type": "pulley", "x_position": "center" }},
+    {{ "id": "object_a", "label": "5 kg", "shape": "box", "type": "shape", "side": "left" }},
+    {{ "id": "object_b", "label": "8 kg", "shape": "box", "type": "shape", "side": "right" }},
+    {{ "id": "tension_a", "label": "T", "length": "medium", "type": "vector", "attached_to": "object_a", "angle": 90 }},
+    {{ "id": "tension_b", "label": "T", "length": "medium", "type": "vector", "attached_to": "object_b", "angle": 90 }},
+    {{ "id": "gravity_a", "label": "Fg = 49 N", "length": "medium", "type": "vector", "attached_to": "object_a", "angle": 270 }},
+    {{ "id": "gravity_b", "label": "Fg = 78.4 N", "length": "medium", "type": "vector", "attached_to": "object_b", "angle": 270 }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_rope", "elements": ["object_a", "object_b"], "target": "pulley_1" }},
+    {{ "type": "acts_on", "elements": ["tension_a", "gravity_a"], "target": "object_a" }},
+    {{ "type": "acts_on", "elements": ["tension_b", "gravity_b"], "target": "object_b" }}
+  ]
+}}
+--- INCLINE + PULLEY PAYLOAD ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "incline_pulley_system",
+    "feature": "tension"
+  }},
+  "incline_angle": 30,
+  "elements": [
+    {{ "id": "pulley_1", "type": "pulley" }},
+    {{ "id": "object_a", "label": "$m_1 = 10\\text{{ kg}}$", "shape": "box", "side": "on_incline", "type": "shape" }},
+    {{ "id": "object_b", "label": "$m_2 = 10\\text{{ kg}}$", "shape": "box", "side": "hanging", "type": "shape" }},
+    {{ "angle": 30, "attached_to": "object_a", "id": "tension_a", "label": "T", "length": "medium", "type": "vector" }},
+    {{ "angle": 270, "attached_to": "object_a", "id": "force_gravity_a", "label": "$m_1g$", "length": "medium", "type": "vector" }},
+    {{ "angle": 120, "attached_to": "object_a", "id": "force_normal_a", "label": "$N_1$", "length": "medium", "type": "vector" }},
+    {{ "angle": 90, "attached_to": "object_b", "id": "tension_b", "label": "T", "length": "medium", "type": "vector" }},
+    {{ "angle": 270, "attached_to": "object_b", "id": "force_gravity_b", "label": "$m_2g$", "length": "medium", "type": "vector" }}
+  ],
+  "relationships": [
+    {{ "elements": ["object_a", "object_b"], "target": "pulley_1", "type": "connected_by_rope" }},
+    {{ "elements": ["tension_a", "force_gravity_a", "force_normal_a"], "target": "object_a", "type": "acts_on" }},
+    {{ "elements": ["tension_b", "force_gravity_b"], "target": "object_b", "type": "acts_on" }}
+  ]
+}}
+
+
+--- PROJECTILE MOTION PAYLOAD (horizontal launch) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "projectile_motion",
+    "feature": "horizontal_launch"
+  }},
+  "launch_height": 20,
+  "launch_velocity": 15,
+  "elements": [
+    {{ "id": "launch_point", "type": "point", "label": "" }},
+    {{ "id": "landing_point", "type": "point", "label": "" }},
+    {{ "angle": 0, "attached_to": "launch_point", "id": "velocity_initial", "label": "$v_0 = 15\\text{{ m/s}}$", "length": "medium", "type": "vector" }}
+  ],
+  "relationships": [
+    {{ "elements": ["launch_point", "landing_point"], "type": "trajectory_path" }}
+  ]
+}}
+
+--- PROJECTILE MOTION PAYLOAD (angled launch) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "projectile_motion",
+    "feature": "angled_launch"
+  }},
+  "launch_angle": 30,
+  "launch_velocity": 25,
+  "elements": [
+    {{ "id": "launch_point", "label": "", "type": "point" }},
+    {{ "id": "landing_point", "label": "", "type": "point" }},
+    {{
+      "angle": 30,
+      "attached_to": "launch_point",
+      "id": "velocity_initial",
+      "label": "$v_0 = 25\\text{{ m/s}}$",
+      "length": "medium",
+      "type": "vector"
+    }}
+  ],
+  "relationships": [
+    {{ "elements": ["launch_point", "landing_point"], "type": "trajectory_path" }}
+  ]
+}}
+
+--- PROJECTILE MOTION PAYLOAD (angled launch from height) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "projectile_motion",
+    "feature": "angled_launch_from_height"
+  }},
+  "launch_angle": 40,
+  "launch_velocity": 25,
+  "launch_height": 30,
+  "elements": [
+    {{ "id": "launch_point", "label": "", "type": "point" }},
+    {{ "id": "landing_point", "label": "", "type": "point" }},
+    {{
+      "angle": 40,
+      "attached_to": "launch_point",
+      "id": "velocity_initial",
+      "label": "$v_0 = 25\\text{{ m/s}}$",
+      "length": "medium",
+      "type": "vector"
+    }}
+  ],
+  "relationships": [
+    {{ "elements": ["launch_point", "landing_point"], "type": "trajectory_path" }}
+  ]
+}}
+
+--- WAVE PAYLOAD (transverse) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "wave_transverse",
+    "feature": "amplitude_wavelength"
+  }},
+  "amplitude": 3,
+  "wavelength": 8,
+  "num_cycles": 2,
+  "elements": [
+    {{ "id": "wave_1", "type": "wave" }},
+    {{ "id": "amplitude_marker", "type": "measurement", "label": "$A = 3\\text{{ cm}}$" }},
+    {{ "id": "wavelength_marker", "type": "measurement", "label": "$\\lambda = 8\\text{{ cm}}$" }}
+  ],
+  "relationships": [
+    {{ "elements": ["amplitude_marker"], "target": "wave_1", "type": "measures_amplitude_of" }},
+    {{ "elements": ["wavelength_marker"], "target": "wave_1", "type": "measures_wavelength_of" }}
+  ]
+}}
+
 # SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 
 Before generating the final JSON response, perform a silent internal check to verify that:
@@ -917,7 +1136,9 @@ Before generating the final JSON response, perform a silent internal check to ve
 # STRICT OUTPUT FORMAT CONTRACT
 
 Return ONLY a single valid JSON object.
-Do NOT include Markdown fences (e.g., ```json), preambles, internal reasoning, notes, calculation logs, or commentary.
+Do NOT include Markdown fences (e.g., ```json), preambles, internal reasoning, notes, calculation logs, or commentary — not before the JSON, not after it, and not interleaved with it.
+Do NOT think out loud, show your work, second-guess your own numbers, or revise your answer choices in visible text. If you need to verify a calculation before answering, do that verification silently and output only the final, correct JSON — never write out the verification process itself in the response.
+The response must start with {{and end with}} — nothing else on any line before or after.
 
 REQUIRED TOP-LEVEL JSON STRUCTURE:
 
@@ -927,6 +1148,7 @@ REQUIRED TOP-LEVEL JSON STRUCTURE:
   - "chart" for chart
   - "graph" for graph
   - "venn_diagram" for venn_diagram
+  - "physics" for physics
 When "visual_required" is false, "visual_type" MUST be null.
 
 {{
