@@ -26,12 +26,13 @@ export function calculateFreeBodyPositions({ elements, isMobile = false }) {
 
 export function calculateInclinePositions({ elements, inclineAngle = 30, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
-
-  const rampBaseWidth = Math.min(SVG_WIDTH * 0.65, SVG_HEIGHT);
-  const rampHeight = rampBaseWidth * Math.tan((inclineAngle * Math.PI) / 180)
-
-  const baseX = paddingX + 20;
-  const baseY = SVG_HEIGHT - paddingY;
+  const angleValue = Math.round(Math.tan((inclineAngle * Math.PI) / 180)*100)/100 >= 1 
+  const widthMultiplyer = isMobile? 0.4 : 0.25
+  const rampBaseWidth = angleValue ? SVG_WIDTH * widthMultiplyer : Math.min(SVG_WIDTH * 0.6, SVG_HEIGHT)
+  const rampHeight =  rampBaseWidth * Math.tan((inclineAngle * Math.PI) / 180)
+  const paddingOffset = isMobile ? 3 :1
+  const baseX = paddingX * paddingOffset
+  const baseY = SVG_HEIGHT - paddingY*paddingOffset;
 
   // Standard orientation: peak at top-left, base runs right, hypotenuse
   // slopes from the peak DOWN to the bottom-right corner.
@@ -118,9 +119,9 @@ export function calculateInclinePulleyPositions({ elements, inclineAngle = 30, i
     rampBaseWidth * Math.tan((inclineAngle * Math.PI) / 180)
   );
 
-  const HANGING_MASS_SPACE = 90;
+  const HANGING_MASS_SPACE = 100
   const baseX = paddingX + HANGING_MASS_SPACE;
-  const baseY = SVG_HEIGHT - paddingY;
+  const baseY = SVG_HEIGHT - paddingY*(isMobile ? 4 : 1.5);
 
   const rampPoints = {
     peak: { x: baseX, y: baseY - rampHeight },
@@ -159,7 +160,7 @@ export function calculateInclinePulleyPositions({ elements, inclineAngle = 30, i
   // pulley system where each rope segment goes to a different side.
 
   const objectBRopeX = rampPoints.peak.x - 55; // to the LEFT of the vertical edge
-  const HANG_DISTANCE = Math.max(60, (SVG_HEIGHT - paddingY) - pulleyY - BOX_HALF_HEIGHT - 10);
+  const HANG_DISTANCE = Math.max(60, (SVG_HEIGHT - paddingY*(isMobile ? 4 : 1.5)) - pulleyY - BOX_HALF_HEIGHT - 10);
 
   const objectBCenter = {
     x: objectBRopeX,
@@ -370,5 +371,47 @@ export function calculateAngledLaunchFromHeightPositions({ figure, isMobile = fa
     launchHeight,
     range,
     timeOfFlight,
+  };
+}
+
+
+
+
+export function calculateWavePositions({ amplitude, wavelength, numCycles = 2, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+
+  const availW = SVG_WIDTH - paddingX * 2;
+  const availH = SVG_HEIGHT - paddingY * 2;
+
+  // Scale wavelength to fill the available width across numCycles.
+  const totalRealWidth = wavelength * numCycles;
+  const pxPerUnit = availW / totalRealWidth;
+
+  const pxWavelength = wavelength * pxPerUnit;
+  const pxAmplitude = Math.min(amplitude * pxPerUnit, availH * 0.35); // cap so amplitude doesn't blow past canvas height
+
+  const centerY = SVG_HEIGHT / 2;
+  const startX = paddingX;
+
+  // Generate a smooth path by sampling many points along the sine curve.
+  const SAMPLES_PER_CYCLE = 40;
+  const totalSamples = Math.round(numCycles * SAMPLES_PER_CYCLE);
+  const points = [];
+  for (let i = 0; i <= totalSamples; i++) {
+    const t = i / SAMPLES_PER_CYCLE; // in units of wavelength
+    const x = startX + t * pxWavelength;
+    const y = centerY - Math.sin(t * 2 * Math.PI) * pxAmplitude;
+    points.push({ x, y });
+  }
+
+  return {
+    points,
+    centerY,
+    startX,
+    pxWavelength,
+    pxAmplitude,
+    numCycles,
+    SVG_WIDTH,
+    SVG_HEIGHT,
   };
 }

@@ -6,6 +6,7 @@ import {
   calculateProjectileMotionPositions,
   calculateAngledProjectilePositions,
   calculateAngledLaunchFromHeightPositions,
+  calculateWavePositions,
 
 } from "./physics/physicsPositions";
 import {renderFreeBodyDiagram, 
@@ -15,6 +16,7 @@ import {renderFreeBodyDiagram,
   renderProjectileMotion,
   renderAngledProjectile,
   renderAngledLaunchFromHeight,
+  renderTransverseWave
 } from "./physics/physicsRender";
 
 import { getSvgDimensions } from "./geometry/geometryHelpers";
@@ -29,6 +31,9 @@ export default function PhysicsVisual({ visual }) {
   const figure = visual?.figure || {};
   const elements = visual?.elements || [];
   const inclineAngle = visual?.incline_angle || 30;
+  const amplitude = visual?.amplitude || 3;
+  const wavelength  = visual?.wavelength || 8;
+  const numCycles = visual?.num_cycles || 2;
  // console.log("incline_angle : ", incline_angle)
 
   let plane = null;
@@ -66,6 +71,12 @@ else if (figure.subtype === "projectile_motion" ) {
   plane = calculateProjectileMotionPositions({ figure, isMobile });
   content = renderProjectileMotion(plane, elements, isMobile);
 }
+}
+
+else if (figure.subtype === "wave_transverse") {
+  const elements = visual?.elements || [];
+  plane = calculateWavePositions({amplitude, wavelength, numCycles, isMobile,});
+  content = renderTransverseWave(plane, elements, isMobile);
 }
 
 

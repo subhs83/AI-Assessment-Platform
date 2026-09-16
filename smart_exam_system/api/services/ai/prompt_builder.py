@@ -202,6 +202,9 @@ When in doubt, prefer fewer visual elements: a diagram should show only what a s
 PULLEY SYSTEM SUBTYPE SELECTION: If BOTH masses simply hang vertically from either side of the pulley, use "subtype": "pulley_system". If ONE mass sits on an inclined surface (connected via rope over a pulley to a second mass that hangs freely), use "subtype": "incline_pulley_system" instead, and include "incline_angle" plus the on-incline object's "side" as "on_incline" (not "left"/"right", which are reserved for pulley_system). Do not generate an incline+pulley combination under "subtype": "pulley_system" — these are visually and structurally different figures.
 
 PROJECTILE MOTION — PEAK POINT INCLUSION: Only include a "peak_point" element (the trajectory's maximum height, marked with a point and typically a dashed vertical reference line to the ground) when the question specifically asks about maximum height or the apex of the trajectory. For questions asking about range, time of flight, or landing velocity, do NOT include a peak_point — it is a derivation-only visual aid that isn't part of what those questions ask the student to find.
+
+WAVE FIGURE VALUE CONSISTENCY: The visual's top-level "amplitude" and "wavelength" fields MUST exactly match the values stated in question_text (and used in explanation), even when the question doesn't ask the student to find that specific value. If question_text says "a wavelength of 12 m", the visual's "wavelength" field must be 12, not a different number — the figure must always depict the actual scenario described in the question, regardless of which specific quantity the question is asking the student to compute.
+
 --------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
 --------------------------------------------------
