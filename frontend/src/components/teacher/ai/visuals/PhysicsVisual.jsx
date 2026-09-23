@@ -1,26 +1,52 @@
-import { 
-  calculateFreeBodyPositions, 
-  calculateInclinePositions, 
-  calculatePulleyPositions,
-  calculateInclinePulleyPositions,
-  calculateProjectileMotionPositions,
-  calculateAngledProjectilePositions,
-  calculateAngledLaunchFromHeightPositions,
-  calculateWavePositions,
-
-} from "./physics/physicsPositions";
-import {renderFreeBodyDiagram, 
-  renderInclinedPlane, 
-  renderPulleySystem,
-  renderInclinePulleySystem,
-  renderProjectileMotion,
-  renderAngledProjectile,
-  renderAngledLaunchFromHeight,
-  renderTransverseWave
-} from "./physics/physicsRender";
-
+import {renderOpticsDefs} from "./physics/rayOptics/rayOpticsHelpers"
 import { getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile";
+import {detectPointChargeVariant, detectTwoChargeVariant, detectFieldLinesBetweenVariant} from "./physics/emf/emfHelpers"
+import { 
+  calculateFreeBodyPositions, calculateInclinePositions,  calculatePulleyPositions, calculateInclinePulleyPositions, 
+  calculateProjectileMotionPositions, calculateAngledProjectilePositions, calculateAngledLaunchFromHeightPositions,
+} from "./physics/physicsPositions";
+import {
+  renderFreeBodyDiagram, renderInclinedPlane, renderPulleySystem,renderInclinePulleySystem,
+  renderProjectileMotion, renderAngledProjectile, renderAngledLaunchFromHeight,
+} from "./physics/physicsRender";
+
+import {
+  calculateWavePositions, calculateStandingWavePositions, calculateLongitudinalWavePositions, 
+  calculateFixedStringHarmonicPositions, calculateWaveSuperpositionPositions, calculateDopplerEffectPositions,
+} from "./physics/soundWave/soundWavePositions"
+import { 
+  renderTransverseWave, renderStandingWave,renderLongitudinalWave, 
+  renderFixedStringHarmonic, renderWaveSuperposition, renderDopplerEffect,
+} from "./physics/soundWave/soundWaveRender"
+
+import {
+  calculateCircuitPositions,calculateParallelCircuitPositions,
+  calculateBridgeCircuitPositions,calculateCombinationCircuitPositions,
+} from "./physics/circuits/circuitsPosition";
+import {
+  renderCircuitSystem, renderParallelCircuitSystem, renderBridgeCircuitSystem, 
+  renderCombinationCircuitSystem,
+} from "./physics/circuits/circuitsRender";
+
+import {
+  calculateConvexLensPositions,calculateConcaveMirrorPositions,calculateRefractionPositions,
+  calculateTIRPositions, calculateConcaveLensPositions,
+} from "./physics/rayOptics/rayOpticsPositions"
+import {
+  renderConvexLensSystem, renderConcaveMirrorSystem,renderRefractionSystem,
+  renderTIRSystem, renderConcaveLensSystem,
+} from "./physics/rayOptics/rayOpticsRender"
+
+import {
+  calculatePointChargePositions, calculateTwoChargePositions, calculatePlatePositions,
+  calculateFieldAtPointPositions,calculateAxisPositionsChargeLayout, calculateBarMagnetPositions
+} from "./physics/emf/emfPositions"
+import {
+  renderPointChargeField, renderTwoChargeField, renderPlateField,renderFieldAtPoint,
+  renderAxisPositionsCharges, renderBarMagnetField
+} from "./physics/emf/emfRender"
+
 
 export default function PhysicsVisual({ visual }) {
   const isMobile = useIsMobile();
@@ -30,10 +56,16 @@ export default function PhysicsVisual({ visual }) {
 
   const figure = visual?.figure || {};
   const elements = visual?.elements || [];
+  const relationships = visual?.relationships || []
   const inclineAngle = visual?.incline_angle || 30;
+  const launch_height = visual?.launch_height || 20
+  const launch_angle = visual?.launch_angle || 45
+  const launch_velocity = visual?.launch_velocity || 20
   const amplitude = visual?.amplitude || 3;
   const wavelength  = visual?.wavelength || 8;
   const numCycles = visual?.num_cycles || 2;
+  const stringLength = visual?.string_length
+  const harmonicNumber = visual?.harmonic_number
  // console.log("incline_angle : ", incline_angle)
 
   let plane = null;
@@ -48,37 +80,156 @@ export default function PhysicsVisual({ visual }) {
     content = renderInclinedPlane(plane,  elements, isMobile);
 }
   else if (figure.subtype === "pulley_system") {
-  const elements = visual?.elements || [];
   plane = calculatePulleyPositions({ elements, isMobile });
   content = renderPulleySystem(plane, elements, isMobile);
 }
 
 else if (figure.subtype === "incline_pulley_system") {
-  const elements = visual?.elements || [];
   plane = calculateInclinePulleyPositions({ elements, inclineAngle, isMobile });
   content = renderInclinePulleySystem(plane, elements, isMobile);
 }
 
 else if (figure.subtype === "projectile_motion" ) {
-  const elements = visual?.elements || [];
  if (figure.feature === "angled_launch_from_height") {
-  plane = calculateAngledLaunchFromHeightPositions({ figure, isMobile });
+  plane = calculateAngledLaunchFromHeightPositions({ launch_angle, launch_velocity, launch_height , isMobile });
   content = renderAngledLaunchFromHeight(plane, elements, isMobile);
 } else if (figure.feature === "angled_launch") {
-  plane = calculateAngledProjectilePositions({ figure, isMobile });
+  plane = calculateAngledProjectilePositions({ launch_angle, launch_velocity, isMobile });
   content = renderAngledProjectile(plane, elements, isMobile);
 } else {
-  plane = calculateProjectileMotionPositions({ figure, isMobile });
+  plane = calculateProjectileMotionPositions({ launch_height,launch_velocity, isMobile });
   content = renderProjectileMotion(plane, elements, isMobile);
 }
 }
 
+
+//SOUND WAVE
+
 else if (figure.subtype === "wave_transverse") {
-  const elements = visual?.elements || [];
   plane = calculateWavePositions({amplitude, wavelength, numCycles, isMobile,});
   content = renderTransverseWave(plane, elements, isMobile);
 }
 
+else if (figure.subtype === "standing_wave") {
+  if(figure.feature === "harmonic_on_fixed_string"){
+  plane = calculateFixedStringHarmonicPositions({ stringLength, harmonicNumber, isMobile });
+  content = renderFixedStringHarmonic(plane, elements, isMobile);
+  }
+  else if (figure.feature === "nodes_antinodes"){
+  plane = calculateStandingWavePositions({ wavelength, numCycles, isMobile });
+  content = renderStandingWave(plane, elements, isMobile);
+}
+}
+
+else if (figure.subtype === "wave_longitudinal") {
+  if(figure.feature === "compressions_rarefactions"){
+  plane = calculateLongitudinalWavePositions({ wavelength, numCycles, isMobile });
+  content = renderLongitudinalWave(plane, elements, isMobile);
+  }
+  else if (figure.feature === "doppler_effect") {
+  const elements = visual?.elements || [];
+  plane = calculateDopplerEffectPositions({ elements, isMobile });
+  content = renderDopplerEffect(plane, isMobile);
+}
+}
+
+else if (figure.subtype === "wave_superposition") {
+  plane = calculateWaveSuperpositionPositions({
+    wave1Amplitude: visual?.wave_1_amplitude,
+    wave1Wavelength: visual?.wave_1_wavelength,
+    wave1Phase: visual?.wave_1_phase,
+    wave2Amplitude: visual?.wave_2_amplitude,
+    wave2Wavelength: visual?.wave_2_wavelength,
+    wave2Phase: visual?.wave_2_phase,
+    numCycles,
+    isMobile,
+  });
+  content = renderWaveSuperposition(plane, elements, isMobile);
+}
+
+//CIRCUITS
+
+else if (figure.subtype === "circuit_series") {
+  plane = calculateCircuitPositions({ elements, relationships, isMobile });
+  content = renderCircuitSystem(plane, elements, relationships, isMobile);
+}
+else if (figure.subtype === "circuit_parallel") {
+  plane = calculateParallelCircuitPositions({ elements, relationships, isMobile });
+  content = renderParallelCircuitSystem(plane, elements, relationships, isMobile);
+}
+else if (figure.subtype === "circuit_bridge") {
+  plane = calculateBridgeCircuitPositions({ elements, relationships, isMobile });
+  content = renderBridgeCircuitSystem(plane, elements, relationships, isMobile);
+}
+
+else if (figure.subtype === "circuit_combination") {
+  plane = calculateCombinationCircuitPositions({ elements, relationships, isMobile });
+  content = renderCombinationCircuitSystem(plane, elements, relationships, isMobile);
+}
+
+//RAY OPTICS
+
+else if (figure.subtype === "ray_diagram_lens" ){
+  if( figure.feature === "convex") {
+  plane = calculateConvexLensPositions({ elements, relationships, isMobile });
+  content = renderConvexLensSystem(plane, elements, isMobile);
+  }
+  else if( figure.feature === "concave") {
+  plane = calculateConcaveLensPositions({ elements, relationships, isMobile });
+  content = renderConcaveLensSystem(plane, elements, isMobile);
+  }
+}
+
+else if (figure.subtype === "ray_diagram_mirror" ){
+  if( figure.feature === "concave") {
+  plane = calculateConcaveMirrorPositions({ elements, relationships, isMobile });
+  content = renderConcaveMirrorSystem(plane, elements, isMobile);
+  }
+}
+// else if (figure.subtype === "ray_diagram_mirror" && figure.feature === "concave") { ... }
+else if (figure.subtype === "refraction") {
+  plane = calculateRefractionPositions({ elements, relationships, isMobile });
+  content = renderRefractionSystem(plane, elements, isMobile);
+}
+else if (figure.subtype === "total_internal_reflection") {
+  plane = calculateTIRPositions({ elements, relationships, isMobile });
+  content = renderTIRSystem(plane, elements, isMobile);
+}
+ 
+
+else if (figure.subtype === "electric_field" && figure.feature === "point_charge") {
+  const variant = detectPointChargeVariant(elements);
+  if (variant === "field_at_point") {
+    plane = calculateFieldAtPointPositions({ elements, isMobile });
+    content = renderFieldAtPoint(plane, isMobile);
+  } else {
+    plane = calculatePointChargePositions({ elements, isMobile });
+    content = renderPointChargeField(plane, isMobile);
+  }
+} else if (figure.subtype === "electric_field" && figure.feature === "two_point_charges") {
+  const variant = detectTwoChargeVariant(elements);
+  if (variant === "axis_positions") {
+    plane = calculateAxisPositionsChargeLayout({ elements, isMobile });
+    content = renderAxisPositionsCharges(plane, isMobile);
+  } else {
+    plane = calculateTwoChargePositions({ elements, isMobile });
+    content = renderTwoChargeField(plane, isMobile);
+  }
+} else if (figure.subtype === "electric_field" && figure.feature === "field_lines_between_charges") {
+  const variant = detectFieldLinesBetweenVariant(elements);
+  if (variant === "plates") {
+    plane = calculatePlatePositions({ elements, isMobile });
+    content = renderPlateField(plane, isMobile);
+  } else {
+    plane = calculateTwoChargePositions({ elements, isMobile });
+    content = renderTwoChargeField(plane, isMobile);
+  }
+}
+
+else if (figure.subtype === "magnetic_field" && figure.feature === "bar_magnet") {
+  plane = calculateBarMagnetPositions({ elements, isMobile });
+  content = renderBarMagnetField(plane, isMobile);
+}
 
   if (!content) return null;
 
@@ -86,6 +237,8 @@ else if (figure.subtype === "wave_transverse") {
     <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
       <div className="flex justify-center w-full overflow-x-auto">
         <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full max-w-xl" role="img" aria-label="Physics diagram">
+          
+          {renderOpticsDefs()}
           {content}
         </svg>
       </div>

@@ -135,7 +135,7 @@ export default function ExamCard({
           </Link>
         )}
 
-        {exam.is_published && exam.total_attempts > 0 && (
+        { exam.total_attempts > 0 && (
           <Link
             to={routes.exams.results(exam.exam_uid)}
             className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2"
@@ -145,7 +145,7 @@ export default function ExamCard({
           </Link>
         )}
 
-        {exam.is_published && exam.total_attempts > 0 && (
+        { exam.total_attempts > 0 && (
           <Link
             to={routes.exams.leaderboard(exam.exam_uid)}
             className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2"
@@ -170,21 +170,16 @@ export default function ExamCard({
     <ConfirmModal
       open={!!examToDelete}
       title="Delete Exam"
-      description="
-        This exam will be permanently removed.
-        This action cannot be undone.
-      "
+      description="This exam will be permanently removed. This action cannot be undone."
       confirmText="Delete Exam"
       variant="danger"
       onClose={() => setExamToDelete(null)}
       onConfirm={async () => {
-
         await deleteExam(
           schoolSlug,
           examToDelete,
           refresh
         );
-
         setExamToDelete(null);
 
       }}

@@ -4,6 +4,7 @@ import DataTableVisual from "./visuals/DataTableVisual"; // to be built
 import ChartVisual from "./visuals/ChartVisual"; // to be built
 import VennDiagramVisual from "./visuals/VennDiagramVisual"; // to be built
 import PhysicsVisual from "./visuals/PhysicsVisual"; // to be built
+import ChemistryVisual from "./visuals/ChemistryVisual"; // to be built
 
 export default function AIQuestionVisual({
   visualType,
@@ -32,6 +33,9 @@ export default function AIQuestionVisual({
 
     case "physics":
       return <PhysicsVisual visual={visual} />;
+
+    case "chemistry":
+      return <ChemistryVisual visual={visual} />;
 
     default:
       return null;

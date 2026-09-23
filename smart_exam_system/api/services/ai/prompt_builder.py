@@ -205,6 +205,46 @@ PROJECTILE MOTION — PEAK POINT INCLUSION: Only include a "peak_point" element 
 
 WAVE FIGURE VALUE CONSISTENCY: The visual's top-level "amplitude" and "wavelength" fields MUST exactly match the values stated in question_text (and used in explanation), even when the question doesn't ask the student to find that specific value. If question_text says "a wavelength of 12 m", the visual's "wavelength" field must be 12, not a different number — the figure must always depict the actual scenario described in the question, regardless of which specific quantity the question is asking the student to compute.
 
+STANDING WAVE FIGURE — DO NOT LABEL THE QUERIED POSITION: For "feature": "nodes_antinodes" questions, still include every actual node_marker/antinode_marker element with its correct x position (needed to draw the wave shape correctly and to verify the explanation's math) — but if the question asks the student to identify a SPECIFIC node or antinode's position (e.g. "at which position is a node located?"), the visual must NOT visually distinguish that specific queried element from the others, and a reference "Node"/"Antinode" label shown for teaching purposes must be placed at a DIFFERENT position than any of the answer options — never at the position that is itself a correct or plausible answer choice.
+
+LEWIS STRUCTURE POSITION ROLES: For "subtype": "lewis_structure", every atom element's "x_position" (and "side" for a 3+ substituent central atom) must be exactly one of the following fixed role strings — never invent a new value:
+
+
+For a 2-atom or linear 3-atom structure (x_position field):
+- "left" | "center" | "right"
+
+For a central atom with 3 substituents arranged in a trigonal/pyramidal pattern (side field):
+- "top_left" | "top_right" | "bottom_center"
+
+For a central atom with 4 substituents arranged tetrahedrally (side field):
+- "top_left" | "top_right" | "bottom_left" | "bottom_right"
+
+Do not use numeric coordinates, percentages, or any position term outside this list (e.g. never "far_left", "upper_middle", "slightly_left"). The renderer maps each of these fixed roles to a specific, chemically correct bond angle — an unrecognized value will fail to render.
+
+RULE: show_image flag for ray_diagram_lens / ray_diagram_mirror
+
+When generating a visual payload for ray_diagram_lens or ray_diagram_mirror,
+set the "forms_image_of" relationship's show_image field based on what the
+question is actually asking:
+
+  show_image: false
+  — when any answer option (option_a/b/c/d) states or implies WHERE the
+    image forms — e.g. "At F", "Between F and O", "Beyond 2F", "Behind
+    the mirror", "On the same side as the object". Rendering the image
+    would draw the correct zone directly on the figure, giving away the
+    answer.
+
+  show_image: true
+  — for all other question types: image characteristics (real/virtual,
+    inverted/erect, magnified/diminished), ray identification, comparing
+    two setups, magnification calculations, or any question where seeing
+    the full construction supports understanding without stating the
+    answer outright.
+
+Rule of thumb: if a correct answer option is itself a location on the
+principal axis relative to the lens/mirror, mark show_image: false.
+Otherwise, default to show_image: true.
+
 --------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
 --------------------------------------------------
@@ -233,29 +273,73 @@ WAVE FIGURE VALUE CONSISTENCY: The visual's top-level "amplitude" and "wavelengt
 - "type": "table"           -> "subtype": "data_matrix" | "frequency_table"
 
 --------------------------------------------------
-3. SCIENCE & CHEMISTRY TAXONOMY
---------------------------------------------------
---------------------------------------------------
-5. PHYSICS TAXONOMY
+ 3. PHYSICS TAXONOMY
 --------------------------------------------------
 - "type": "physics"
   -> "subtype": "free_body_diagram" | "inclined_plane" | "pulley_system" | "incline_pulley_system" | "projectile_motion"
      "feature": "none" | "multiple_forces" | "friction" | "tension" | "net_force" | "horizontal_launch" | "angled_launch" | "angled_launch_from_height"
 
-  -> "subtype": "circuit_series" | "circuit_parallel" | "circuit_bridge"
-     "feature": "none" | "resistors" | "battery_and_switch" | "ammeter_voltmeter"
+  -> "subtype": "circuit_series" | "circuit_parallel"
+      "feature": "none" | "resistors" | "battery_and_switch" | "ammeter_voltmeter"
+                | "bulb" | "power_dissipation" | "voltage_divider"
+                | "short_circuit" | "open_circuit_fault"
+                | "charging" | "discharging" 
+                | "energizing" | "de_energizing"
 
+  -> "subtype": "circuit_bridge"
+     "feature": "none" | "resistors" | "battery_and_switch" | "ammeter_voltmeter" | "open_circuit_fault"
+
+  -> "subtype": "circuit_combination"
+     "feature": "none" | "resistors" | "battery_and_switch" | "ammeter_voltmeter" | "charging" | "discharging" | "energizing" | "de_energizing"
+  --------------------------------------------------
+  4. ELECTRIC & MAGNETIC FIELDS
+  --------------------------------------------------
+-> "subtype": "electric_field"
+   "feature": "point_charge" | "two_point_charges" | "field_lines_between_charges"
+
+-> "subtype": "magnetic_field"
+   "feature": "bar_magnet" | "current_carrying_wire" | "current_carrying_loop" | "solenoid" | "force_on_moving_charge" | "force_on_current_carrying_wire"
+
+  --------------------------------------------------
+  5. LIGHT, LENS & MIRROR
+  --------------------------------------------------
   -> "subtype": "ray_diagram_lens" | "ray_diagram_mirror" | "refraction" | "total_internal_reflection"
      "feature": "none" | "convex" | "concave" | "plane" | "image_formation"
 
-  -> "subtype": "wave_transverse" | "wave_longitudinal" | "standing_wave"
-     "feature": "none" | "amplitude_wavelength" | "nodes_antinodes" | "doppler_effect"
+  --------------------------------------------------
+  6. SOUND & WAVE
+  --------------------------------------------------
+  -> "subtype": "wave_transverse" | "wave_longitudinal" | "standing_wave" | "wave_superposition"
+     "feature": "none" | "amplitude_wavelength" | "nodes_antinodes" | "doppler_effect" | "harmonic_on_fixed_string" | "compressions_rarefactions" | "constructive_interference"
 
-  -> "subtype": "electric_field" | "magnetic_field"
-     "feature": "none" | "point_charge" | "current_carrying_wire" | "bar_magnet"
 
+--------------------------------------------------
+7. CHEMISTRY TAXONOMY
+--------------------------------------------------
+- "type": "chemistry"
+  -> "subtype": "lewis_structure" | "molecular_2d"
+     "feature": "none" | "single_double_triple_bonds" | "lone_pairs" | "resonance_structures" | "formal_charge"
 
-- "type": "chemistry"       -> "subtype": "molecular_2d" | "lewis_structure" | "skeletal_formula" | "titration_setup" | "galvanic_cell"
+  -> "subtype": "molecular_geometry"
+     "feature": "none" | "vsepr_shape" | "bond_angle" | "polarity"
+
+  -> "subtype": "skeletal_formula"
+     "feature": "none" | "functional_groups" | "isomers" | "ring_structures"
+
+  -> "subtype": "atomic_structure"
+     "feature": "none" | "bohr_model"
+
+  -> "subtype": "reaction_diagram"
+     "feature": "none" | "energy_profile" | "activation_energy" | "exothermic_endothermic"
+
+  -> "subtype": "titration_setup"
+     "feature": "none" | "titration_curve" | "equivalence_point" | "indicator_color_change"
+
+  -> "subtype": "galvanic_cell"
+     "feature": "none" | "electron_flow" | "salt_bridge" | "half_reactions"
+
+  -> "subtype": "ph_scale"
+     "feature": "none" | "acid_base_strength" | "buffer_region"
 
 --------------------------------------------------
 4. PHASE 2: COMPOSITE / IMO / ISO TAXONOMY
@@ -1123,6 +1207,675 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   "relationships": [
     {{ "elements": ["amplitude_marker"], "target": "wave_1", "type": "measures_amplitude_of" }},
     {{ "elements": ["wavelength_marker"], "target": "wave_1", "type": "measures_wavelength_of" }}
+  ]
+}}
+
+--- WAVE PAYLOAD (standing wave) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "standing_wave",
+    "feature": "nodes_antinodes"
+  }},
+  "wavelength": 8,
+  "num_cycles": 2,
+  "elements": [
+    {{ "id": "wave_1", "type": "wave" }},
+    {{ "id": "node_marker", "type": "measurement", "label": "Node" }},
+    {{ "id": "antinode_marker", "type": "measurement", "label": "Antinode" }}
+  ],
+  "relationships": [
+    {{ "elements": ["node_marker"], "target": "wave_1", "type": "marks_nodes_of" }},
+    {{ "elements": ["antinode_marker"], "target": "wave_1", "type": "marks_antinodes_of" }}
+  ]
+}}
+
+--- WAVE PAYLOAD (longitudinal) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "wave_longitudinal",
+    "feature": "compressions_rarefactions"
+  }},
+  "wavelength": 8,
+  "num_cycles": 2,
+  "elements": [
+    {{ "id": "wave_1", "type": "wave" }},
+    {{ "id": "compression_marker", "type": "measurement", "label": "Compression" }},
+    {{ "id": "rarefaction_marker", "type": "measurement", "label": "Rarefaction" }}
+  ],
+  "relationships": [
+    {{ "elements": ["compression_marker"], "target": "wave_1", "type": "marks_compression_of" }},
+    {{ "elements": ["rarefaction_marker"], "target": "wave_1", "type": "marks_rarefaction_of" }}
+  ]
+}}
+
+--- WAVE PAYLOAD (fixed-end harmonics) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "standing_wave",
+    "feature": "harmonic_on_fixed_string"
+  }},
+  "string_length": 2,
+  "harmonic_number": 3,
+  "elements": [
+    {{ "id": "wave_1", "type": "wave" }},
+    {{ "id": "fixed_end_left", "type": "point", "x_position": 0 }},
+    {{ "id": "fixed_end_right", "type": "point", "x_position": 2 }}
+  ],
+  "relationships": [
+    {{ "elements": ["fixed_end_left", "fixed_end_right"], "target": "wave_1", "type": "fixes_endpoints_of" }}
+  ]
+}}
+
+--- WAVE PAYLOAD (superposition) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "wave_superposition",
+    "feature": "constructive_interference"
+  }},
+  "wave_1_amplitude": 2,
+  "wave_1_wavelength": 8,
+  "wave_1_phase": 0,
+  "wave_2_amplitude": 2,
+  "wave_2_wavelength": 8,
+  "wave_2_phase": 0,
+  "num_cycles": 2,
+  "elements": [
+    {{ "id": "wave_1", "type": "wave" }},
+    {{ "id": "wave_2", "type": "wave" }},
+    {{ "id": "resultant_wave", "type": "wave" }}
+  ],
+  "relationships": [
+    {{ "elements": ["wave_1", "wave_2"], "target": "resultant_wave", "type": "superposes_to" }}
+  ]
+}}
+
+--- WAVE PAYLOAD (Doppler effect) ---
+"visual": {{
+  "figure": {{
+    "type": "physics",
+    "subtype": "wave_longitudinal",
+    "feature": "doppler_effect"
+  }},
+  "source_speed": 20,
+  "wave_speed": 340,
+  "wavelength_at_rest": 2,
+  "elements": [
+    {{ "id": "source", "type": "point", "x_position": 10 }},
+    {{ "id": "wavefront_1", "type": "circle", "emitted_at_x": 0, "radius": 8 }},
+    {{ "id": "wavefront_2", "type": "circle", "emitted_at_x": 2.5, "radius": 6 }},
+    {{ "id": "wavefront_3", "type": "circle", "emitted_at_x": 5, "radius": 4 }},
+    {{ "id": "wavefront_4", "type": "circle", "emitted_at_x": 7.5, "radius": 2 }}
+  ],
+  "relationships": [
+    {{ "elements": ["wavefront_1", "wavefront_2", "wavefront_3", "wavefront_4"], "target": "source", "type": "emitted_by" }}
+  ]
+}}
+
+##################################################
+# PHYSICS: CIRCUIT_SERIES
+##################################################
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (resistors) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "resistors" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "9V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 10Ω", "type": "resistor", "x_position": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 20Ω", "type": "resistor", "x_position": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_2"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (battery_and_switch) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "battery_and_switch" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S1", "type": "switch", "state": "closed", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R1 = 15Ω", "type": "resistor", "x_position": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1", "resistor_1"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (bulb) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "bulb" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "9V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S1", "type": "switch", "state": "closed", "x_position": "top" }},
+    {{ "id": "bulb_1", "label": "L1", "type": "bulb", "x_position": "right", "isLit": true }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1", "bulb_1"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (power_dissipation) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "power_dissipation" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "20V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 5Ω", "type": "resistor", "x_position": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 15Ω", "type": "resistor", "x_position": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_2"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "open_circuit_fault" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "9V", "type": "battery", "x_position": "left" }},
+    {{ "id": "break_1", "label": "", "type": "open_break", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R1 = 10Ω", "type": "resistor", "x_position": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "break_1", "resistor_1"], "order": "series", "loop_closed": false }}
+  ]
+}}
+
+# Note: visually identical to "resistors" feature — question_text/explanation
+# targets P = IV or P = I²R instead of just equivalent resistance/current.
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (voltage_divider) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "voltage_divider" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "10V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 4Ω", "type": "resistor", "x_position": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 6Ω", "type": "resistor", "x_position": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_2"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "short_circuit" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 5Ω", "type": "resistor", "x_position": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 10Ω", "type": "resistor", "x_position": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_2"], "order": "series", "loop_closed": true }},
+    {{ "type": "shorts", "elements": ["short_1"], "target": "resistor_2" }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "charging" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S1", "type": "switch", "state": "closed", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R = 5kΩ", "type": "resistor", "x_position": "right" }},
+    {{ "id": "capacitor_1", "label": "C = 100μF", "type": "capacitor", "x_position": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1", "resistor_1", "capacitor_1"], "order": "series", "loop_closed": true }}
+  ]
+}}
+# Note: series-only feature. Question targets voltage across ONE resistor
+# via the divider formula V_x = V_total * (R_x / R_total), not total current.
+
+
+##################################################
+# PHYSICS: CIRCUIT_PARALLEL
+##################################################
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (resistors) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "resistors" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 12Ω", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 6Ω", "type": "resistor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_2"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (battery_and_switch) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "battery_and_switch" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S1", "type": "switch", "state": "closed", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 10Ω", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 20Ω", "type": "resistor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_2"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (bulb) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "bulb" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "bulb_1", "label": "L1", "type": "bulb", "x_position": "right", "side": "top", "isLit": true }},
+    {{ "id": "bulb_2", "label": "L2", "type": "bulb", "x_position": "right", "side": "bottom", "isLit": false }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["bulb_1", "bulb_2"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (ammeter_voltmeter) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "ammeter_voltmeter" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "ammeter_1", "label": "A", "type": "ammeter", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R1 = 15Ω", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 30Ω", "type": "resistor", "x_position": "right", "side": "bottom" }},
+    {{ "id": "voltmeter_1", "label": "V", "type": "voltmeter", "x_position": "far_right" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "ammeter_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_2"], "order": "parallel_branch", "shares_nodes": true }},
+    {{ "type": "measures_current", "elements": ["ammeter_1"], "target": "battery_1" }},
+    {{ "type": "measures_voltage", "elements": ["voltmeter_1"], "target": "resistor_1" }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (power_dissipation) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "power_dissipation" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "24V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 8Ω", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 12Ω", "type": "resistor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_2"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "open_circuit_fault" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "break_1", "label": "", "type": "open_break", "x_position": "right", "side": "top" }},
+    { {"id": "resistor_1", "label": "R1 = 15Ω", "type": "resistor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["break_1", "resistor_1"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "short_circuit" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 10Ω", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "resistor_2", "label": "R2 = 20Ω", "type": "resistor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_2"], "order": "parallel_branch", "shares_nodes": true }},
+    {{ "type": "shorts", "elements": ["short_1"], "target": "resistor_1" }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "charging" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "10V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R = 1kΩ", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "capacitor_1", "label": "C = 200μF", "type": "capacitor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "capacitor_1"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (energizing) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "energizing" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "open", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R", "type": "resistor", "x_position": "right" }},
+    {{ "id": "inductor_1", "label": "L", "type": "inductor", "x_position": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1", "resistor_1", "inductor_1"], "order": "series", "loop_closed": false }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (de_energizing) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "de_energizing" }},
+  "elements": [
+    {{ "id": "inductor_1", "label": "L", "is_energized": true, "type": "inductor", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R", "type": "resistor", "x_position": "right" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "closed", "x_position": "top" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["inductor_1", "switch_1", "resistor_1"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (energizing) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "energizing" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "inductor_1", "label": "L", "type": "inductor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "inductor_1"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT PARALLEL PAYLOAD (de_energizing) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_parallel", "feature": "de_energizing" }},
+  "elements": [
+    {{ "id": "inductor_1", "label": "L", "is_energized": true, "type": "inductor", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "closed", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R1", "type": "resistor", "x_position": "right", "side": "top" }},
+    {{ "id": "resistor_2", "label": "R2", "type": "resistor", "x_position": "right", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["inductor_1", "switch_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_2"], "order": "parallel_branch", "shares_nodes": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT SERIES PAYLOAD (energizing, with time constant values) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_series", "feature": "energizing" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R = 20 Ω", "type": "resistor", "x_position": "top" }},
+    {{ "id": "inductor_1", "label": "L = 4 H", "type": "inductor", "x_position": "right" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "closed", "x_position": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "inductor_1", "switch_1"], "order": "series", "loop_closed": true }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT COMBINATION PAYLOAD (energizing, R+L parallel sub-branch) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_combination", "feature": "energizing" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "closed", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R1", "type": "resistor", "x_position": "top" }},
+    {{ "id": "node_1", "type": "node", "x_position": "right" }},
+    {{ "id": "resistor_2", "label": "R2", "side": "top", "type": "resistor" }},
+    {{ "id": "inductor_1", "label": "L", "side": "bottom", "type": "inductor" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1", "resistor_1", "node_1"], "order": "series", "loop_closed": true }},
+    {{ "anchorId": "node_1", "elements": ["resistor_2", "inductor_1"], "order": "parallel_sub_branch" }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT COMBINATION PAYLOAD (de_energizing, inductor already energized) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_combination", "feature": "de_energizing" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "open", "x_position": "top" }},
+    {{ "id": "resistor_1", "label": "R1", "type": "resistor", "x_position": "top" }},
+    {{ "id": "node_1", "type": "node", "x_position": "right" }},
+    {{ "id": "resistor_2", "label": "R2", "side": "top", "type": "resistor" }},
+    {{ "id": "inductor_1", "label": "L", "is_energized": true, "side": "bottom", "type": "inductor" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1", "resistor_1", "node_1"], "order": "series", "loop_closed": false }},
+    {{ "anchorId": "node_1", "elements": ["resistor_2", "inductor_1"], "order": "parallel_sub_branch" }}
+  ]
+}}
+# Note: same rules as circuit_series (power_dissipation) — visually
+# reuses "resistors" render path, only question intent differs.
+
+
+##################################################
+# PHYSICS: CIRCUIT_BRIDGE
+##################################################
+
+--- PHYSICS: CIRCUIT BRIDGE PAYLOAD (resistors) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_bridge", "feature": "resistors" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "6V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 10Ω", "type": "resistor", "x_position": "top", "side": "left" }},
+    {{ "id": "resistor_2", "label": "R2 = 20Ω", "type": "resistor", "x_position": "top", "side": "right" }},
+    {{ "id": "resistor_3", "label": "R3 = 15Ω", "type": "resistor", "x_position": "bottom", "side": "left" }},
+    {{ "id": "resistor_4", "label": "R4 = 25Ω", "type": "resistor", "x_position": "bottom", "side": "right" }},
+    {{ "id": "galvanometer_1", "label": "G", "type": "galvanometer", "x_position": "center" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_3"], "order": "series", "branch": "left" }},
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_2", "resistor_4"], "order": "series", "branch": "right" }},
+    {{ "type": "bridges", "elements": ["galvanometer_1"], "between": ["resistor_1", "resistor_2"] }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT BRIDGE PAYLOAD (battery_and_switch) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_bridge", "feature": "battery_and_switch" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "switch_1", "label": "S", "type": "switch", "state": "closed", "x_position": "bottom", "side": "left" }},
+    {{ "id": "resistor_1", "label": "R1", "type": "resistor", "x_position": "top", "side": "left" }},
+    {{ "id": "resistor_2", "label": "R2", "type": "resistor", "x_position": "top", "side": "right" }},
+    {{ "id": "resistor_3", "label": "R3", "type": "resistor", "x_position": "bottom", "side": "left" }},
+    {{ "id": "resistor_4", "label": "R4", "type": "resistor", "x_position": "bottom", "side": "right" }},
+    {{ "id": "galvanometer_1", "label": "G", "type": "galvanometer", "x_position": "center" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "switch_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_1", "resistor_3"], "order": "series", "branch": "left" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_2", "resistor_4"], "order": "series", "branch": "right" }},
+    {{ "type": "bridges", "elements": ["galvanometer_1"], "between": ["resistor_1", "resistor_2"] }}
+  ]
+}}
+
+--- PHYSICS: CIRCUIT BRIDGE PAYLOAD (ammeter_voltmeter) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_bridge", "feature": "ammeter_voltmeter" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1", "type": "resistor", "x_position": "top", "side": "left" }},
+    {{ "id": "resistor_2", "label": "R2", "type": "resistor", "x_position": "top", "side": "right" }},
+    {{ "id": "resistor_3", "label": "R3", "type": "resistor", "x_position": "bottom", "side": "left" }},
+    {{ "id": "resistor_4", "label": "R4", "type": "resistor", "x_position": "bottom", "side": "right" }},
+    {{ "id": "galvanometer_1", "label": "G", "type": "galvanometer", "x_position": "center" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_3"], "order": "series", "branch": "left" }},
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_2", "resistor_4"], "order": "series", "branch": "right" }},
+    {{ "type": "bridges", "elements": ["galvanometer_1"], "between": ["resistor_1", "resistor_2"] }}
+  ]
+}}
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_bridge", "feature": "open_circuit_fault" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1", "type": "resistor", "x_position": "top", "side": "left", "broken": true }},
+    {{ "id": "resistor_2", "label": "R2", "type": "resistor", "x_position": "top", "side": "right" }},
+    {{ "id": "resistor_3", "label": "R3", "type": "resistor", "x_position": "bottom", "side": "left" }},
+    {{ "id": "resistor_4", "label": "R4", "type": "resistor", "x_position": "bottom", "side": "right" }},
+    {{ "id": "galvanometer_1", "label": "G", "type": "galvanometer", "x_position": "center" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "resistor_3"], "order": "series", "branch": "left" }},
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_2", "resistor_4"], "order": "series", "branch": "right" }},
+    {{ "type": "bridges", "elements": ["galvanometer_1"], "between": ["resistor_1", "resistor_2"] }}
+  ]
+}}
+
+
+--- PHYSICS: CIRCUIT COMBINATION PAYLOAD (circuit_combination) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_combination", "feature": "resistors" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "12V", "type": "battery", "x_position": "left" }},
+    {{ "id": "resistor_1", "label": "R1 = 4Ω", "type": "resistor", "x_position": "top" }},
+    {{ "id": "node_1", "type": "node", "x_position": "right" }},
+    {{ "id": "resistor_2", "label": "R2 = 6Ω", "type": "resistor" }},
+    {{ "id": "resistor_3", "label": "R3 = 12Ω", "type": "resistor" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1", "resistor_1", "node_1"], "order": "series", "loop_closed": true }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_2", "resistor_3"], "order": "parallel_sub_branch", "anchorId": "node_1" }}
+  ]
+}}
+
+
+--- PHYSICS: Ray Diagram PAYLOAD (ray_diagram_lens) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "ray_diagram_lens", "feature": "convex" }},
+  "elements": [
+    {{ "id": "lens_1", "label": "Convex Lens", "type": "lens", "focal_length": 10 }},
+    {{ "id": "object_1", "label": "Object", "type": "object_arrow", "height": 5, "distance_from_lens": 25, "side": "left" }},
+    {{ "id": "F1", "label": "F", "type": "focal_point", "side": "left" }},
+    {{ "id": "F2", "label": "F", "type": "focal_point", "side": "right" }},
+    {{ "id": "2F1", "label": "2F", "type": "focal_point", "side": "left", "show": false }},
+    {{ "id": "2F2", "label": "2F", "type": "focal_point", "side": "right", "show": false }}
+  ],
+  "relationships": [
+    {{ "type": "forms_image_of", "elements": ["object_1"], "via": "lens_1", "show_image": true }},
+    {{ "type": "ray_construction", "rays": ["parallel_to_axis", "through_center", "through_focal_point"], "elements": ["object_1", "lens_1"] }}
+  ]
+}}
+
+--- PHYSICS: Refraction PAYLOAD (refraction) ---
+
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "refraction", "feature": "plane" }},
+  "elements": [
+    {{ "id": "medium_1", "label": "Air (n=1.0)", "type": "medium", "index": 1.0, "side": "top" }},
+    {{ "id": "medium_2", "label": "Glass (n=1.5)", "type": "medium", "index": 1.5, "side": "bottom" }},
+    {{ "id": "incident_ray_1", "label": "Incident Ray", "type": "ray", "angle": 40, "role": "incident" }},
+    {{ "id": "normal_1", "label": "Normal", "type": "normal_line" }}
+  ],
+  "relationships": [
+    {{ "type": "refracts_at_boundary", "elements": ["incident_ray_1"], "between": ["medium_1", "medium_2"] }},
+    {{ "type": "boundary_shape", "value": "slab", "thickness": 5 }}
+  ]
+}}
+
+--- PHYSICS: Total Internal Reflection PAYLOAD (total_internal_reflection) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "total_internal_reflection", "feature": "none" }},
+  "elements": [
+    {{ "id": "medium_1", "label": "Glass (n=1.5)", "type": "medium", "index": 1.5, "side": "bottom" }},
+    {{ "id": "medium_2", "label": "Air (n=1.0)", "type": "medium", "index": 1.0, "side": "top" }},
+    {{ "id": "incident_ray_1", "label": "Incident Ray", "type": "ray", "angle": 50, "role": "incident" }}
+  ],
+  "relationships": [
+    {{ "type": "reflects_or_refracts_at_boundary", "elements": ["incident_ray_1"], "between": ["medium_1", "medium_2"], "show_partial_reflection": true }}
+  ]
+}}
+
+--- PHYSICS: ELECTRIC FIELD PAYLOAD (point_charge — qualitative field-line pattern) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "point_charge" }},
+  "elements": [
+    {{ "id": "charge_1", "label": "Q", "type": "charge", "charge_type": "negative" }}
+  ],
+  "relationships": []
+}}
+
+--- PHYSICS: ELECTRIC FIELD PAYLOAD (point_charge — field vector at a point, calculation) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "point_charge" }},
+  "elements": [
+    {{ "id": "charge_q1", "label": "$Q_1 = +5.0 \\times 10^{{-6}}\\text{{ C}}$", "type": "point_charge", "charge_type": "positive", "value": 5e-06, "x_position": 0, "y_position": 0 }},
+    {{ "id": "point_p", "label": "P", "type": "point", "x_position": 0.3, "y_position": 0 }},
+    {{ "id": "electric_field_vector", "label": "$E$", "type": "vector", "attached_to": "point_p", "angle": 0, "length": "medium" }},
+    {{ "id": "segment_r", "label": "$r = 0.30\\text{{ m}}$", "type": "segment", "value": 0.3 }}
+  ],
+  "relationships": [
+    {{ "type": "field_due_to_charge", "elements": ["electric_field_vector"], "source_charge": "charge_q1", "at_point": "point_p" }},
+    {{ "type": "forms_segment", "elements": ["charge_q1", "point_p"], "target": "segment_r" }}
+  ]
+}}
+
+--- PHYSICS: ELECTRIC FIELD PAYLOAD (two_point_charges — attraction/repulsion field lines) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "two_point_charges" }},
+  "elements": [
+    {{ "id": "charge_a", "label": "$Q_1$", "type": "point_charge", "charge_type": "positive" }},
+    {{ "id": "charge_b", "label": "$Q_2$", "type": "point_charge", "charge_type": "negative" }}
+  ],
+  "relationships": [
+    {{ "type": "field_lines_between_charges", "elements": ["charge_a", "charge_b"], "direction": "from_a_to_b" }}
+  ]
+}}
+
+--- PHYSICS: ELECTRIC FIELD PAYLOAD (two_point_charges — net-field-zero, coordinate axis) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "two_point_charges" }},
+  "elements": [
+    {{ "id": "charge_q1", "label": "$Q_1 = +2\\text{{ nC}}$", "type": "point_charge", "charge_type": "positive", "value": 2e-09, "x_position": 0, "y_position": 0 }},
+    {{ "id": "charge_q2", "label": "$Q_2 = -4\\text{{ nC}}$", "type": "point_charge", "charge_type": "negative", "value": -4e-09, "x_position": 3, "y_position": 0 }},
+    {{ "id": "axis_x", "label": "x-axis", "type": "axis", "orientation": "horizontal", "min": -2, "max": 5 }}
+  ],
+  "relationships": []
+}}
+
+--- PHYSICS: ELECTRIC FIELD PAYLOAD (field_lines_between_charges — magnitude comparison, unequal density) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "field_lines_between_charges" }},
+  "elements": [
+    {{ "id": "charge_q1", "label": "$Q_1$", "type": "point_charge", "charge_type": "positive", "relative_magnitude": "stronger" }},
+    {{ "id": "charge_q2", "label": "$Q_2$", "type": "point_charge", "charge_type": "negative", "relative_magnitude": "weaker" }}
+  ],
+  "relationships": [
+    {{ "type": "shows_field_lines_between", "elements": ["charge_q1", "charge_q2"] }},
+    {{ "type": "magnitude_comparison", "elements": ["charge_q1", "charge_q2"], "relationship": "greater_than" }}
+  ]
+}}
+
+--- PHYSICS: ELECTRIC FIELD PAYLOAD (field_lines_between_charges — parallel plates, uniform field) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "field_lines_between_charges" }},
+  "elements": [
+    {{ "id": "plate_pos", "label": "+", "type": "plate", "charge_type": "positive", "side": "top" }},
+    {{ "id": "plate_neg", "label": "-", "type": "plate", "charge_type": "negative", "side": "bottom" }}
+  ],
+  "relationships": [
+    {{ "type": "creates_uniform_field", "elements": ["plate_pos", "plate_neg"], "direction": "down" }}
+  ]
+}}
+
+
+--- PHYSICS: BAR MAGNET PAYLOAD (default) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "magnetic_field", "feature": "bar_magnet" }},
+  "elements": [
+    {{ "id": "magnet_1", "label": "Bar Magnet", "type": "bar_magnet", "pole_orientation": "horizontal" }}
+  ],
+  "relationships": [
+    {{ "elements": ["magnet_1"], "type": "shows_field_lines" }}
   ]
 }}
 

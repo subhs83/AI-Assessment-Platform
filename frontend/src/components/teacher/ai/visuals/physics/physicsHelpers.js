@@ -28,6 +28,8 @@ export function computeVectorEndpoint(x, y, angleDeg, length = "medium") {
   };
 }
 
+
+
 export function renderVector({ x, y, angleDeg, length = "medium", label, color = "#D85A30", dashed = false }, isMobile = false) {
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
   const end = computeVectorEndpoint(x, y, angleDeg, length);
@@ -93,4 +95,4 @@ export function renderArrowMarkerDefs() {
   );
 }
 
- 
+

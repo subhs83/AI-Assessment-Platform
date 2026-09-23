@@ -1,4 +1,4 @@
-import { getSvgDimensions } from "../geometry/geometryHelpers";
+import { getSvgDimensions,} from "../geometry/geometryHelpers";
 
 // in calculateInclinePositions's file
 export const INCLINE_BOX_HEIGHT = 36;
@@ -21,7 +21,6 @@ export function calculateFreeBodyPositions({ elements, isMobile = false }) {
     objectSize: OBJECT_SIZE,
   };
 }
-
 
 
 export function calculateInclinePositions({ elements, inclineAngle = 30, isMobile = false }) {
@@ -177,13 +176,14 @@ export function calculateInclinePulleyPositions({ elements, inclineAngle = 30, i
     slopeAngleDeg,
   };
 }
-export function calculateProjectileMotionPositions({ figure, isMobile = false }) {
+
+export function calculateProjectileMotionPositions({ launch_height, launch_velocity, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
 
-  const launchHeight = figure?.launch_height ?? 20;
-  const launchVelocity = figure?.launch_velocity ?? 10;
+  const launchHeight = launch_height;
+  const launchVelocity = launch_velocity;
   const G = 9.8;
-
+ 
   // Real kinematics: time to fall launchHeight, then horizontal range
   // in that same time. This is what makes the curve an ACTUAL
   // projectile path, not a generic decorative parabola.
@@ -238,13 +238,12 @@ export function calculateProjectileMotionPositions({ figure, isMobile = false })
 }
 
 
-export function calculateAngledProjectilePositions({ figure, isMobile = false }) {
+export function calculateAngledProjectilePositions({launch_angle, launch_velocity, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
 
-  const launchAngle = figure?.launch_angle ?? 45;
-  const launchVelocity = figure?.launch_velocity ?? 20;
+  const launchAngle = launch_angle
+  const launchVelocity = launch_velocity
   const G = 9.8;
-
   const angleRad = (launchAngle * Math.PI) / 180;
   const v0x = launchVelocity * Math.cos(angleRad);
   const v0y = launchVelocity * Math.sin(angleRad);
@@ -298,12 +297,12 @@ export function calculateAngledProjectilePositions({ figure, isMobile = false })
   };
 }
 
-export function calculateAngledLaunchFromHeightPositions({ figure, isMobile = false }) {
+export function calculateAngledLaunchFromHeightPositions({ launch_angle, launch_velocity, launch_height, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
 
-  const launchAngle = figure?.launch_angle ?? 30;
-  const launchVelocity = figure?.launch_velocity ?? 20;
-  const launchHeight = figure?.launch_height ?? 20;
+  const launchAngle = launch_angle
+  const launchVelocity = launch_velocity
+  const launchHeight = launch_height
   const G = 9.8;
 
   const angleRad = (launchAngle * Math.PI) / 180;
@@ -377,41 +376,6 @@ export function calculateAngledLaunchFromHeightPositions({ figure, isMobile = fa
 
 
 
-export function calculateWavePositions({ amplitude, wavelength, numCycles = 2, isMobile = false }) {
-  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
 
-  const availW = SVG_WIDTH - paddingX * 2;
-  const availH = SVG_HEIGHT - paddingY * 2;
 
-  // Scale wavelength to fill the available width across numCycles.
-  const totalRealWidth = wavelength * numCycles;
-  const pxPerUnit = availW / totalRealWidth;
 
-  const pxWavelength = wavelength * pxPerUnit;
-  const pxAmplitude = Math.min(amplitude * pxPerUnit, availH * 0.35); // cap so amplitude doesn't blow past canvas height
-
-  const centerY = SVG_HEIGHT / 2;
-  const startX = paddingX;
-
-  // Generate a smooth path by sampling many points along the sine curve.
-  const SAMPLES_PER_CYCLE = 40;
-  const totalSamples = Math.round(numCycles * SAMPLES_PER_CYCLE);
-  const points = [];
-  for (let i = 0; i <= totalSamples; i++) {
-    const t = i / SAMPLES_PER_CYCLE; // in units of wavelength
-    const x = startX + t * pxWavelength;
-    const y = centerY - Math.sin(t * 2 * Math.PI) * pxAmplitude;
-    points.push({ x, y });
-  }
-
-  return {
-    points,
-    centerY,
-    startX,
-    pxWavelength,
-    pxAmplitude,
-    numCycles,
-    SVG_WIDTH,
-    SVG_HEIGHT,
-  };
-}

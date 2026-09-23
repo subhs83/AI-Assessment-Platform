@@ -1,5 +1,5 @@
 import { getSvgDimensions } from "../geometry/geometryHelpers";
-import { renderVector, renderArrowMarkerDefs, computeVectorEndpoint } from "./physicsHelpers";
+import { renderVector, renderArrowMarkerDefs, computeVectorEndpoint} from "./physicsHelpers";
 import MathText from "../../../../common/MathText"
 
 export function renderFreeBodyDiagram(plane, isMobile = false) {
@@ -406,11 +406,7 @@ export function renderProjectileMotion(plane, elements, isMobile = false) {
 
   return (
     <g>
-      <defs>
-        <marker id="physics-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" markerUnits="userSpaceOnUse" orient="auto">
-          <path d="M0,0 L10,5 L0,10 Z" fill="context-stroke" />
-        </marker>
-      </defs>
+        {renderArrowMarkerDefs()}
 
       {/* Ground */}
       <line x1={0} y1={groundY} x2={launchX + (landingPoint.x - launchX) + 30} y2={groundY}
@@ -464,11 +460,7 @@ export function renderAngledProjectile(plane, elements, isMobile = false) {
 
   return (
     <g>
-      <defs>
-        <marker id="physics-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" markerUnits="userSpaceOnUse" orient="auto">
-          <path d="M0,0 L10,5 L0,10 Z" fill="context-stroke" />
-        </marker>
-      </defs>
+      {renderArrowMarkerDefs()}
 
       {/* Ground */}
       <line x1={0} y1={groundY} x2={landingPoint.x + 30} y2={groundY}
@@ -530,11 +522,7 @@ export function renderAngledLaunchFromHeight(plane, elements, isMobile = false) 
 
   return (
     <g>
-      <defs>
-        <marker id="physics-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" markerUnits="userSpaceOnUse" orient="auto">
-          <path d="M0,0 L10,5 L0,10 Z" fill="context-stroke" />
-        </marker>
-      </defs>
+      {renderArrowMarkerDefs()}
 
       {/* Ground */}
       <line x1={0} y1={groundY} x2={landingPoint.x + 30} y2={groundY}
@@ -592,72 +580,7 @@ export function renderAngledLaunchFromHeight(plane, elements, isMobile = false) 
 
 
 
-export function renderTransverseWave(plane, elements, isMobile = false) {
-  if (!plane) return null;
 
-  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
-  const { points, centerY, startX, pxWavelength, pxAmplitude, SVG_WIDTH } = plane;
 
-  const amplitudeMarkerEl = elements.find((el) => el.id === "amplitude_marker");
-  const wavelengthMarkerEl = elements.find((el) => el.id === "wavelength_marker");
 
-  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 
-  // Amplitude marker: vertical double-arrow from centerline to the
-  // first crest, positioned just after the wave starts.
-  const crestX = startX + pxWavelength * 0.25; // first crest is at 1/4 wavelength
-  const crestY = centerY - pxAmplitude;
-
-  // Wavelength marker: horizontal double-arrow between two consecutive
-  // points at the same phase (e.g. two consecutive crests).
-  const secondCrestX = crestX + pxWavelength;
-
-  return (
-    <g>
-      <defs>
-        <marker id="wave-arrow-end" markerWidth="8" markerHeight="8" refX="6" refY="4" markerUnits="userSpaceOnUse" orient="auto">
-          <path d="M0,0 L8,4 L0,8 Z" fill="context-stroke" />
-        </marker>
-        <marker id="wave-arrow-start" markerWidth="8" markerHeight="8" refX="2" refY="4" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
-          <path d="M0,0 L8,4 L0,8 Z" fill="context-stroke" />
-        </marker>
-      </defs>
-
-      {/* Centerline (equilibrium position) */}
-      <line x1={startX} y1={centerY} x2={SVG_WIDTH - 20} y2={centerY}
-        stroke="currentColor" strokeWidth={strokeWidth * 0.4} strokeDasharray="4,4"
-        className="text-slate-300" vectorEffect="non-scaling-stroke" />
-
-      {/* The wave itself */}
-      <path d={pathD} fill="none" stroke="#378add" strokeWidth={strokeWidth * 1.3} vectorEffect="non-scaling-stroke" />
-
-      {/* Amplitude marker: vertical double-arrow at the first crest */}
-      {amplitudeMarkerEl && (
-        <g>
-          <line x1={crestX} y1={centerY} x2={crestX} y2={crestY}
-            stroke="#D85A30" strokeWidth={strokeWidth}
-            markerEnd="url(#wave-arrow-end)" markerStart="url(#wave-arrow-start)" vectorEffect="non-scaling-stroke" />
-          <foreignObject x={crestX + 8} y={(centerY + crestY) / 2 - 12} width={90} height={24}>
-            <div style={{ display: "flex", alignItems: "center", height: "100%", fontSize, fontWeight: 600, color: "#D85A30" }}>
-              <MathText text={amplitudeMarkerEl.label} />
-            </div>
-          </foreignObject>
-        </g>
-      )}
-
-      {/* Wavelength marker: horizontal double-arrow between two crests */}
-      {wavelengthMarkerEl && (
-        <g>
-          <line x1={crestX} y1={crestY - 15} x2={secondCrestX} y2={crestY - 15}
-            stroke="#1D9E75" strokeWidth={strokeWidth}
-            markerEnd="url(#wave-arrow-end)" markerStart="url(#wave-arrow-start)" vectorEffect="non-scaling-stroke" />
-          <foreignObject x={(crestX + secondCrestX) / 2 - 45} y={crestY - 40} width={90} height={22}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize, fontWeight: 600, color: "#1D9E75" }}>
-              <MathText text={wavelengthMarkerEl.label} />
-            </div>
-          </foreignObject>
-        </g>
-      )}
-    </g>
-  );
-}
