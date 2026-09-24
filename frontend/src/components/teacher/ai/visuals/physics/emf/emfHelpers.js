@@ -161,3 +161,26 @@ export function arrowOnCubicMidpoint(d) {
     a2: { x: x - Math.cos(angle + 0.4) * size, y: y - Math.sin(angle + 0.4) * size },
   };
 }
+
+// fieldIndicator.jsx — reusable dots/×'s background pattern
+
+export function FieldIntoPageIndicator({ width, height, rows = 3, cols = 5 }) {
+  const cells = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = (c + 0.5) * (width / cols) - width / 2;
+      const y = (r + 0.5) * (height / rows) - height / 2;
+      cells.push({ x, y });
+    }
+  }
+  return (
+    <g opacity={0.55}>
+      {cells.map(({ x, y }, i) => (
+        <g key={i}>
+          <line x1={x - 5} y1={y - 5} x2={x + 5} y2={y + 5} stroke="#94A3B8" strokeWidth={1.5} />
+          <line x1={x - 5} y1={y + 5} x2={x + 5} y2={y - 5} stroke="#94A3B8" strokeWidth={1.5} />
+        </g>
+      ))}
+    </g>
+  );
+}

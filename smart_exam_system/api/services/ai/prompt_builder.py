@@ -1795,6 +1795,11 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+
+##################################################
+# PHYSICS: ELECTRIC FIELD & MAGNETIC FIELD
+##################################################
+
 --- PHYSICS: ELECTRIC FIELD PAYLOAD (point_charge — qualitative field-line pattern) ---
 "visual": {{
   "figure": {{ "type": "physics", "subtype": "electric_field", "feature": "point_charge" }},
@@ -1879,6 +1884,53 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+--- PHYSICS: CURRENT CARRYING WIRE PAYLOAD (default) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "magnetic_field", "feature": "current_carrying_wire" }},
+  "elements": [
+    {{ "id": "wire_1", "label": "I", "type": "current_wire", "orientation": "vertical", "current_direction": "up" }}
+  ],
+  "relationships": [
+    {{ "elements": ["wire_1"], "type": "shows_field_lines" }}
+  ]
+}}
+
+--- PHYSICS: SOLENOID PAYLOAD (default) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "magnetic_field", "feature": "solenoid" }},
+  "elements": [
+    {{ "id": "solenoid_1", "label": "Solenoid", "type": "solenoid", "orientation": "horizontal", "current_direction": "counterclockwise", "turns": 6 }}
+  ],
+  "relationships": [
+    {{ "elements": ["solenoid_1"], "type": "shows_field_lines" }}
+  ]
+}}
+
+--- PHYSICS: FORCE ON MOVING CHARGE PAYLOAD (default) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "magnetic_field", "feature": "force_on_moving_charge" }},
+  "elements": [
+    {{ "id": "charge_1", "label": "$q$", "type": "moving_charge", "charge_type": "positive" }},
+    {{ "id": "velocity_vector", "label": "$v$", "type": "vector", "attached_to": "charge_1", "angle": 0, "length": "medium" }},
+    {{ "id": "field_indicator", "label": "$B$", "type": "field_into_page", "region": "background" }}
+  ],
+  "relationships": [
+    {{ "elements": ["charge_1", "velocity_vector"], "type": "moves_with_velocity" }},
+    {{ "elements": ["charge_1"], "target": "field_indicator", "type": "moves_through_field" }}
+  ]
+}}
+
+--- PHYSICS: FORCE ON CURRENT-CARRYING WIRE PAYLOAD (default) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "magnetic_field", "feature": "force_on_current_carrying_wire" }},
+  "elements": [
+    {{ "id": "wire_1", "label": "I", "type": "current_wire", "orientation": "horizontal", "current_direction": "right" }},
+    {{ "id": "field_indicator", "label": "$B$", "type": "field_into_page", "region": "background" }}
+  ],
+  "relationships": [
+    {{ "elements": ["wire_1"], "target": "field_indicator", "type": "carries_current_through_field" }}
+  ]
+}}
 # SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 
 Before generating the final JSON response, perform a silent internal check to verify that:

@@ -134,15 +134,93 @@ export function calculateBarMagnetPositions({ elements, isMobile = false }) {
 
   const cx = SVG_WIDTH / 2;
   const cy = SVG_HEIGHT / 2;
-  const magnetWidth = isMobile ? 80 : 100;
-  const magnetHeight = isMobile ? 20 : 24;
+  const magnetWidth = isMobile ? 90 : 110;
+  const magnetHeight = isMobile ? 22 : 26;
 
-  const availableHalfHeight = cy - paddingY - magnetHeight / 2;
   const availableHalfWidth = SVG_WIDTH / 2 - paddingX;
+  const availableHalfHeight = cy - paddingY;
   const loopCount = 3;
 
-  return { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfHeight, availableHalfWidth };
+  return { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfWidth, availableHalfHeight };
 }
 
+export function calculateCurrentWirePositions({ elements, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX } = getSvgDimensions(isMobile);
+  const wireEl = elements.find((el) => el.type === "current_wire");
+  const pointEl = elements.find((el) => el.type === "point");
+  const segmentEl = elements.find((el) => el.type === "segment");
 
+  const horizontal = wireEl?.orientation === "horizontal";
+  const cx = SVG_WIDTH * 0.38;
+  const cy = SVG_HEIGHT / 2;
+  const wireHalfLength = Math.min(SVG_HEIGHT, SVG_WIDTH) * 0.32;
+
+  // Scale the point's data-space x_position into pixels — bounded so it
+  // never runs past the canvas regardless of the given value.
+  const availableRight = SVG_WIDTH - paddingX - cx;
+  const rawX = pointEl?.x_position ?? 1;
+  const scale = Math.min(availableRight / Math.max(rawX, 1), 90);
+  const pointX = cx + rawX * scale;
+  const pointY = cy + (pointEl?.y_position ?? 0) * scale;
+
+  return {
+    cx, cy, wireHalfLength, horizontal,
+    currentLabel: wireEl?.label,
+    point: pointEl ? { x: pointX, y: pointY, label: pointEl.label || "P" } : null,
+    segmentLabel: segmentEl?.label,
+  };
+}
+
+export function calculateCurrentLoopPositions({ elements, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const loopEl = elements.find((el) => el.type === "current_loop");
+  const centerEl = elements.find((el) => el.type === "point");
+
+  return {
+    cx: SVG_WIDTH / 2,
+    cy: SVG_HEIGHT / 2,
+    radius: Math.min(SVG_WIDTH, SVG_HEIGHT) * 0.28,
+    currentDirection: loopEl?.current_direction || "clockwise",
+    loopLabel: loopEl?.label,
+    centerLabel: centerEl?.label || "Center",
+  };
+}
+
+export function calculateSolenoidPositions({ elements, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const el = elements.find((e) => e.type === "solenoid");
+  const horizontal = el?.orientation !== "vertical";
+  const turns = Math.min(Math.max(el?.turns || 6, 3), 10);
+
+  const cx = SVG_WIDTH / 2;
+  const cy = SVG_HEIGHT / 2;
+  const coilLength = Math.min(SVG_WIDTH, SVG_HEIGHT) * (isMobile ? 0.75 : 0.8);
+  const coilRadius = Math.min(SVG_WIDTH, SVG_HEIGHT) * 0.25;
+
+  return { cx, cy, coilLength, coilRadius, turns, horizontal };
+}
+
+export function calculateMovingChargePositions({ elements, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const chargeEl = elements.find((el) => el.type === "moving_charge");
+  const vectorEl = elements.find((el) => el.type === "vector");
+
+  return {
+    fieldWidth: SVG_WIDTH,
+    fieldHeight: SVG_HEIGHT,
+    cx: SVG_WIDTH / 2,
+    cy: SVG_HEIGHT / 2,
+    chargeSign: chargeEl?.charge_type === "negative" ? -1 : 1,
+    chargeLabel: chargeEl?.label,
+    vectorAngle: vectorEl?.angle ?? 0,
+    vectorLength: { small: 30, medium: 60, large: 75 }[vectorEl?.length] || 60,
+    vectorLabel: vectorEl?.label,
+  };
+}
+
+export function calculateWireForcePositions({ elements, isMobile = false }) {
+  const base = calculateCurrentWirePositions({ elements, isMobile }); // reuse existing wire-position logic
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  return { ...base, fieldWidth: SVG_WIDTH, fieldHeight: SVG_HEIGHT };
+}
 

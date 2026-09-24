@@ -6,6 +6,12 @@ import MathText from "../../../../../common/MathText"
 //////////// RAY OPTICS  //////////////////
 ///////////////////////////////////////////
 
+export function lineAtX(p1, p2, x) {
+  const t = (x - p1.x) / (p2.x - p1.x);
+  return { x, y: p1.y + t * (p2.y - p1.y) };
+}
+
+
 // in renderVector.js — additive, doesn't change existing callers
 export function renderVectorToPoint({ x, y, toX, toY, label, color = "#D85A30", dashed = false }, isMobile = false) {
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
@@ -99,6 +105,24 @@ export function renderConcaveLensSymbol(lensX, topY, bottomY, strokeWidth) {
   );
 }
 
+export function renderConvexMirrorSymbol(mirrorX, topY, bottomY, strokeWidth) {
+  const midY = (topY + bottomY) / 2;
+  const bulge = (bottomY - topY) * 0.15;
+  const archD = `M ${mirrorX} ${topY} Q ${mirrorX - bulge} ${midY} ${mirrorX} ${bottomY}`;
+  // in renderConvexMirrorSymbol — fix the hatch direction (only the sign inside x2 changes):
+  const hatches = Array.from({ length: 8 }, (_, i) => {
+    const t = i / 7;
+    const y = topY + t * (bottomY - topY);
+    const archX = (1 - t) ** 2 * mirrorX + 2 * (1 - t) * t * (mirrorX - bulge) + t ** 2 * mirrorX;
+    return <line key={i} x1={archX} y1={y} x2={archX + bulge * 0.9} y2={y} stroke={OPTICS_COLORS.marker} strokeWidth={strokeWidth * 0.9} strokeOpacity={0.5} />;
+  });
+  return (
+    <g>
+      <path d={archD} fill="none" stroke="url(#mirror-reflective-gradient)" strokeWidth={strokeWidth * 1.8} strokeLinecap="round" />
+      {hatches}
+    </g>
+  );
+}
 
 export function renderDimensionLine(x1, x2, y, label, strokeWidth, fontSize) {
   const [xa, xb] = x1 < x2 ? [x1, x2] : [x2, x1];
@@ -312,4 +336,58 @@ export function getShowImage(relationships) {
 // so no render function needs a different data shape for this case.
 export function buildStubRayPaths(objectTip, surfacePoints) {
   return surfacePoints.filter(Boolean).map((p) => [{ points: [objectTip, p] }]);
+}
+
+
+function resolveMirrorTarget(rayDef, positions) {
+  if (rayDef.elements.includes("C_right")) return positions.C_right;
+  if (rayDef.elements.includes("F_right")) return positions.F_right;
+  return null;
+}
+
+export function interpretMirrorRayPath(rayDef, objectTip, mirrorX, axisY, positions, frontFPoint, extend) {
+  const segments = [];
+  let currentPoint = objectTip;
+  const target = resolveMirrorTarget(rayDef, positions);
+
+  rayDef.path.forEach((step) => {
+    if (step === "parallel_to_axis") {
+      const next = { x: mirrorX, y: currentPoint.y };
+      segments.push({ from: currentPoint, to: next });
+      currentPoint = next;
+    } else if (step === "directed_towards_center_of_curvature") {
+      const next = target ? lineAtX(currentPoint, target, mirrorX) : { x: mirrorX, y: axisY };
+      segments.push({ from: currentPoint, to: next });
+      currentPoint = next;
+    } else if (step === "diverges_from_focal_point" && target) {
+      const dx = currentPoint.x - target.x, dy = currentPoint.y - target.y;
+      const mag = Math.hypot(dx, dy) || 1;
+      const near = { x: currentPoint.x + (dx / mag) * extend, y: currentPoint.y + (dy / mag) * extend }; // extend*0.6 → extend
+      segments.push({ from: currentPoint, to: near });
+      currentPoint = near;
+    }  else if (step === "reflects_back_along_itself") {
+      if (segments.length > 0) segments[segments.length - 1].reversedArrow = true;
+    } else if (step === "reflects_through_focal_point_front") {
+        const dx = currentPoint.x - frontFPoint.x, dy = currentPoint.y - frontFPoint.y;
+        const mag = Math.hypot(dx, dy) || 1;
+        const near = { x: currentPoint.x + (dx / mag) * (extend * 0.6), y: currentPoint.y + (dy / mag) * (extend * 0.6) };
+        segments.push({ from: currentPoint, to: near });
+        currentPoint = near;
+      }
+  });
+    console.log(`[${rayDef.id}]`, JSON.stringify({ objectTip, target, frontFPoint, segments }, null, 2));
+  return segments;
+}
+
+export function renderArrowAtT(from, to, t, color, reversed = false) {
+  const x = from.x + (to.x - from.x) * t;
+  const y = from.y + (to.y - from.y) * t;
+  const angleDeg = reversed
+    ? (Math.atan2(from.y - to.y, from.x - to.x) * 180) / Math.PI
+    : (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+  return (
+    <g transform={`translate(${x}, ${y}) rotate(${angleDeg})`}>
+      <path d="M-5,-4 L5,0 L-5,4 Z" fill={color} />
+    </g>
+  );
 }

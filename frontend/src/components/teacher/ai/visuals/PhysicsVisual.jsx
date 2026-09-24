@@ -31,20 +31,24 @@ import {
 
 import {
   calculateConvexLensPositions,calculateConcaveMirrorPositions,calculateRefractionPositions,
-  calculateTIRPositions, calculateConcaveLensPositions,
+  calculateTIRPositions, calculateConcaveLensPositions, calculateConvexMirrorPositions
 } from "./physics/rayOptics/rayOpticsPositions"
 import {
   renderConvexLensSystem, renderConcaveMirrorSystem,renderRefractionSystem,
-  renderTIRSystem, renderConcaveLensSystem,
+  renderTIRSystem, renderConcaveLensSystem, renderConvexMirrorSystem
 } from "./physics/rayOptics/rayOpticsRender"
 
 import {
   calculatePointChargePositions, calculateTwoChargePositions, calculatePlatePositions,
-  calculateFieldAtPointPositions,calculateAxisPositionsChargeLayout, calculateBarMagnetPositions
+  calculateFieldAtPointPositions,calculateAxisPositionsChargeLayout, calculateBarMagnetPositions,
+  calculateCurrentWirePositions, calculateCurrentLoopPositions,calculateSolenoidPositions, 
+  calculateMovingChargePositions, calculateWireForcePositions
+
 } from "./physics/emf/emfPositions"
 import {
   renderPointChargeField, renderTwoChargeField, renderPlateField,renderFieldAtPoint,
-  renderAxisPositionsCharges, renderBarMagnetField
+  renderAxisPositionsCharges, renderBarMagnetField, renderCurrentWireField, renderCurrentLoopField,
+  renderSolenoidField, renderMovingChargeForce, renderWireForceField
 } from "./physics/emf/emfRender"
 
 
@@ -179,11 +183,15 @@ else if (figure.subtype === "ray_diagram_lens" ){
   content = renderConcaveLensSystem(plane, elements, isMobile);
   }
 }
-
+ 
 else if (figure.subtype === "ray_diagram_mirror" ){
   if( figure.feature === "concave") {
   plane = calculateConcaveMirrorPositions({ elements, relationships, isMobile });
   content = renderConcaveMirrorSystem(plane, elements, isMobile);
+  }
+  else if( figure.feature === "convex") {
+   plane = calculateConvexMirrorPositions({ elements, relationships, isMobile });
+   content = renderConvexMirrorSystem(plane, elements, isMobile);
   }
 }
 // else if (figure.subtype === "ray_diagram_mirror" && figure.feature === "concave") { ... }
@@ -226,10 +234,32 @@ else if (figure.subtype === "electric_field" && figure.feature === "point_charge
   }
 }
 
-else if (figure.subtype === "magnetic_field" && figure.feature === "bar_magnet") {
-  plane = calculateBarMagnetPositions({ elements, isMobile });
-  content = renderBarMagnetField(plane, isMobile);
+else if (figure.subtype === "magnetic_field"){
+    if( figure.feature === "bar_magnet") {
+    plane = calculateBarMagnetPositions({ elements, isMobile });
+    content = renderBarMagnetField(plane, isMobile);
+  }
+  else if (figure.feature === "current_carrying_wire") {
+    plane = calculateCurrentWirePositions({ elements, isMobile });
+    content = renderCurrentWireField(plane, isMobile);
+  } else if (figure.feature === "current_carrying_loop") {
+    plane = calculateCurrentLoopPositions({ elements, isMobile });
+    content = renderCurrentLoopField(plane, isMobile);
+  }
+  else if (figure.feature === "solenoid") {
+  plane = calculateSolenoidPositions({ elements, isMobile });
+  content = renderSolenoidField(plane, isMobile);
+} else if (figure.feature === "force_on_moving_charge") {
+  plane = calculateMovingChargePositions({ elements, isMobile });
+  content = renderMovingChargeForce(plane, isMobile);
+} else if (figure.feature === "force_on_current_carrying_wire") {
+  plane = calculateWireForcePositions({ elements, isMobile });
+  content = renderWireForceField(plane, isMobile);
 }
+}
+
+
+
 
   if (!content) return null;
 

@@ -313,3 +313,58 @@ export function calculateConcaveLensPositions({ elements, relationships, isMobil
 
   return { lensX, axisY, scale, heightScale, f, uMag, v, m, positions, rayEls, useExplicitRays, nearFocalPoint, extend: isMobile ? 35 : 55, showImage };
 }
+
+
+export function calculateConvexMirrorPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+
+  const mirrorEl = elements.find((e) => e.type === "mirror");
+  const objectEl = elements.find((e) => e.type === "object_arrow");
+  const focalEl = elements.find((e) => e.type === "focal_point");
+  const centerEl = elements.find((e) => e.type === "center_of_curvature");
+
+  const f = mirrorEl.focal_length;
+  const uMag = objectEl.distance_from_mirror;
+  const ho = objectEl.height;
+
+  const fDist = f;
+  const cDist = 2 * f;
+  const fSigned = -f;
+  const v = 1 / (1 / fSigned - 1 / uMag);
+  const m = -v / uMag;
+
+  const showImage = getShowImage(relationships);
+  const rayConstructionRel = relationships.find((r) => r.type === "ray_construction");
+  const useExplicitRays = Array.isArray(rayConstructionRel?.rays) && typeof rayConstructionRel.rays[0] === "object";
+
+  const naturalBehindNeed = Math.max(Math.abs(v), fDist);
+  const cPlotDist = Math.min(cDist, naturalBehindNeed * 1.5);
+
+  const MIRROR_DEPTH = isMobile ? 15 : 20;
+  const frontExtent = Math.max(uMag, MIRROR_DEPTH);
+  const behindExtent = Math.max(Math.abs(v), cPlotDist);
+  const scale = (SVG_WIDTH - 2 * paddingX - MIRROR_DEPTH) / (frontExtent + behindExtent);
+  const mirrorX = paddingX + frontExtent * scale;
+  const axisY = SVG_HEIGHT / 2;
+
+  const imageHeightSigned = m * ho;
+  const maxHeight = Math.max(Math.abs(ho), Math.abs(imageHeightSigned));
+  const availableHeight = SVG_HEIGHT / 2 - paddingY - 20;
+  const heightScale = Math.min(availableHeight / maxHeight, scale * 3);
+  const rayHeightPx = Math.max(Math.abs(ho * heightScale), Math.abs(imageHeightSigned * heightScale));
+  const mirrorHalf = Math.max(isMobile ? 45 : 60, rayHeightPx * 1.15);
+
+  const positions = {
+    mirror: { x: mirrorX, topY: axisY - mirrorHalf, bottomY: axisY + mirrorHalf },
+    object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+    image: { x: mirrorX + Math.abs(v) * scale, baseY: axisY, tipY: axisY - imageHeightSigned * heightScale, isVirtual: true },
+    F_right: focalEl ? { x: mirrorX + fDist * scale, y: axisY, label: focalEl.label } : null,
+    C_right: centerEl ? { x: mirrorX + cPlotDist * scale, y: axisY, label: centerEl.label } : null,
+  };
+
+  // Synthetic point — never in the real payload — used only to plot the
+  // "reflects_through_focal_point_front" WRONG distractor ray accurately.
+  const frontFPoint = { x: mirrorX - fDist * scale, y: axisY };
+
+  return { mirrorX, axisY, positions, showImage, useExplicitRays, rayConstructionRays: rayConstructionRel?.rays, frontFPoint, extend: isMobile ? 35 : 55 };
+}

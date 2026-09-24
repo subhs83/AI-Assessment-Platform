@@ -1,6 +1,4 @@
-import {
-  Eye,
-  RefreshCw,
+import { Eye, // RefreshCw,
 } from "lucide-react";
 
 import Button from "../../ui/Button";
@@ -20,13 +18,13 @@ export default function HistoryCardActions({
         View Questions
       </Button>
 
-      <Button
+      {/* <Button
         variant="success"
         onClick={() => onGenerateAgain(item)}
       >
         <RefreshCw size={16} />
         Generate Again
-      </Button>
+      </Button> */}
 
     </div>
   );

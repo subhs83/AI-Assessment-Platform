@@ -1,7 +1,7 @@
 import { getSvgDimensions } from "../../geometry/geometryHelpers";
 import {
   FieldLineRay, PointChargeSymbol,FIELD_COLORS, arrowOnQuadraticCurve,
-  MAG_COLORS, BarMagnetSymbol
+  MAG_COLORS, BarMagnetSymbol, normalizeMathLabel, FieldIntoPageIndicator
 } from "./emfHelpers"
 import MathText from "../../../../../common/MathText"
 
@@ -233,45 +233,240 @@ export function renderAxisPositionsCharges(plane, isMobile = false) {
 
 export function renderBarMagnetField(plane, isMobile = false) {
   if (!plane) return null;
-  const { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfHeight, availableHalfWidth } = plane;
+  const { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfHeight } = plane;
   const { strokeWidth } = getSvgDimensions(isMobile);
 
   const halfW = magnetWidth / 2;
   const halfH = magnetHeight / 2;
-  const externalLoops = [];
 
+  const loops = [];
   for (let i = 0; i < loopCount; i++) {
-    const t = loopCount > 1 ? i / (loopCount - 1) : 0; // 0 = smallest/innermost loop, 1 = largest/outermost
+    const t = (i + 1) / loopCount;
 
-    // FIX: footpoint now moves ALONG the pole face as loops get bigger —
-    // innermost loop starts near the pole's outer edge (small arc hugging
-    // the magnet), outermost loop starts near the pole's corner (big
-    // sweeping arc). This is what prevents loops from crossing each other.
-    const footY = halfH * (0.35 + 0.25 * t);
-    const footX_N = -halfW;
-    const footX_S = halfW;
+    // FIX: fixed pixel stagger (not proportional to the small magnetHeight)
+    // — innermost loop's footpoint sits right at the pole edge, each
+    // successive loop's footpoint moves outward by a real, visible amount.
+    const footpointStagger = isMobile ? 10 : 14;
+    const chordY = halfH * 0.3 + i * footpointStagger;
 
-    const verticalReach = halfH * 1.4 + t * (availableHalfHeight - halfH * 1.4);
-    const horizontalReach = Math.min(halfW + verticalReach * 0.75, availableHalfWidth * 0.9);
+    const targetPeakDistance = halfH * 2.2 + t * (availableHalfHeight - halfH * 2.2);
+    const controlY_top = 2 * -targetPeakDistance - -chordY;
+    const controlY_bottom = 2 * targetPeakDistance - chordY;
 
-    // Top loop (footY negative side)
-    externalLoops.push({
-      d: `M ${footX_N} ${-footY} C ${-horizontalReach} ${-verticalReach}, ${horizontalReach} ${-verticalReach}, ${footX_S} ${-footY}`,
-    });
-    // Bottom loop (mirror)
-    externalLoops.push({
-      d: `M ${footX_N} ${footY} C ${-horizontalReach} ${verticalReach}, ${horizontalReach} ${verticalReach}, ${footX_S} ${footY}`,
-    });
+    const topPath = `M ${-halfW} ${-chordY} Q 0 ${controlY_top}, ${halfW} ${-chordY}`;
+    const bottomPath = `M ${-halfW} ${chordY} Q 0 ${controlY_bottom}, ${halfW} ${chordY}`;
+    loops.push(topPath, bottomPath);
   }
-
-  const renderLoop = (d, key) => (
-    <path key={key} d={d} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />
-  );
 
   return (
     <g transform={`translate(${cx},${cy}) rotate(${horizontal ? 0 : 90})`}>
-      {externalLoops.map((loop, i) => renderLoop(loop.d, `ext-${i}`))}
+      {loops.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />
+      ))}
       <BarMagnetSymbol cx={0} cy={0} width={magnetWidth} height={magnetHeight} horizontal={true} />
     </g>
   );
 }
+
+export function renderCurrentWireField(plane, isMobile = false) {
+  if (!plane) return null;
+  const { cx, cy, wireHalfLength, horizontal, currentLabel, point, segmentLabel } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+
+  const wireTop = { x: horizontal ? cx - wireHalfLength : cx, y: horizontal ? cy : cy - wireHalfLength };
+  const wireBottom = { x: horizontal ? cx + wireHalfLength : cx, y: horizontal ? cy : cy + wireHalfLength };
+
+  // Concentric ellipses around the wire — NO arrowheads, since field
+  // direction is what the question tests.
+  const ringCount = 3;
+  const ringGap = isMobile ? 14 : 18;
+
+  return (
+    <g>
+      {/* Wire */}
+      <line x1={wireTop.x} y1={wireTop.y} x2={wireBottom.x} y2={wireBottom.y} stroke="#1E293B" strokeWidth={strokeWidth * 1.8} strokeLinecap="round" />
+
+      {/* Current direction arrow — GIVEN data, safe to show */}
+      <polygon
+        points={
+          horizontal
+            ? `${wireBottom.x + 10},${wireBottom.y} ${wireBottom.x - 4},${wireBottom.y - 6} ${wireBottom.x - 4},${wireBottom.y + 6}`
+            : `${wireTop.x},${wireTop.y - 10} ${wireTop.x - 6},${wireTop.y + 4} ${wireTop.x + 6},${wireTop.y + 4}`
+        }
+        fill="#1E293B"
+      />
+      {currentLabel && (
+        <foreignObject x={cx - 60} y={horizontal ? cy - 34 : cy - wireHalfLength - 26} width={120} height={22} style={{ overflow: "visible" }}>
+          <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.3, fontWeight: 600, color: "#1E293B" }}>
+            <MathText text={normalizeMathLabel(currentLabel)} />
+          </div>
+        </foreignObject>
+      )}
+
+      {/* Concentric field rings, centered on the wire at the point's height */}
+      {Array.from({ length: ringCount }, (_, i) => {
+        const r = ringGap * (i + 1);
+        return horizontal
+          ? <ellipse key={i} cx={cx} cy={cy} rx={r * 0.55} ry={r} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />
+          : <ellipse key={i} cx={cx} cy={cy} rx={r} ry={r * 0.55} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />;
+      })}
+
+      {/* Point P + optional distance segment */}
+      {point && (
+        <>
+          <line x1={cx} y1={cy} x2={point.x} y2={point.y} stroke="#94A3B8" strokeWidth={1.5} strokeDasharray="4,3" />
+          {segmentLabel && (
+            <foreignObject x={(cx + point.x) / 2 - 40} y={cy - 26} width={80} height={22} style={{ overflow: "visible" }}>
+              <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.3, fontWeight: 600, color: "#475569" }}>
+                <MathText text={normalizeMathLabel(segmentLabel)} />
+              </div>
+            </foreignObject>
+          )}
+          <circle cx={point.x} cy={point.y} r={3} fill="#1E293B" />
+          <text x={point.x} y={point.y + 20} fontSize={fontSize*1.3} textAnchor="middle" fontWeight={700} fill="#1E293B">{point.label}</text>
+        </>
+      )}
+    </g>
+  );
+}
+
+
+
+export function renderCurrentLoopField(plane, isMobile = false) {
+  if (!plane) return null;
+  const { cx, cy, radius, currentDirection, loopLabel, centerLabel } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+  const clockwise = currentDirection === "clockwise";
+
+  // Small arrowheads on the loop showing CURRENT flow direction —
+  // given data, safe to show. Field direction at center is NOT indicated.
+  const arrowAngles = [0, 90, 180, 270];
+
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#1E293B" strokeWidth={strokeWidth * 1.8} />
+      {arrowAngles.map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        const tangentRad = clockwise ? rad + Math.PI / 2 : rad - Math.PI / 2;
+        const px = cx + Math.cos(rad) * radius;
+        const py = cy + Math.sin(rad) * radius;
+        const arrowSize = 15;
+        const a1 = { x: px - Math.cos(tangentRad - 0.4) * arrowSize, y: py - Math.sin(tangentRad - 0.4) * arrowSize };
+        const a2 = { x: px - Math.cos(tangentRad + 0.4) * arrowSize, y: py - Math.sin(tangentRad + 0.4) * arrowSize };
+        return <polygon key={deg} points={`${px},${py} ${a1.x},${a1.y} ${a2.x},${a2.y}`} fill="#1E293B" />;
+      })}
+
+      <circle cx={cx} cy={cy} r={3} fill="#475569" />
+      <text x={cx} y={cy + 20} fontSize={fontSize} textAnchor="middle" fontWeight={700} fill="#475569">{centerLabel}</text>
+
+      {loopLabel && (
+        <foreignObject x={cx + radius - 10} y={cy - radius - 6} width={90} height={22} style={{ overflow: "visible" }}>
+          <div style={{ fontSize, fontWeight: 600, color: "#1E293B" }}>
+            <MathText text={normalizeMathLabel(loopLabel)} />
+          </div>
+        </foreignObject>
+      )}
+    </g>
+  );
+}
+
+export function renderSolenoidField(plane, isMobile = false) {
+  if (!plane) return null;
+  const { cx, cy, coilLength, coilRadius, turns, horizontal } = plane;
+  const { strokeWidth } = getSvgDimensions(isMobile);
+
+  const spacing = coilLength / turns;
+  const coils = Array.from({ length: turns }, (_, i) => -coilLength / 2 + spacing * i + spacing / 2);
+
+  // Uniform field lines through the core — same straight-parallel-line
+  // primitive as the electric-field plate diagram, no arrowheads (field
+  // direction is what's being tested).
+  const coreLineCount = 3;
+
+  return (
+    <g transform={`translate(${cx},${cy}) rotate(${horizontal ? 0 : 90})`}>
+      {/* Field lines inside the core */}
+      {Array.from({ length: coreLineCount }, (_, i) => {
+        const yOff = (i - (coreLineCount - 1) / 2) * (coilRadius * 0.55);
+        return <line key={`core-${i}`} x1={-coilLength / 2} y1={yOff} x2={coilLength / 2} y2={yOff} stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />;
+      })}
+
+      {/* Coil turns — each an ellipse (side-view of a loop), no direction arrows */}
+      {coils.map((x, i) => (
+        <ellipse key={i} cx={x} cy={0} rx={coilRadius * 0.32} ry={coilRadius} fill="none" stroke="#1E293B" strokeWidth={strokeWidth * 1.4} />
+      ))}
+
+      {/* Outer coil envelope hint — top/bottom guide lines connecting the turns */}
+      <line x1={-coilLength / 2} y1={-coilRadius} x2={coilLength / 2} y2={-coilRadius} stroke="#1E293B" strokeWidth={1} strokeDasharray="2,3" opacity={0.8} />
+      <line x1={-coilLength / 2} y1={coilRadius} x2={coilLength / 2} y2={coilRadius} stroke="#1E293B" strokeWidth={1} strokeDasharray="2,3" opacity={0.8} />
+    </g>
+  );
+}
+
+export function renderMovingChargeForce(plane, isMobile = false) {
+  if (!plane) return null;
+  const { fieldWidth, fieldHeight, cx, cy, chargeSign, chargeLabel, vectorAngle, vectorLength, vectorLabel } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+
+  const rad = (vectorAngle * Math.PI) / 180;
+  const vEndX = cx + Math.cos(rad) * vectorLength;
+  const vEndY = cy - Math.sin(rad) * vectorLength;
+
+  return (
+    <g>
+      <g transform={`translate(${cx},${cy })`}>
+        <FieldIntoPageIndicator width={fieldWidth} height={fieldHeight} />
+      </g>
+
+      {/* Charge — sign shown, it's given data (proton, +q) */}
+      <g transform={`translate(${cx},${cy})`}>
+        <PointChargeSymbol charge={chargeSign} label={normalizeMathLabel(chargeLabel)} radius={14} revealSign={true} />
+      </g>
+
+      {/* Velocity vector — given data, shown */}
+      <line x1={cx+20} y1={cy} x2={vEndX} y2={vEndY} stroke="#1E293B" strokeWidth={strokeWidth * 1.3} />
+      <polygon points={`${vEndX},${vEndY} ${vEndX - 8 * Math.cos(rad - 0.4)},${vEndY + 8 * Math.sin(rad - 0.4)} ${vEndX - 8 * Math.cos(rad + 0.4)},${vEndY + 8 * Math.sin(rad + 0.4)}`} fill="#1E293B" />
+      {vectorLabel && (
+        <foreignObject x={vEndX + 6} y={vEndY - 16} width={40} height={22} style={{ overflow: "visible" }}>
+          <div style={{ fontSize:fontSize*1.5, fontWeight: 700, color: "#1E293B" }}><MathText text={normalizeMathLabel(vectorLabel)} /></div>
+        </foreignObject>
+      )}
+
+      {/* NOTE: force vector deliberately NOT drawn — that's the answer */}
+    </g>
+  );
+}
+
+export function renderWireForceField(plane, isMobile = false) {
+  if (!plane) return null;
+  const { cx, cy, wireHalfLength, horizontal, currentLabel, fieldWidth, fieldHeight } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+
+  const wireTop = { x: horizontal ? cx - wireHalfLength : cx, y: horizontal ? cy : cy - wireHalfLength };
+  const wireBottom = { x: horizontal ? cx + wireHalfLength : cx, y: horizontal ? cy : cy + wireHalfLength };
+
+  return (
+    <g>
+      <g transform={`translate(${cx},${cy})`}>
+        <FieldIntoPageIndicator width={fieldWidth} height={fieldHeight} />
+      </g>
+
+      <line x1={wireTop.x} y1={wireTop.y} x2={wireBottom.x} y2={wireBottom.y} stroke="#1E293B" strokeWidth={strokeWidth * 1.8} strokeLinecap="round" />
+      <polygon
+        points={horizontal
+          ? `${wireBottom.x + 10},${wireBottom.y} ${wireBottom.x - 4},${wireBottom.y - 6} ${wireBottom.x - 4},${wireBottom.y + 6}`
+          : `${wireTop.x},${wireTop.y - 10} ${wireTop.x - 6},${wireTop.y + 4} ${wireTop.x + 6},${wireTop.y + 4}`}
+        fill="#1E293B"
+      />
+      {currentLabel && (
+        <foreignObject x={cx - 40} y={horizontal ? cy - 34 : cy - wireHalfLength - 26} width={80} height={22} style={{ overflow: "visible" }}>
+          <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize*1.5, fontWeight: 600, color: "#1E293B" }}>
+            <MathText text={normalizeMathLabel(currentLabel)} />
+          </div>
+        </foreignObject>
+      )}
+      {/* NOTE: force vector deliberately NOT drawn */}
+    </g>
+  );
+}
+

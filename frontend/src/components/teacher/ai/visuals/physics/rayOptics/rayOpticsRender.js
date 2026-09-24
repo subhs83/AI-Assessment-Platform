@@ -3,7 +3,8 @@ import {
     renderVectorToPoint, renderLensSymbol, renderDimensionLine, OPTICS_COLORS,
     renderMathLabel,renderConcaveMirrorSymbol,renderVerticalDimensionLine,
     renderDirectionAngleArc, angleOfVector,mediumFill, renderMidRayArrow,
-    renderConcaveLensSymbol, interpretRayPath, buildStubRayPaths,
+    renderConcaveLensSymbol, interpretRayPath, buildStubRayPaths, lineAtX,
+    interpretMirrorRayPath, renderConvexMirrorSymbol
     } from "./rayOpticsHelpers";
 
 
@@ -87,10 +88,6 @@ export function renderConvexLensSystem(plane, elements, isMobile = false) {
   );
 }
 
-function lineAtX(p1, p2, x) {
-  const t = (x - p1.x) / (p2.x - p1.x);
-  return { x, y: p1.y + t * (p2.y - p1.y) };
-}
 
 
 export function renderConcaveMirrorSystem(plane, elements, isMobile = false) {
@@ -354,6 +351,93 @@ export function renderConcaveLensSystem(plane, elements, isMobile = false) {
           <line x1={seg.from.x} y1={seg.from.y} x2={seg.to.x} y2={seg.to.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} strokeDasharray={seg.dashed ? "5,4" : undefined} />
           {!seg.dashed && renderMidRayArrow(seg.from, seg.to, OPTICS_COLORS.ray, strokeWidth)}
         </g>
+      ))}
+    </g>
+  );
+}
+
+export function renderConvexMirrorSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize, width } = getSvgDimensions(isMobile);
+  const { mirrorX, axisY, positions, showImage, useExplicitRays, rayConstructionRays, frontFPoint, extend } = plane;
+  const { mirror, object, image, F_right, C_right } = positions;
+  const objectTip = { x: object.x, y: object.tipY };
+  const EXPLICIT_RAY_COLORS = ["#e8870a", "#c0392b", "#2980b9"]; // extend if a payload ever has more than 3 rays
+  let rayGroups, rayLabels;
+
+  if (useExplicitRays) {
+    rayGroups = rayConstructionRays.map((rayDef) => interpretMirrorRayPath(rayDef, objectTip, mirrorX, axisY, positions, frontFPoint, extend));
+    // Spread labels out (different t per ray, alternating vertical offset) since
+    // renderConvexMirrorSystem — replace the rayLabels construction inside useExplicitRays:
+    rayLabels = rayConstructionRays.map((rayDef, i) => {
+      const segs = rayGroups[i];
+      if (!segs || segs.length === 0) return null;
+      const targetSeg = segs[segs.length - 1];
+      const labelText = elements.find((e) => e.id === rayDef.id)?.label || rayDef.id;
+      const t = 0.6;
+      const baseX = targetSeg.from.x + (targetSeg.to.x - targetSeg.from.x) * t;
+      const baseY = targetSeg.from.y + (targetSeg.to.y - targetSeg.from.y) * t;
+      const dx = targetSeg.to.x - targetSeg.from.x, dy = targetSeg.to.y - targetSeg.from.y;
+      const mag = Math.hypot(dx, dy) || 1;
+      const perpX = -dy / mag
+      const offset = 16 * (i - (rayConstructionRays.length - 1) / 2);
+      return { x: baseX + perpX * offset, y: baseY - 10, text: labelText, color: EXPLICIT_RAY_COLORS[i % EXPLICIT_RAY_COLORS.length] };
+    });
+  } else {
+      rayLabels = [];
+      const ray1MirrorPoint = { x: mirrorX, y: object.tipY };
+      const imageTip = { x: image.x, y: image.tipY };
+      const ray2MirrorPoint = C_right ? lineAtX(objectTip, C_right, mirrorX) : { x: mirrorX, y: axisY };
+
+      rayGroups = [
+        showImage
+          ? [{ from: objectTip, to: ray1MirrorPoint }, { from: ray1MirrorPoint, to: F_right, dashed: true }, { from: F_right, to: imageTip, dashed: true }]
+          : [{ from: objectTip, to: ray1MirrorPoint }, { from: ray1MirrorPoint, to: F_right, dashed: true }],
+        showImage
+          ? [{ from: objectTip, to: ray2MirrorPoint, reversedArrow: true }, { from: ray2MirrorPoint, to: C_right, dashed: true }, { from: C_right, to: imageTip, dashed: true }]
+          : [{ from: objectTip, to: ray2MirrorPoint, reversedArrow: true }],
+      ];
+    }
+
+  const polePoint = { x: mirrorX, y: axisY };
+
+  return (
+    <g>
+      <line x1={0} y1={axisY} x2={width} y2={axisY} stroke={OPTICS_COLORS.axis} strokeDasharray="4,3" strokeWidth={strokeWidth} />
+      {renderConvexMirrorSymbol(mirrorX, mirror.topY, mirror.bottomY, strokeWidth)}
+
+      {/* Pole (P) — the mirror/axis intersection point, always present physically
+          but never in the payload, so rendered unconditionally like the axis itself. */}
+      <circle cx={polePoint.x} cy={polePoint.y} r={7} fill={OPTICS_COLORS.marker} fillOpacity={0.15} />
+      <circle cx={polePoint.x} cy={polePoint.y} r={3} fill={OPTICS_COLORS.marker} />
+      {renderMathLabel(polePoint.x, polePoint.y + 20, "P", fontSize, OPTICS_COLORS.marker)}
+
+      {[F_right, C_right].filter(Boolean).map((pos, i) => (
+        <g key={i}>
+          <circle cx={pos.x} cy={pos.y} r={7} fill={OPTICS_COLORS.marker} fillOpacity={0.15} />
+          <circle cx={pos.x} cy={pos.y} r={3} fill={OPTICS_COLORS.marker} />
+          {renderMathLabel(pos.x, pos.y + 20, pos.label, fontSize, OPTICS_COLORS.marker)}
+        </g>
+      ))}
+
+      {renderVectorToPoint({ x: object.x, y: object.baseY, toX: object.x, toY: object.tipY, color: OPTICS_COLORS.object })}
+      {renderDimensionLine(object.x, mirrorX, axisY + 30, object.distanceLabel, strokeWidth, fontSize)}
+      {(useExplicitRays || showImage) && renderVectorToPoint({ x: image.x, y: image.baseY, toX: image.x, toY: image.tipY, color: OPTICS_COLORS.image, dashed: true })}
+
+      {rayGroups.map((group, rayIndex) => group.map((seg, i) => {
+        const color = useExplicitRays ? EXPLICIT_RAY_COLORS[rayIndex % EXPLICIT_RAY_COLORS.length] : OPTICS_COLORS.ray;
+        return (
+          <g key={`${rayIndex}-${i}`}>
+            <line x1={seg.from.x} y1={seg.from.y} x2={seg.to.x} y2={seg.to.y} stroke={color} strokeWidth={strokeWidth} strokeDasharray={seg.dashed ? "5,4" : undefined} />
+            {seg.reversedArrow
+              ? renderMidRayArrow(seg.to, seg.from, color, strokeWidth)
+              : !seg.dashed && renderMidRayArrow(seg.from, seg.to, color, strokeWidth)}
+          </g>
+        );
+      }))}
+
+      {rayLabels.filter(Boolean).map((l, i) => (
+        <g key={`label-${i}`}>{renderMathLabel(l.x, l.y, l.text, fontSize, l.color)}</g>
       ))}
     </g>
   );
