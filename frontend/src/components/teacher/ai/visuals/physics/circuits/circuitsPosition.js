@@ -91,9 +91,9 @@ export function calculateCircuitPositions({ elements, relationships, isMobile = 
 
   const contentBounds = {
   minX: loopLeft - 30,
-  maxX: loopRight + 60, // extra room for rung labels sitting outside the rail
-  minY: loopTop - 10,
-  maxY: loopBottom + 30, // battery sits below the wire
+  maxX: loopRight + 80, // extra room for rung labels sitting outside the rail
+  minY: loopTop - 20,
+  maxY: loopBottom + 20, // battery sits below the wire
 };
   return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, positions, contentBounds };
 }
@@ -244,9 +244,9 @@ export function calculateParallelCircuitPositions({ elements, relationships, isM
 
    const contentBounds = {
     minX: loopLeft - 30,
-    maxX: loopRight + 60, // extra room for rung labels sitting outside the rail
-    minY: loopTop - 10,
-    maxY: loopBottom + 30, // battery sits below the wire
+    maxX: loopRight + 80, // extra room for rung labels sitting outside the rail
+    minY: loopTop - 20,
+    maxY: loopBottom + 20, // battery sits below the wire
   };
   return { loopLeft, loopRight, loopTop, loopBottom, seriesIds, rungGroups: rungGroups.map((g) => [...g]), positions, contentBounds };
 }
@@ -262,8 +262,8 @@ export function calculateBridgeCircuitPositions({ elements, relationships, isMob
 
   const cx = SVG_WIDTH / 2;
   const cy = paddingY + usableH * 0.35;
-  const halfW = usableW * 0.35;
-  const halfH = usableH * 0.28;
+  const halfW = usableW * 0.40;
+  const halfH = usableH * 0.30;
 
   const N = { x: cx, y: cy - halfH };
   const S = { x: cx, y: cy + halfH };
@@ -312,17 +312,24 @@ export function calculateBridgeCircuitPositions({ elements, relationships, isMob
   if (battId) positions[battId] = { ...midpoint(outerLeftTop, outerLeftBottom), rotation: 90 };
   if (switchId) positions[switchId] = { ...midpoint(outerLeftBottom, outerRightBottom), rotation: 0 };
 
+  // NEW: content bounds covering the diamond (N/S/W/E), the outer
+  // battery/switch loop below it, and margin for arm-resistor labels
+  // (which sit outside the diamond edges, per renderTrimmedEdge's label
+  // handling) and the battery's own value label below the outer loop.
+  const labelMargin = 15
   const contentBounds = {
-    minX: outerLeftBottom - 30,
-    maxX: outerRightBottom + 60, // extra room for rung labels sitting outside the rail
-    minY: outerLeftTop - 10,
-    maxY: outerRightTop + 30, // battery sits below the wire
+    minX: W.x - labelMargin,
+    maxX: E.x + labelMargin,
+    minY: N.y - labelMargin,
+    maxY: outerBottomY + labelMargin, // extra room for the battery's own label beneath the outer loop
   };
+
   return {
     N, S, W, E,
     outerLeftTop, outerLeftBottom, outerRightBottom, outerRightTop,
     leftTopId, rightTopId, leftBottomId, rightBottomId, galvId, battId, switchId,
-    positions, contentBounds
+    positions,
+    contentBounds, // NEW
   };
 }
 
@@ -473,9 +480,9 @@ const subRels = sideOrder.map((side) => ({
 });
   const contentBounds = {
   minX: loopLeft - 30,
-  maxX: loopRight + 60, // extra room for rung labels sitting outside the rail
-  minY: loopTop - 10,
-  maxY: loopBottom + 30,
+  maxX: loopRight + 80, // extra room for rung labels sitting outside the rail
+  minY: loopTop - 20,
+  maxY: loopBottom + 20,
 };
 return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, subRels, positions, contentBounds };
 }
@@ -561,9 +568,9 @@ export function calculateTwoSourceCombinationPositions({ elements, relationships
 
   const contentBounds = {
     minX: loopLeft - 30,
-    maxX: loopRight + 60, // extra room for rung labels sitting outside the rail
-    minY: loopTop - 10,
-    maxY: loopBottom + 30,
+    maxX: loopRight + 80, // extra room for rung labels sitting outside the rail
+    minY: loopTop - 20,
+    maxY: loopBottom + 20,
   };
 
   return {
@@ -595,7 +602,7 @@ export function calculateMeterBridgePositions({ elements, isMobile = false }) {
   const nullX = wireLeft + (nullCm / wireLengthCm) * (wireRight - wireLeft);
   const contentBounds = {
     minX: wireLeft - 30,
-    maxX: wireRight + 60,
+    maxX: wireRight + 80,
     minY: stripY - 20,
     maxY: wireY + 20, // battery sits below the wire
   };

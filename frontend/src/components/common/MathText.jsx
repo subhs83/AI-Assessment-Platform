@@ -1,13 +1,13 @@
 import "katex/dist/katex.min.css";
 import { BlockMath, InlineMath } from "react-katex";
-import { prepareForKaTeX } from "./editableMathText.js";
+//import { prepareForKaTeX } from "./editableMathText.js";
 
 export default function MathText({ text = "" }) {
   if (!text) return null;
 
-  const normalized = prepareForKaTeX(text);
+  //const normalized = prepareForKaTeX(text);
 
-  const parts = normalized.split(
+  const parts = text.split(
     /(\$\$[\s\S]*?\$\$|\$[^$]*\$)/g
   );
 
