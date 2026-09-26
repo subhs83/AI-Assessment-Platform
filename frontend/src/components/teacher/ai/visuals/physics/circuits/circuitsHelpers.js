@@ -1,6 +1,19 @@
 
 import MathText from "../../../../../common/MathText"
 
+// mathTextHelpers.js — small utility, used anywhere a label might arrive LaTeX-wrapped
+
+export function normalizeMathLabel(text) {
+  if (!text) return text;
+  // Strip a single pair of outer $ ... $ delimiters if present — MathText
+  // in this codebase expects raw content, not the wrapper itself.
+  const trimmed = text.trim();
+  if (trimmed.startsWith("$") && trimmed.endsWith("$") && trimmed.length > 1) {
+    return trimmed.slice(1, -1);
+  }
+  return text;
+}
+
 // Electric circuit Related Function
 //1. Theme
 // circuitTheme.js

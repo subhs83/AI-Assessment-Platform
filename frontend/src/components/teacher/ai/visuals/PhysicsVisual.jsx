@@ -21,12 +21,14 @@ import {
 } from "./physics/soundWave/soundWaveRender"
 
 import {
-  calculateCircuitPositions,calculateParallelCircuitPositions,
-  calculateBridgeCircuitPositions,calculateCombinationCircuitPositions,
+  calculateCircuitPositions,calculateParallelCircuitPositions, calculateBridgeCircuitPositions,
+  calculateCombinationCircuitPositions, calculateJunctionPositions, calculateTwoSourceCombinationPositions,
+  calculateMeterBridgePositions,
 } from "./physics/circuits/circuitsPosition";
 import {
   renderCircuitSystem, renderParallelCircuitSystem, renderBridgeCircuitSystem, 
-  renderCombinationCircuitSystem,
+  renderCombinationCircuitSystem, renderJunctionCurrents, renderTwoSourceCombinationSystem,
+  renderMeterBridge
 } from "./physics/circuits/circuitsRender";
 
 import {
@@ -70,7 +72,10 @@ export default function PhysicsVisual({ visual }) {
   const numCycles = visual?.num_cycles || 2;
   const stringLength = visual?.string_length
   const harmonicNumber = visual?.harmonic_number
- // console.log("incline_angle : ", incline_angle)
+  const hasJunctionRelationship = relationships.some((r) => r.type === "current_conservation_at_node");
+  const hasNullRelationship = relationships.some((r) => r.type === "is_connected_to_jockey");
+ //console.log("hasJunctionRelationship : ", hasJunctionRelationship)
+ //console.log("hasJunctionRelationship : ", hasJunctionRelationship)
 
   let plane = null;
   let content = null;
@@ -152,7 +157,10 @@ else if (figure.subtype === "wave_superposition") {
 }
 
 //CIRCUITS
-
+if (hasJunctionRelationship) {
+  plane = calculateJunctionPositions({ elements, relationships, isMobile });
+  content = renderJunctionCurrents(plane, isMobile);
+}
 else if (figure.subtype === "circuit_series") {
   plane = calculateCircuitPositions({ elements, relationships, isMobile });
   content = renderCircuitSystem(plane, elements, relationships, isMobile);
@@ -162,13 +170,38 @@ else if (figure.subtype === "circuit_parallel") {
   content = renderParallelCircuitSystem(plane, elements, relationships, isMobile);
 }
 else if (figure.subtype === "circuit_bridge") {
+  if (hasNullRelationship){
+  plane = calculateMeterBridgePositions({ elements, isMobile });
+  content = renderMeterBridge(plane, isMobile);
+  }
+  else{
   plane = calculateBridgeCircuitPositions({ elements, relationships, isMobile });
   content = renderBridgeCircuitSystem(plane, elements, relationships, isMobile);
+  }
 }
 
 else if (figure.subtype === "circuit_combination") {
-  plane = calculateCombinationCircuitPositions({ elements, relationships, isMobile });
-  content = renderCombinationCircuitSystem(plane, elements, relationships, isMobile);
+  function isTwoSourceCombination(relationships) {
+  const seriesRels = relationships.filter((r) => r.type === "connected_by_wire" && r.order === "series" && r.branch);
+  return seriesRels.length >= 2;
+}
+  if (isTwoSourceCombination(relationships)) {
+    plane = calculateTwoSourceCombinationPositions({ elements, relationships, isMobile });
+    content = renderTwoSourceCombinationSystem(plane, elements, isMobile);
+  } else {
+    plane = calculateCombinationCircuitPositions({ elements, relationships, isMobile });
+    content = renderCombinationCircuitSystem(plane, elements, relationships, isMobile);
+  }
+}
+
+else if (figure.subtype === "circuit_kirchhoff_junction") {
+  plane = calculateJunctionPositions({ elements, relationships, isMobile });
+  content = renderJunctionCurrents(plane, isMobile);
+}
+
+else if (figure.subtype === "circuit_meter_bridge" ) {
+  plane = calculateMeterBridgePositions({ elements, isMobile });
+  content = renderMeterBridge(plane, isMobile);
 }
 
 //RAY OPTICS

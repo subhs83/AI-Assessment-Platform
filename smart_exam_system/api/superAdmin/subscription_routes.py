@@ -20,10 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 
-@api_superadmin_bp.route(
-    "/schools/<int:school_id>/subscription",
-    methods=["GET"],
-)
+@api_superadmin_bp.route("/schools/<int:school_id>/subscription", methods=["GET"],)
 @login_required
 @super_admin_required
 def get_school_subscription_api(school_id):
@@ -34,8 +31,6 @@ def get_school_subscription_api(school_id):
 
     try:
         data = get_school_subscription_summary(school_id)
-
-        
 
         return api_response(
             success=True,
@@ -64,10 +59,7 @@ def get_school_subscription_api(school_id):
 
 
 
-@api_superadmin_bp.route(
-    "/schools/<int:school_id>/subscription/plan",
-    methods=["PUT"],
-)
+@api_superadmin_bp.route("/schools/<int:school_id>/subscription/plan", methods=["PUT"],)
 @login_required
 @super_admin_required
 def change_school_subscription_plan_api(school_id):
@@ -118,10 +110,7 @@ def change_school_subscription_plan_api(school_id):
     
 
 
-@api_superadmin_bp.route(
-    "/schools/<int:school_id>/subscription/extend",
-    methods=["PUT"],
-)
+@api_superadmin_bp.route("/schools/<int:school_id>/subscription/extend", methods=["PUT"],)
 @login_required
 @super_admin_required
 def extend_school_subscription_api(school_id):
@@ -167,10 +156,7 @@ def extend_school_subscription_api(school_id):
     
 
 
-@api_superadmin_bp.route(
-    "/schools/<int:school_id>/subscription/bonus-credits",
-    methods=["PUT"],
-)
+@api_superadmin_bp.route("/schools/<int:school_id>/subscription/bonus-credits", methods=["PUT"],)
 @login_required
 @super_admin_required
 def add_bonus_ai_credits_api(school_id):
@@ -216,10 +202,7 @@ def add_bonus_ai_credits_api(school_id):
     
 
 
-@api_superadmin_bp.route(
-    "/schools/<int:school_id>/subscription/status",
-    methods=["PUT"],
-)
+@api_superadmin_bp.route("/schools/<int:school_id>/subscription/status", methods=["PUT"],)
 @login_required
 @super_admin_required
 def update_subscription_status_api(school_id):

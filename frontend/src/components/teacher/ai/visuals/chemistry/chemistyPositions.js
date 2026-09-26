@@ -5,7 +5,7 @@ export function calculateLewisStructurePositions({ elements, relationships, isMo
   const { width: SVG_WIDTH, height: SVG_HEIGHT, fontSize } = getSvgDimensions(isMobile);
   const centerX = SVG_WIDTH / 2;
   const centerY = SVG_HEIGHT / 2;
-  const SCALE = isMobile ? 40 : 55;
+  const SCALE = isMobile ? 40 : 50;
 
   const atomEls = elements.filter((el) => el.type === "atom");
   const positions = {};

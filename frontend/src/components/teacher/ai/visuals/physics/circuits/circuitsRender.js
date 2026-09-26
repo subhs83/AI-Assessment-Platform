@@ -1,9 +1,10 @@
 import React from 'react';
 import { getSvgDimensions } from "../../geometry/geometryHelpers";
 import { renderTrimmedEdge, getLoopCorners, JunctionDot, CIRCUIT_COLORS, CircuitBackdrop, renderCornerArcs, renderCornerArc, renderLegSegments, COMPONENT_REACH,
-  renderComponent, reachForElement,  renderShortBypass,
+  renderComponent, reachForElement,  renderShortBypass
  } from "./circuitsHelpers";
- 
+
+ import MathText from "../../../../../common/MathText"
 
 
 
@@ -331,3 +332,168 @@ export function renderCombinationCircuitSystem(plane, elements, relationships, i
 }
 
 
+export function renderJunctionCurrents(plane, isMobile = false) {
+  if (!plane) return null;
+  const { cx, cy, nodeLabel, vectors } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+
+  return (
+    <g transform={`translate(${cx},${cy})`}>
+      {vectors.map((v) => {
+        const rad = (v.angle * Math.PI) / 180;
+        // Incoming: line runs from far point INTO the node (arrowhead at 0,0).
+        // Outgoing: line runs from node OUT to the far point (arrowhead at far end).
+        const farX = Math.cos(rad) * v.length;
+        const farY = -Math.sin(rad) * v.length;
+        const tipX = v.isIncoming ? 0 : farX;
+        const tipY = v.isIncoming ? 0 : farY;
+        const tailX = v.isIncoming ? farX : 0;
+        const tailY = v.isIncoming ? farY : 0;
+        const arrowAngle = Math.atan2(tipY - tailY, tipX - tailX);
+        const arrowSize = 12;
+        const a1 = { x: tipX - Math.cos(arrowAngle - 0.4) * arrowSize, y: tipY - Math.sin(arrowAngle - 0.4) * arrowSize };
+        const a2 = { x: tipX - Math.cos(arrowAngle + 0.4) * arrowSize, y: tipY - Math.sin(arrowAngle + 0.4) * arrowSize };
+
+        const labelX = farX * 1.18;
+        const labelY = farY * 1.18;
+
+        return (
+          <g key={v.id}>
+            <line x1={tailX} y1={tailY} x2={tipX} y2={tipY} stroke="#1E293B" strokeWidth={strokeWidth * 1.3} />
+            <polygon points={`${tipX},${tipY} ${a1.x},${a1.y} ${a2.x},${a2.y}`} fill="#1E293B" />
+            {v.label && (
+              <foreignObject x={labelX - 45} y={labelY - 11} width={90} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "center", fontSize, fontWeight: 600, color: "#1E293B" }}>
+                  <MathText text={(v.label)} />
+                </div>
+              </foreignObject>
+            )}
+          </g>
+        );
+      })}
+      <circle cx={0} cy={0} r={4} fill="#475569" />
+      {nodeLabel && (
+        <text x={0} y={-14} fontSize={fontSize} fontWeight={700} textAnchor="middle" fill="#475569">{nodeLabel}</text>
+      )}
+    </g>
+  );
+}
+
+
+export function renderTwoSourceCombinationSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { loopLeft, loopRight, loopTop, loopBottom, midX, sharedComponents, positions } = plane;
+  const wireColor = CIRCUIT_COLORS.wire;
+
+  const corners = getLoopCorners(loopLeft, loopTop, loopRight, loopBottom); // NEW — was missing entirely
+
+  const allTopIds = Object.keys(positions).filter((id) => positions[id].rotation === 0);
+  const leftTopIds = allTopIds.filter((id) => positions[id].x < midX);
+  const rightTopIds = allTopIds.filter((id) => positions[id].x >= midX);
+
+  return (
+    <g>
+      <CircuitBackdrop width={width} height={height} patternId="circuit-grid-twosource" />
+      {renderCornerArcs(loopLeft, loopTop, loopRight, loopBottom, strokeWidth)}
+
+      {/* FIX: top-left segment now starts at corners.topStart (the arc's
+          actual endpoint), not a hardcoded loopLeft+10 guess */}
+      {renderLegSegments({ startPoint: corners.topStart, endPoint: { x: midX, y: loopTop }, axis: "x", ids: leftTopIds, elements, positions, strokeWidth })}
+      {/* FIX: same correction on the right side, using corners.topEnd */}
+      {renderLegSegments({ startPoint: { x: midX, y: loopTop }, endPoint: corners.topEnd, axis: "x", ids: rightTopIds, elements, positions, strokeWidth })}
+
+      {/* FIX: bottom rail now spans corners.bottomEnd -> corners.bottomStart
+          (their actual left/right order), not hardcoded ±10 offsets */}
+      <line x1={corners.bottomEnd.x} y1={loopBottom} x2={corners.bottomStart.x} y2={loopBottom} stroke={wireColor} strokeWidth={strokeWidth} />
+
+      {/* FIX: left/right vertical rails now use corners.leftStart/leftEnd
+          and corners.rightStart/rightEnd instead of the raw loopTop/loopBottom */}
+      {renderLegSegments({ startPoint: corners.leftStart, endPoint: corners.leftEnd, axis: "y", ids: [plane.leftBattery].filter(Boolean), elements, positions, strokeWidth })}
+      {renderLegSegments({ startPoint: corners.rightStart, endPoint: corners.rightEnd, axis: "y", ids: [plane.rightBattery].filter(Boolean), elements, positions, strokeWidth })}
+
+      {renderLegSegments({ startPoint: { x: midX, y: loopTop }, endPoint: { x: midX, y: loopBottom }, axis: "y", ids: sharedComponents, elements, positions, strokeWidth })}
+
+      <JunctionDot x={midX} y={loopTop} />
+      <JunctionDot x={midX} y={loopBottom} />
+
+      {Object.keys(positions).map((id) => {
+        const el = elements.find((e) => e.id === id);
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+      })}
+    </g>
+  );
+}
+
+export function renderMeterBridge(plane, isMobile = false) {
+  if (!plane) return null;
+  const { wireLeft, wireRight, wireY, stripY, midX, nullX, rLabel, sLabel, galvLabel, batteryLabel, nullPointLabel } = plane;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+  const wireColor = CIRCUIT_COLORS.wire;
+
+  const rReach = COMPONENT_REACH.resistor;
+  const rCenterX = wireLeft + (wireRight - wireLeft) * 0.28;
+  const sCenterX = wireLeft + (wireRight - wireLeft) * 0.72;
+  const jockeyTipY = wireY - 4; 
+
+  return (
+    <g>
+      {/* Top metal strip: two horizontal segments, gaps for R and S, bent
+          down at both ends to meet the wire's endpoints (A and C) */}
+      <line x1={wireLeft} y1={stripY} x2={rCenterX - rReach} y2={stripY} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={rCenterX + rReach} y1={stripY} x2={midX - 8} y2={stripY} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={midX + 8} y1={stripY} x2={sCenterX - rReach} y2={stripY} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={sCenterX + rReach} y1={stripY} x2={wireRight} y2={stripY} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={wireLeft} y1={stripY} x2={wireLeft} y2={wireY} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={wireRight} y1={stripY} x2={wireRight} y2={wireY} stroke={wireColor} strokeWidth={strokeWidth} />
+
+      {/* R and S sitting in the two gaps */}
+      {renderComponent({ id: "r", type: "resistor", label: rLabel }, { x: rCenterX, y: stripY, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize)}
+      {renderComponent({ id: "s", type: "resistor", label: sLabel }, { x: sCenterX, y: stripY, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize)}
+
+      {/* Midpoint node dot, between the two gaps */}
+      <JunctionDot x={midX} y={stripY} />
+
+      {/* The 1m measuring wire — drawn as a distinct, thicker/colored line
+          with tick marks like a ruler, per the reference description */}
+      <line x1={wireLeft} y1={wireY} x2={wireRight} y2={wireY} stroke="#B45309" strokeWidth={strokeWidth * 1.4} />
+      {Array.from({ length: 11 }, (_, i) => {
+        const x = wireLeft + (i / 10) * (wireRight - wireLeft);
+        return <line key={i} x1={x} y1={wireY - 5} x2={x} y2={wireY + 5} stroke="#78716C" strokeWidth={1} />;
+      })}
+
+      <text x={wireLeft + 8} y={wireY + 24} fontSize={fontSize * 1.15} textAnchor="middle" fill="#57534E">A</text>
+      <text x={wireRight-8} y={wireY + 24} fontSize={fontSize * 1.15} textAnchor="middle" fill="#57534E">C</text>
+
+      {/* Jockey / null point marker on the wire */}
+      <circle cx={nullX} cy={wireY} r={4} fill="#DC2626" stroke="#991B1B" strokeWidth={1.5} />
+      <line x1={nullX} y1={wireY} x2={nullX} y2={wireY - (stripY - wireY) * 0.35} stroke="#DC2626" strokeWidth={1.5} strokeDasharray="3,2" />
+      {nullPointLabel && (
+        <foreignObject x={nullX - 35} y={wireY + 28} width={70} height={20} style={{ overflow: "visible" }}>
+          <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize * 0.9, fontWeight: 600, color: "#DC2626" }}>
+            <MathText text={(nullPointLabel)} />
+          </div>
+        </foreignObject>
+      )}
+
+      {/* Galvanometer: from the R/S midpoint node down to the jockey/null point */}
+      <line x1={midX} y1={stripY} x2={nullX} y2={jockeyTipY} stroke={wireColor} strokeWidth={strokeWidth} />
+      {(() => {
+        const galvX = (midX + nullX) / 2;
+        const galvY = (stripY + jockeyTipY) / 2;
+        return renderComponent(
+          { id: "g", type: "galvanometer", label: galvLabel },
+          { x: galvX, y: galvY, rotation: (Math.atan2(jockeyTipY - stripY, nullX - midX) * 180) / Math.PI, labelSide: "outer" },
+          strokeWidth, fontSize
+        );
+      })()}
+
+      {/* Battery + closing wire beneath the measuring wire, A to C */}
+      <line x1={wireLeft} y1={wireY} x2={wireLeft} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={wireRight} y1={wireY} x2={wireRight} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
+      {renderComponent({ id: "batt", type: "battery", label: batteryLabel }, { x: midX, y: wireY + 30, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize)}
+      <line x1={wireLeft} y1={wireY + 30} x2={midX - COMPONENT_REACH.battery} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
+      <line x1={midX + COMPONENT_REACH.battery} y1={wireY + 30} x2={wireRight} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
+    </g>
+  );
+}

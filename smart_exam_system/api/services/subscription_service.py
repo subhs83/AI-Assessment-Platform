@@ -51,7 +51,7 @@ def get_school_subscription_record(school_id):
 
  
 def calculate_subscription_expiry(duration_days):
-    starts_at = datetime.utcnow()
+    starts_at = datetime.now(UTC)
     expires_at = starts_at + timedelta(days=duration_days)
 
     return starts_at, expires_at

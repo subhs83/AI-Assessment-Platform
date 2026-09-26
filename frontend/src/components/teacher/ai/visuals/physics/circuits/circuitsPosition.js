@@ -457,5 +457,118 @@ return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, subRels, position
 }
 
 
+export function calculateJunctionPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const nodeEl = elements.find((el) => el.type === "node");
+  const vectorEls = elements.filter((el) => el.type === "vector");
+  const rel = relationships.find((r) => r.type === "current_conservation_at_node");
 
+  const cx = SVG_WIDTH / 2;
+  const cy = SVG_HEIGHT / 2;
+  const lengthMap = { short: 55, medium: 80, long: 105 };
+
+  const vectors = vectorEls.map((v) => ({
+    id: v.id,
+    label: v.label,
+    angle: v.angle ?? 0,
+    length: lengthMap[v.length] || 80,
+    isIncoming: rel?.incoming?.includes(v.id) || false,
+  }));
+
+  return { cx, cy, nodeLabel: nodeEl?.label, vectors };
+}
+
+
+
+export function calculateTwoSourceCombinationPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+  const margin = isMobile ? 20 : 15;
+
+  const loopLeft = paddingX;
+  const loopRight = SVG_WIDTH - paddingX;
+  const loopTop = paddingY + margin;
+  const loopBottom = SVG_HEIGHT - paddingY - margin;
+  const midX = (loopLeft + loopRight) / 2;
+
+  const leftRel = relationships.find((r) => r.type === "connected_by_wire" && r.order === "series" && r.branch === "left");
+  const rightRel = relationships.find((r) => r.type === "connected_by_wire" && r.order === "series" && r.branch === "right");
+  const leftIds = leftRel?.elements || [];
+  const rightIds = rightRel?.elements || [];
+
+  // Shared elements = present in both branch arrays (the common middle
+  // segment: node_top, resistor_c, node_bottom in Q5's case).
+  const sharedIds = leftIds.filter((id) => rightIds.includes(id));
+  const leftOnlyIds = leftIds.filter((id) => !sharedIds.includes(id));
+  const rightOnlyIds = rightIds.filter((id) => !sharedIds.includes(id));
+
+  const isNode = (id) => elements.find((el) => el.id === id)?.type === "node";
+  const leftBattery = leftOnlyIds.find((id) => elements.find((el) => el.id === id)?.type === "battery");
+  const rightBattery = rightOnlyIds.find((id) => elements.find((el) => el.id === id)?.type === "battery");
+  const leftTopComponents = leftOnlyIds.filter((id) => id !== leftBattery);
+  const rightTopComponents = rightOnlyIds.filter((id) => id !== rightBattery);
+  const sharedComponents = sharedIds.filter((id) => !isNode(id)); // the actual drawn element(s), e.g. resistor_c
+  const sharedNodes = sharedIds.filter(isNode); // node_top / node_bottom — anchors only, not drawn
+
+  const positions = {};
+
+  // Left battery — left vertical rail
+  if (leftBattery) positions[leftBattery] = { x: loopLeft, y: (loopTop + loopBottom) / 2, rotation: 90, labelSide: "outer" };
+  // Right battery — right vertical rail
+  if (rightBattery) positions[rightBattery] = { x: loopRight, y: (loopTop + loopBottom) / 2, rotation: 90, labelSide: "outer" };
+
+  // Left-only top components (e.g. resistor_a), spaced between loopLeft and midX
+  leftTopComponents.forEach((id, i) => {
+    const frac = (i + 1) / (leftTopComponents.length + 1);
+    positions[id] = { x: loopLeft + frac * (midX - loopLeft), y: loopTop, rotation: 0, labelSide: "outer" };
+  });
+
+  // Right-only top components (e.g. resistor_b), spaced between midX and loopRight
+  rightTopComponents.forEach((id, i) => {
+    const frac = (i + 1) / (rightTopComponents.length + 1);
+    positions[id] = { x: midX + frac * (loopRight - midX), y: loopTop, rotation: 0, labelSide: "outer" };
+  });
+
+  // Shared middle branch — vertical, at midX, between loopTop and loopBottom
+  const midY = (loopTop + loopBottom) / 2;
+  sharedComponents.forEach((id, i) => {
+    const frac = (i + 1) / (sharedComponents.length + 1);
+    positions[id] = { x: midX, y: loopTop + frac * (loopBottom - loopTop), rotation: 90, labelSide: "outer" };
+  });
+
+  return {
+    loopLeft, loopRight, loopTop, loopBottom, midX, midY,
+    leftBattery, rightBattery, leftTopComponents, rightTopComponents, sharedComponents, sharedNodes,
+    positions,
+  };
+}
+
+export function calculateMeterBridgePositions({ elements, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+
+  const rEl = elements.find((el) => el.id === "resistor_r" || (el.type === "resistor" && el.side === "left"));
+  const sEl = elements.find((el) => el.id === "resistor_s" || (el.type === "resistor" && el.side === "right"));
+  const galvEl = elements.find((el) => el.type === "galvanometer");
+  const batteryEl = elements.find((el) => el.type === "battery");
+  const wireEl = elements.find((el) => el.type === "wire");
+  const nullPointEl = elements.find((el) => el.type === "point");
+
+  const wireY = SVG_HEIGHT - paddingY - (isMobile ? 30 : 36);
+  const stripY = paddingY + (isMobile ? 34 : 40);
+  const wireLeft = paddingX + 15;
+  const wireRight = SVG_WIDTH - paddingX - 15;
+  const midX = (wireLeft + wireRight) / 2;
+
+  // Null point: parse "40 cm" out of a 100cm-scale wire into a screen x.
+  const wireLengthCm = wireEl?.length || 100;
+  const nullCm = parseFloat(nullPointEl?.label) || wireLengthCm / 2;
+  const nullX = wireLeft + (nullCm / wireLengthCm) * (wireRight - wireLeft);
+
+  return {
+    wireLeft, wireRight, wireY, stripY, midX, nullX,
+    wireLengthCm, nullCm,
+    rLabel: rEl?.label, sLabel: sEl?.label,
+    galvLabel: galvEl?.label, batteryLabel: batteryEl?.label,
+    nullPointLabel: nullPointEl?.label,
+  };
+}
 

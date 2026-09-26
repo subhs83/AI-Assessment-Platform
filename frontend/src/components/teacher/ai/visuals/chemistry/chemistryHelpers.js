@@ -85,9 +85,39 @@ export function renderBond(rel, positions, strokeWidth, key, labelClearance) {
   }
   return <g key={key}>{lines}</g>;
 }
-// --------------------------------------------------
-// LONE PAIRS — shared by lewis_structure and (later) molecular_2d
-// --------------------------------------------------
+
+
+function findBestLonePairAngle(p, bondedTo) {
+  if (bondedTo.length === 0) return -Math.PI / 2; // straight up, no bonds at all
+
+  const bondAngles = bondedTo.map((bp) => Math.atan2(bp.y - p.y, bp.x - p.x));
+  const angularDistance = (a, b) => {
+    let diff = Math.abs(a - b);
+    if (diff > Math.PI) diff = 2 * Math.PI - diff;
+    return diff;
+  };
+  const minClearance = (candidate) => Math.min(...bondAngles.map((a) => angularDistance(candidate, a)));
+
+  // Chemistry convention: draw a lone pair pointing straight up
+  // whenever there's reasonably enough room for it, even if some
+  // other direction is technically the widest gap — this is why NH3's
+  // single lone pair belongs at the top, not off to the side.
+  const UP = -Math.PI / 2;
+  const MIN_ACCEPTABLE_CLEARANCE = (35 * Math.PI) / 180;
+  if (minClearance(UP) >= MIN_ACCEPTABLE_CLEARANCE) return UP;
+
+  // Otherwise fall back to whichever direction has the most true
+  // clearance from every bond.
+  let bestAngle = UP, bestClearance = -Infinity;
+  const CANDIDATES = 48;
+  for (let i = 0; i < CANDIDATES; i++) {
+    const candidate = (i / CANDIDATES) * 2 * Math.PI;
+    const c = minClearance(candidate);
+    if (c > bestClearance) { bestClearance = c; bestAngle = candidate; }
+  }
+  return bestAngle;
+}
+
 export function renderLonePairs(rel, positions, bondRels, key, labelClearance) {
   const atomId = rel.elements[0];
   const p = positions[atomId];
@@ -98,30 +128,26 @@ export function renderLonePairs(rel, positions, bondRels, key, labelClearance) {
     .map((b) => positions[b.elements.find((e) => e !== atomId)])
     .filter(Boolean);
 
-  let dirX = 0, dirY = -1;
-  if (bondedTo.length > 0) {
-    const avgDx = bondedTo.reduce((s, bp) => s + (bp.x - p.x), 0) / bondedTo.length;
-    const avgDy = bondedTo.reduce((s, bp) => s + (bp.y - p.y), 0) / bondedTo.length;
-    const len = Math.hypot(avgDx, avgDy) || 1;
-    dirX = -avgDx / len;
-    dirY = -avgDy / len;
-  }
-
-  const DISTANCE_FROM_ATOM = labelClearance + 14; // clear the label, plus a visible gap
+  const bestAngle = findBestLonePairAngle(p, bondedTo);
+  const dirX = Math.cos(bestAngle), dirY = Math.sin(bestAngle);
   const perpX = -dirY, perpY = dirX;
-  const pairDots = [];
+
+  const BASE_DISTANCE = labelClearance + 14;
+  const PAIR_STACK_GAP = 16; // successive pairs stack FURTHER OUT, not sideways
+
+  const pairGroups = [];
   for (let k = 0; k < rel.count; k++) {
-    const spread = (k - (rel.count - 1) / 2) * 14;
-    const baseX = p.x + dirX * DISTANCE_FROM_ATOM + perpX * spread;
-    const baseY = p.y + dirY * DISTANCE_FROM_ATOM + perpY * spread;
-    pairDots.push(
+    const dist = BASE_DISTANCE + k * PAIR_STACK_GAP;
+    const baseX = p.x + dirX * dist;
+    const baseY = p.y + dirY * dist;
+    pairGroups.push(
       <g key={`${key}-${k}`}>
         <circle cx={baseX - perpX * 3} cy={baseY - perpY * 3} r={2} fill="#1e293b" />
         <circle cx={baseX + perpX * 3} cy={baseY + perpY * 3} r={2} fill="#1e293b" />
       </g>
     );
   }
-  return <g key={key}>{pairDots}</g>;
+  return <g key={key}>{pairGroups}</g>;
 }
 // --------------------------------------------------
 // ATOM LABEL — shared by every chemistry subtype

@@ -291,6 +291,15 @@ Otherwise, default to show_image: true.
 
   -> "subtype": "circuit_combination"
      "feature": "none" | "resistors" | "battery_and_switch" | "ammeter_voltmeter" | "charging" | "discharging" | "energizing" | "de_energizing"
+
+  -> "subtype": "circuit_meter_bridge"
+     "feature": "none" | "null_point" 
+  --------------------------------------------------
+  PHYSICS TAXONOMY ADDITION: KIRCHHOFF'S JUNCTION RULE
+  --------------------------------------------------
+  -> "subtype": "circuit_kirchhoff_junction"
+    "feature": "none" | "current_conservation"
+
   --------------------------------------------------
   4. ELECTRIC & MAGNETIC FIELDS
   --------------------------------------------------
@@ -1748,8 +1757,45 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+--- PHYSICS: KIRCHHOFF JUNCTION PAYLOAD (default) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_kirchhoff_junction", "feature": "current_conservation" }},
+  "elements": [
+    {{ "id": "node_j", "label": "Junction", "type": "node", "x_position": "center" }},
+    {{ "id": "current_i1", "label": "$I_1 = 5\\text{{ A}}$", "type": "vector", "attached_to": "node_j", "angle": 180, "length": "medium" }},
+    {{ "id": "current_i2", "label": "$I_2 = 2\\text{{ A}}$", "type": "vector", "attached_to": "node_j", "angle": 45, "length": "short" }},
+    {{ "id": "current_i3", "label": "$I_3$", "type": "vector", "attached_to": "node_j", "angle": 315, "length": "short" }}
+  ],
+  "relationships": [
+    {{ "type": "current_conservation_at_node", "elements": ["node_j"], "incoming": ["current_i1"], "outgoing": ["current_i2", "current_i3"] }}
+  ]
+}}
 
---- PHYSICS: Ray Diagram PAYLOAD (ray_diagram_lens) ---
+
+--- PHYSICS: METER BRIDGE PAYLOAD (confirmed against NCERT Fig. 3.27) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "circuit_meter_bridge", "feature": "null_point" }},
+  "elements": [
+    {{ "id": "battery_1", "label": "V", "type": "battery", "x_position": "bottom" }},
+    {{ "id": "resistor_r", "label": "R = ?", "type": "resistor", "side": "left", "x_position": "top" }},
+    {{ "id": "resistor_s", "label": "S = 5Ω", "type": "resistor", "side": "right", "x_position": "top" }},
+    {{ "id": "galvanometer_1", "label": "G", "type": "galvanometer", "x_position": "center" }},
+    {{ "id": "meter_wire", "label": "100 cm", "type": "wire", "length": 100, "x_position": "bottom" }},
+    {{ "id": "null_point", "label": "40 cm", "type": "point", "x_position": "mid_left" }}
+  ],
+  "relationships": [
+    {{ "type": "connected_by_wire", "elements": ["battery_1"], "order": "series" }},
+    {{ "type": "connected_by_wire", "elements": ["resistor_r", "resistor_s"], "order": "parallel_branch", "shares_nodes": true }},
+    {{ "type": "bridges", "elements": ["galvanometer_1"], "between": ["resistor_r", "meter_wire"] }},
+    {{ "type": "is_connected_to_jockey", "elements": ["galvanometer_1"], "target": "null_point" }}
+  ]
+}}
+
+##################################################
+# PHYSICS: LIGHT & RAY OPTICS
+##################################################
+
+--- PHYSICS: RAY DIAGRAM LENS PAYLOAD (convex) ---
 "visual": {{
   "figure": {{ "type": "physics", "subtype": "ray_diagram_lens", "feature": "convex" }},
   "elements": [
@@ -1765,9 +1811,25 @@ When "visual_required": true, return the corresponding semantic "visual" payload
     {{ "type": "ray_construction", "rays": ["parallel_to_axis", "through_center", "through_focal_point"], "elements": ["object_1", "lens_1"] }}
   ]
 }}
+# distance_from_lens + focal_length together determine the case (beyond 2F / at 2F / between F-2F / at F / within F);
+# the renderer classifies this itself — just supply real numeric values, don't try to pre-classify.
 
---- PHYSICS: Refraction PAYLOAD (refraction) ---
+--- PHYSICS: RAY DIAGRAM MIRROR PAYLOAD (concave) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "ray_diagram_mirror", "feature": "concave" }},
+  "elements": [
+    {{ "id": "mirror_1", "label": "Concave Mirror", "type": "mirror", "focal_length": 10 }},
+    {{ "id": "object_1", "label": "Object", "type": "object_arrow", "height": 5, "distance_from_mirror": 30, "side": "left" }},
+    {{ "id": "F1", "label": "F", "type": "focal_point", "side": "left" }},
+    {{ "id": "C1", "label": "C", "type": "center_of_curvature", "side": "left" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_image_of", "elements": ["object_1"], "via": "mirror_1", "show_image": true }},
+    {{ "type": "ray_construction", "rays": ["parallel_to_axis", "through_center_of_curvature", "through_focal_point"], "elements": ["object_1", "mirror_1"] }}
+  ]
+}}
 
+--- PHYSICS: REFRACTION PAYLOAD (plane boundary, single medium change) ---
 "visual": {{
   "figure": {{ "type": "physics", "subtype": "refraction", "feature": "plane" }},
   "elements": [
@@ -1778,11 +1840,28 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ],
   "relationships": [
     {{ "type": "refracts_at_boundary", "elements": ["incident_ray_1"], "between": ["medium_1", "medium_2"] }},
-    {{ "type": "boundary_shape", "value": "slab", "thickness": 5 }}
+    {{ "type": "boundary_shape", "value": "single" }}
   ]
 }}
 
---- PHYSICS: Total Internal Reflection PAYLOAD (total_internal_reflection) ---
+--- PHYSICS: REFRACTION PAYLOAD (glass slab, lateral displacement) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "refraction", "feature": "plane" }},
+  "elements": [
+    {{ "id": "medium_1", "label": "Air (n=1.0)", "type": "medium", "index": 1.0, "side": "outer" }},
+    {{ "id": "medium_2", "label": "Glass (n=1.5)", "type": "medium", "index": 1.5, "side": "inner" }},
+    {{ "id": "incident_ray_1", "label": "Incident Ray", "type": "ray", "angle": 35, "role": "incident" }},
+    {{ "id": "normal_1", "label": "Normal", "type": "normal_line" }}
+  ],
+  "relationships": [
+    {{ "type": "refracts_at_boundary", "elements": ["incident_ray_1"], "between": ["medium_1", "medium_2"] }},
+    {{ "type": "boundary_shape", "value": "slab", "thickness": 5 }}
+  ]
+}}
+# slab means: ray enters medium_2, travels through it, exits back into medium_1 parallel to the incident ray but laterally shifted.
+# thickness is the slab thickness in the same units as other physics distances.
+
+--- PHYSICS: TOTAL INTERNAL REFLECTION PAYLOAD ---
 "visual": {{
   "figure": {{ "type": "physics", "subtype": "total_internal_reflection", "feature": "none" }},
   "elements": [
@@ -1794,6 +1873,7 @@ When "visual_required": true, return the corresponding semantic "visual" payload
     {{ "type": "reflects_or_refracts_at_boundary", "elements": ["incident_ray_1"], "between": ["medium_1", "medium_2"], "show_partial_reflection": true }}
   ]
 }}
+
 
 
 ##################################################
@@ -1931,6 +2011,99 @@ When "visual_required": true, return the corresponding semantic "visual" payload
     {{ "elements": ["wire_1"], "target": "field_indicator", "type": "carries_current_through_field" }}
   ]
 }}
+
+##################################################
+# CHEMISTRY
+##################################################
+--- LEWIS STRUCTURE PAYLOAD ---
+"visual": {{
+  "figure": {{
+    "type": "chemistry",
+    "subtype": "lewis_structure",
+    "feature": "none"
+  }},
+  "elements": [
+    {{ "id": "atom_o", "type": "atom", "element": "O", "x_position": 0, "y_position": 0 }},
+    {{ "id": "atom_h1", "type": "atom", "element": "H", "x_position": -1.5, "y_position": -1.0 }},
+    {{ "id": "atom_h2", "type": "atom", "element": "H", "x_position": 1.5, "y_position": -1.0 }},
+    {{
+      "id": "bond_o_h1",
+      "type": "bond",
+      "bond_order": 1,
+      "between": ["atom_o", "atom_h1"]
+    }},
+    {{
+      "id": "bond_o_h2",
+      "type": "bond",
+      "bond_order": 1,
+      "between": ["atom_o", "atom_h2"]
+    }},
+    {{
+      "id": "lone_pairs_o",
+      "type": "lone_pairs",
+      "on_atom": "atom_o",
+      "count": 2
+    }}
+  ],
+  "relationships": []
+}}
+
+--- MOLECULAR 2D PAYLOAD (formal charge) ---
+"visual": {{
+  "figure": {{
+    "type": "chemistry",
+    "subtype": "molecular_2d",
+    "feature": "formal_charge"
+  }},
+  "elements": [
+    {{ "id": "atom_n", "label": "N", "type": "atom", "x_position": "center" }},
+    {{ "id": "atom_h1", "label": "H", "type": "atom", "side": "top_left" }},
+    {{ "id": "atom_h2", "label": "H", "type": "atom", "side": "top_right" }},
+    {{ "id": "atom_h3", "label": "H", "type": "atom", "side": "bottom_left" }},
+    {{ "id": "atom_h4", "label": "H", "type": "atom", "side": "bottom_right" }}
+  ],
+  "relationships": [
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h1"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h2"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h3"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h4"], "type": "forms_bond" }},
+    {{ "formal_charge": 1, "elements": ["atom_n"], "type": "has_formal_charge" }}
+  ]
+}}
+
+--- MOLECULAR 2D PAYLOAD (resonance structures) ---
+"visual": {{
+  "figure": {{
+    "type": "chemistry",
+    "subtype": "molecular_2d",
+    "feature": "resonance_structures"
+  }},
+  "elements": [
+    {{ "id": "s1_atom_o1", "label": "O", "type": "atom", "x_position": "left", "structure_group": 1 }},
+    {{ "id": "s1_atom_o2", "label": "O", "type": "atom", "x_position": "center", "structure_group": 1 }},
+    {{ "id": "s1_atom_o3", "label": "O", "type": "atom", "x_position": "right", "structure_group": 1 }},
+
+    {{ "id": "s2_atom_o1", "label": "O", "type": "atom", "x_position": "left", "structure_group": 2 }},
+    {{ "id": "s2_atom_o2", "label": "O", "type": "atom", "x_position": "center", "structure_group": 2 }},
+    {{ "id": "s2_atom_o3", "label": "O", "type": "atom", "x_position": "right", "structure_group": 2 }}
+  ],
+  "relationships": [
+    {{ "bond_type": "double", "elements": ["s1_atom_o1", "s1_atom_o2"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["s1_atom_o2", "s1_atom_o3"], "type": "forms_bond" }},
+    {{ "count": 2, "elements": ["s1_atom_o1"], "type": "has_lone_pairs" }},
+    {{ "count": 3, "elements": ["s1_atom_o3"], "type": "has_lone_pairs" }},
+    {{ "formal_charge": -1, "elements": ["s1_atom_o3"], "type": "has_formal_charge" }},
+
+    {{ "bond_type": "single", "elements": ["s2_atom_o1", "s2_atom_o2"], "type": "forms_bond" }},
+    {{ "bond_type": "double", "elements": ["s2_atom_o2", "s2_atom_o3"], "type": "forms_bond" }},
+    {{ "count": 3, "elements": ["s2_atom_o1"], "type": "has_lone_pairs" }},
+    {{ "count": 2, "elements": ["s2_atom_o3"], "type": "has_lone_pairs" }},
+    {{ "formal_charge": -1, "elements": ["s2_atom_o1"], "type": "has_formal_charge" }},
+
+    {{ "elements": [1, 2], "type": "resonance_between" }}
+  ],
+  "overall_charge": -1
+}}
 # SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 
 Before generating the final JSON response, perform a silent internal check to verify that:
@@ -1957,6 +2130,7 @@ REQUIRED TOP-LEVEL JSON STRUCTURE:
   - "graph" for graph
   - "venn_diagram" for venn_diagram
   - "physics" for physics
+  - "chemistry" for chemistry
 When "visual_required" is false, "visual_type" MUST be null.
 
 {{
