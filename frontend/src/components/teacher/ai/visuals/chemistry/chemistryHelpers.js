@@ -33,8 +33,14 @@ export function resolveAtomOffset(atom, atomCount) {
   if (atom.x_position && LINEAR_LAYOUT[atom.x_position]) {
     return LINEAR_LAYOUT[atom.x_position];
   }
+  if (atom.x_position === "top" && INVERTED_TRIGONAL_LAYOUT.top) {
+    return INVERTED_TRIGONAL_LAYOUT.top;
+  }
   if (atom.side && TETRAHEDRAL_LAYOUT[atom.side] && atomCount >= 5) {
     return TETRAHEDRAL_LAYOUT[atom.side];
+  }
+  if (atom.side && INVERTED_TRIGONAL_LAYOUT[atom.side]) {
+    return INVERTED_TRIGONAL_LAYOUT[atom.side];
   }
   if (atom.side && TRIGONAL_LAYOUT[atom.side]) {
     return TRIGONAL_LAYOUT[atom.side];
@@ -179,3 +185,41 @@ export function renderChargeLabel(rel, positions, fontSize, key) {
     </foreignObject>
   );
 }
+
+export function extractLonePairRels(relationships) {
+  return relationships
+    .filter((r) => r.type === "has_lone_pairs" || r.type === "lone_pairs")
+    .map((r) => ({
+      atomId: r.elements ? r.elements[0] : r.on_atom,
+      count: r.count,
+    }));
+}
+
+export function renderIonBrackets(overallCharge, positions, fontSize) {
+  if (overallCharge === undefined || overallCharge === null) return null;
+
+  const xs = Object.values(positions).map((p) => p.x);
+  const ys = Object.values(positions).map((p) => p.y);
+  const minX = Math.min(...xs) - 30, maxX = Math.max(...xs) + 30;
+  const minY = Math.min(...ys) - 30, maxY = Math.max(...ys) + 30;
+
+  const chargeText = overallCharge > 0 ? `${overallCharge}+` : `${Math.abs(overallCharge)}-`;
+
+  return (
+    <g>
+      <path d={`M ${minX + 10} ${minY} L ${minX} ${minY} L ${minX} ${maxY} L ${minX + 10} ${maxY}`}
+        fill="none" stroke="#1e293b" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+      <path d={`M ${maxX - 10} ${minY} L ${maxX} ${minY} L ${maxX} ${maxY} L ${maxX - 10} ${maxY}`}
+        fill="none" stroke="#1e293b" strokeWidth={2} vectorEffect="non-scaling-stroke" />
+      <foreignObject x={maxX + 2} y={minY - 6} width={30} height={20}>
+        <div className="font-bold text-slate-900" style={{ fontSize: fontSize * 1.1 }}>{chargeText}</div>
+      </foreignObject>
+    </g>
+  );
+}
+
+export const INVERTED_TRIGONAL_LAYOUT = {
+  top: { x: 0, y: -1.5 },
+  bottom_left: { x: -1.3, y: 1.1 },
+  bottom_right: { x: 1.3, y: 1.1 },
+};

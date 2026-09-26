@@ -88,7 +88,14 @@ export function calculateCircuitPositions({ elements, relationships, isMobile = 
    tapTargetIds.forEach((id) => {
     if (positions[id]) positions[id].labelSide = "inner";
   });
-  return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, positions };
+
+  const contentBounds = {
+  minX: loopLeft - 30,
+  maxX: loopRight + 40, // extra room for rung labels sitting outside the rail
+  minY: loopTop - 10,
+  maxY: loopBottom + 10, // battery sits below the wire
+};
+  return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, positions, contentBounds };
 }
 
 // --- circuit_parallel ---
@@ -235,7 +242,13 @@ export function calculateParallelCircuitPositions({ elements, relationships, isM
     }
   });
 
-  return { loopLeft, loopRight, loopTop, loopBottom, seriesIds, rungGroups: rungGroups.map((g) => [...g]), positions };
+   const contentBounds = {
+    minX: loopLeft - 30,
+    maxX: loopRight + 40, // extra room for rung labels sitting outside the rail
+    minY: loopTop - 10,
+    maxY: loopBottom + 10, // battery sits below the wire
+  };
+  return { loopLeft, loopRight, loopTop, loopBottom, seriesIds, rungGroups: rungGroups.map((g) => [...g]), positions, contentBounds };
 }
 
 
@@ -299,11 +312,17 @@ export function calculateBridgeCircuitPositions({ elements, relationships, isMob
   if (battId) positions[battId] = { ...midpoint(outerLeftTop, outerLeftBottom), rotation: 90 };
   if (switchId) positions[switchId] = { ...midpoint(outerLeftBottom, outerRightBottom), rotation: 0 };
 
+  const contentBounds = {
+    minX: outerLeftBottom - 30,
+    maxX: outerRightBottom + 40, // extra room for rung labels sitting outside the rail
+    minY: outerLeftTop - 10,
+    maxY: outerRightTop + 10, // battery sits below the wire
+  };
   return {
     N, S, W, E,
     outerLeftTop, outerLeftBottom, outerRightBottom, outerRightTop,
     leftTopId, rightTopId, leftBottomId, rightBottomId, galvId, battId, switchId,
-    positions,
+    positions, contentBounds
   };
 }
 
@@ -452,8 +471,13 @@ const subRels = sideOrder.map((side) => ({
     }
   }
 });
-
-return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, subRels, positions };
+  const contentBounds = {
+  minX: loopLeft - 30,
+  maxX: loopRight + 40, // extra room for rung labels sitting outside the rail
+  minY: loopTop - 10,
+  maxY: loopBottom + 10,
+};
+return { loopLeft, loopRight, loopTop, loopBottom, orderedIds, subRels, positions, contentBounds };
 }
 
 
@@ -535,10 +559,17 @@ export function calculateTwoSourceCombinationPositions({ elements, relationships
     positions[id] = { x: midX, y: loopTop + frac * (loopBottom - loopTop), rotation: 90, labelSide: "outer" };
   });
 
+  const contentBounds = {
+    minX: loopLeft - 30,
+    maxX: loopRight + 40, // extra room for rung labels sitting outside the rail
+    minY: loopTop - 10,
+    maxY: loopBottom + 10,
+  };
+
   return {
     loopLeft, loopRight, loopTop, loopBottom, midX, midY,
     leftBattery, rightBattery, leftTopComponents, rightTopComponents, sharedComponents, sharedNodes,
-    positions,
+    positions, contentBounds
   };
 }
 
@@ -562,13 +593,18 @@ export function calculateMeterBridgePositions({ elements, isMobile = false }) {
   const wireLengthCm = wireEl?.length || 100;
   const nullCm = parseFloat(nullPointEl?.label) || wireLengthCm / 2;
   const nullX = wireLeft + (nullCm / wireLengthCm) * (wireRight - wireLeft);
-
+  const contentBounds = {
+    minX: wireLeft - 30,
+    maxX: wireRight + 40,
+    minY: stripY - 20,
+    maxY: wireY + 60, // battery sits below the wire
+  };
   return {
     wireLeft, wireRight, wireY, stripY, midX, nullX,
     wireLengthCm, nullCm,
     rLabel: rEl?.label, sLabel: sEl?.label,
     galvLabel: galvEl?.label, batteryLabel: batteryEl?.label,
-    nullPointLabel: nullPointEl?.label,
+    nullPointLabel: nullPointEl?.label, contentBounds
   };
 }
 

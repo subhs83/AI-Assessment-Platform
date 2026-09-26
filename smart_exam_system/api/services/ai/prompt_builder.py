@@ -245,6 +245,7 @@ Rule of thumb: if a correct answer option is itself a location on the
 principal axis relative to the lens/mirror, mark show_image: false.
 Otherwise, default to show_image: true.
 
+LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substituent above and TWO below (e.g. formate HCO2-, where H sits above C and two O's sit below), use "x_position": "top" for the upper atom, and "side": "bottom_left" | "bottom_right" for the two lower atoms. Do not reuse "top_left"/"top_right" for this arrangement — those are reserved for the opposite case (2 above, 1 below).
 --------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
 --------------------------------------------------

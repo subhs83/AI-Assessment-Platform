@@ -95,4 +95,32 @@ export function renderArrowMarkerDefs() {
   );
 }
 
+// circuitFitToBounds.js
 
+// Computes a uniform transform (translate + scale) that fits a content
+// bounding box into the safe area of the canvas, exactly like
+// fitPositionsToBounds does for geometry — but returned as a transform
+// string to wrap around already-built SVG content, since circuit
+// renderers draw wires/labels with real extents, not just points.
+export function computeFitTransform(contentBounds, isMobile = false) {
+  const { width, height, paddingX, paddingY } = getSvgDimensions(isMobile);
+  const { minX, maxX, minY, maxY } = contentBounds;
+
+  const bboxW = (maxX - minX) || 1;
+  const bboxH = (maxY - minY) || 1;
+  const safeW = width - paddingX * 2;
+  const safeH = height - paddingY * 2;
+
+  const scale = Math.min(1, safeW / bboxW, safeH / bboxH);
+
+  const bboxCenterX = (minX + maxX) / 2;
+  const bboxCenterY = (minY + maxY) / 2;
+  const targetCenterX = width / 2;
+  const targetCenterY = height / 2;
+
+  // translate(tx,ty) scale(s), applied around the bbox center, mapped to canvas center
+  const tx = targetCenterX - bboxCenterX * scale;
+  const ty = targetCenterY - bboxCenterY * scale;
+
+  return `translate(${tx},${ty}) scale(${scale})`;
+}

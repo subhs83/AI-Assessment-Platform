@@ -299,7 +299,7 @@ else if (figure.subtype === "magnetic_field"){
   return (
     <div className="my-4 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
       <div className="flex justify-center w-full overflow-x-auto">
-        <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full max-w-xl" role="img" aria-label="Physics diagram">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full max-w-xl text-slate-800 dark:text-slate-100 overflow-visible" role="img" aria-label="Physics diagram">
           
           {renderOpticsDefs()}
           {content}
