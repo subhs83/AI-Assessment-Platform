@@ -1,26 +1,37 @@
 import "katex/dist/katex.min.css";
 import { BlockMath, InlineMath } from "react-katex";
-//import { prepareForKaTeX } from "./editableMathText.js";
 
 export default function MathText({ text = "" }) {
   if (!text) return null;
 
-  //const normalized = prepareForKaTeX(text);
+  // 1. Placeholder for escaped dollar signs (\$)
+  const placeholder = "___ESCAPED_DOLLAR___";
+  const sanitizedText = text.replace(/\\\$|\\\$/g, placeholder);
 
-  const parts = text.split(
-    /(\$\$[\s\S]*?\$\$|\$[^$]*\$)/g
-  );
+  // 2. Split by BlockMath ($$...$$) and InlineMath ($...$)
+  // Matches valid inline math including subscript (_) and superscript (^)
+  const parts = sanitizedText.split(/(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g);
 
   return (
     <>
       {parts.map((part, index) => {
-        if (part.startsWith("$$") && part.endsWith("$$")) {
-          return <BlockMath key={index} math={part.slice(2, -2)} />;
+        // Restore literal $ signs for plain text output
+        const unescapedPart = part.replaceAll(placeholder, "$");
+
+        // Case 1: Display/Block Math ($$...$$)
+        if (part.startsWith("$$") && part.endsWith("$$") && part.length > 4) {
+          const mathContent = part.slice(2, -2).replaceAll(placeholder, "\\$");
+          return <BlockMath key={index} math={mathContent} />;
         }
-        if (part.startsWith("$") && part.endsWith("$")) {
-          return <InlineMath key={index} math={part.slice(1, -1)} />;
+
+        // Case 2: Inline Math ($...$) — handles ^, _, {}, \text{}
+        if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
+          const mathContent = part.slice(1, -1).replaceAll(placeholder, "\\$");
+          return <InlineMath key={index} math={mathContent} />;
         }
-        return <span key={index}>{part}</span>;
+
+        // Case 3: Plain text / Escaped dollar signs / Unmatched text
+        return <span key={index}>{unescapedPart}</span>;
       })}
     </>
   );
