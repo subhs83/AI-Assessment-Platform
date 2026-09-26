@@ -35,6 +35,7 @@ export default function Button({
         font-medium
         flex 
         items-center 
+        justify-center
         gap-1
         transition-colors
         disabled:opacity-50

@@ -1,6 +1,6 @@
 import React from 'react';
 import { getSvgDimensions } from "../../geometry/geometryHelpers";
-import { renderTrimmedEdge, getLoopCorners, JunctionDot, CIRCUIT_COLORS, CircuitBackdrop, renderCornerArcs, renderCornerArc, renderLegSegments, COMPONENT_REACH,
+import { renderTrimmedEdge, getLoopCorners, JunctionDot, CIRCUIT_COLORS, renderCornerArcs, renderCornerArc, renderLegSegments, COMPONENT_REACH,
   renderComponent, reachForElement,  renderShortBypass
  } from "./circuitsHelpers";
 
@@ -10,7 +10,7 @@ import { renderTrimmedEdge, getLoopCorners, JunctionDot, CIRCUIT_COLORS, Circuit
 
 export function renderCircuitSystem(plane, elements, relationships, isMobile = false) {
   if (!plane) return null;
-  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
   const { loopLeft, loopRight, loopTop, loopBottom, orderedIds, positions, contentBounds } = plane;
   const fitTransform = computeFitTransform(contentBounds, isMobile);
   const corners = getLoopCorners(loopLeft, loopTop, loopRight, loopBottom);
@@ -31,7 +31,7 @@ export function renderCircuitSystem(plane, elements, relationships, isMobile = f
 
   return (
     <g transform={fitTransform}>
-      <CircuitBackdrop width={width} height={height} patternId="circuit-grid-series" />
+      {/* <CircuitBackdrop width={width} height={height} patternId="circuit-grid-series" /> */}
       {renderCornerArcs(loopLeft, loopTop, loopRight, loopBottom, strokeWidth)}
       {renderLegSegments({ startPoint: corners.topStart, endPoint: corners.topEnd, axis: "x", ids: legGroups.top, elements, positions, strokeWidth })}
       {renderLegSegments({ startPoint: corners.rightStart, endPoint: corners.rightEnd, axis: "y", ids: legGroups.right, elements, positions, strokeWidth })}
@@ -101,7 +101,7 @@ export function renderCircuitSystem(plane, elements, relationships, isMobile = f
 
 export function renderParallelCircuitSystem(plane, elements, relationships, isMobile = false) {
   if (!plane) return null;
-  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { strokeWidth, fontSize, } = getSvgDimensions(isMobile);
   const { loopLeft, loopRight, loopTop, loopBottom, seriesIds, rungGroups, positions, contentBounds } = plane;
   const fitTransform = computeFitTransform(contentBounds, isMobile);
   const wireColor = CIRCUIT_COLORS.wire;
@@ -128,7 +128,7 @@ export function renderParallelCircuitSystem(plane, elements, relationships, isMo
 
   return (
     <g transform={fitTransform}>
-      <CircuitBackdrop width={width} height={height} patternId="circuit-grid-parallel" />
+      {/* <CircuitBackdrop width={width} height={height} patternId="circuit-grid-parallel" /> */}
       {renderCornerArc("topLeft", loopLeft, loopTop, loopRight, loopBottom, strokeWidth)}
       {renderCornerArc("bottomLeft", loopLeft, loopTop, loopRight, loopBottom, strokeWidth)}
 
@@ -196,7 +196,7 @@ export function renderParallelCircuitSystem(plane, elements, relationships, isMo
 
 export function renderBridgeCircuitSystem(plane, elements, relationships, isMobile = false) {
   if (!plane) return null;
-  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { strokeWidth, fontSize, } = getSvgDimensions(isMobile);
   const {
     N, S, W, E,
     outerLeftTop, outerLeftBottom, outerRightBottom, outerRightTop,
@@ -218,7 +218,7 @@ export function renderBridgeCircuitSystem(plane, elements, relationships, isMobi
 
   return (
     <g transform={fitTransform}>
-      <CircuitBackdrop width={width} height={height} patternId="circuit-grid-bridge" />
+      {/* <CircuitBackdrop width={width} height={height} patternId="circuit-grid-bridge" /> */}
 
       {leftTopId && renderTrimmedEdge(W, N, leftTopId, elements, strokeWidth)}
       {rightTopId && renderTrimmedEdge(N, E, rightTopId, elements, strokeWidth)}
@@ -256,7 +256,7 @@ export function renderBridgeCircuitSystem(plane, elements, relationships, isMobi
 
 export function renderCombinationCircuitSystem(plane, elements, relationships, isMobile = false) {
   if (!plane) return null;
-  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { strokeWidth, fontSize, } = getSvgDimensions(isMobile);
   const { loopLeft, loopRight, loopTop, loopBottom, orderedIds, subRels, positions, contentBounds } = plane;
   const fitTransform = computeFitTransform(contentBounds, isMobile);
   const wireColor = CIRCUIT_COLORS.wire;
@@ -275,7 +275,7 @@ export function renderCombinationCircuitSystem(plane, elements, relationships, i
 
   return (
     <g transform={fitTransform}>
-      <CircuitBackdrop width={width} height={height} patternId="circuit-grid-combination" />
+      {/* <CircuitBackdrop width={width} height={height} patternId="circuit-grid-combination" /> */}
 
       {/* FIX: only the LEFT corners exist — this is a ladder network, not
           a closed rectangle. There is no wire on the outer right edge for
@@ -385,7 +385,7 @@ export function renderJunctionCurrents(plane, isMobile = false) {
 
 export function renderTwoSourceCombinationSystem(plane, elements, isMobile = false) {
   if (!plane) return null;
-  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { strokeWidth, fontSize, } = getSvgDimensions(isMobile);
   const { loopLeft, loopRight, loopTop, loopBottom, midX, sharedComponents, positions, contentBounds } = plane;
   const wireColor = CIRCUIT_COLORS.wire;
   const fitTransform = computeFitTransform(contentBounds, isMobile);
@@ -397,7 +397,7 @@ export function renderTwoSourceCombinationSystem(plane, elements, isMobile = fal
 
   return (
     <g transform={fitTransform}>
-      <CircuitBackdrop width={width} height={height} patternId="circuit-grid-twosource" />
+      {/* <CircuitBackdrop width={width} height={height} patternId="circuit-grid-twosource" /> */}
       {renderCornerArcs(loopLeft, loopTop, loopRight, loopBottom, strokeWidth)}
 
       {/* FIX: top-left segment now starts at corners.topStart (the arc's
