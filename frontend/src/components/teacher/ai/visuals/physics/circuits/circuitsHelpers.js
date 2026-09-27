@@ -443,7 +443,7 @@ function perpOffset(rotationDeg, distance) {
 // series, parallel, and bridge renderers alike). Symbol geometry rotates
 // with the wire; +/- signs and value labels are always computed in
 // absolute coordinates and drawn unrotated, so nothing ever reads sideways.
-export function renderComponent(el, pos, strokeWidth, fontSize) {
+export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
   const { x, y, rotation, labelSide = "outer", labelSign, labelDistance = 22 } = pos;
   const isBattery = el.type === "battery";
   const showBreak = el.broken === true;
@@ -522,7 +522,7 @@ export function renderComponent(el, pos, strokeWidth, fontSize) {
           const boxX = x + clearance;
           return (
             <g transform={`translate(${boxX},${y}) rotate(90)`}>
-              <foreignObject x={-boxWidth / 2 *0.40} y={-11} width={boxWidth} height={22} style={{ overflow: "visible" }}>
+              <foreignObject x={-boxWidth / 2 *0.45} y={-11} width={boxWidth} height={22} style={{ overflow: "visible" }}>
                 <div style={{ display: "flex", justifyContent: "flex-start", fontSize: fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
@@ -548,8 +548,8 @@ export function renderComponent(el, pos, strokeWidth, fontSize) {
 
           return (
             <g transform={`translate(${labelX},${labelY}) rotate(${displayAngle})`}>
-              <foreignObject x={-40} y={-11} width={80} height={22} style={{ overflow: "visible" }}>
-                <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+              <foreignObject x={isMobile ? -50: -40} y={isMobile? -15: -10} width={100} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "center", fontSize, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
               </foreignObject>
@@ -560,7 +560,7 @@ export function renderComponent(el, pos, strokeWidth, fontSize) {
         // unchanged — horizontal-leg case (rotation 0/180)
         const { dx, dy } = perpOffset(rotation, labelDistance);
         return (
-          <foreignObject x={x + dx * sideMultiplier - 40} y={y + dy * sideMultiplier - 7} width={80} height={22} style={{ overflow: "visible" }}>
+          <foreignObject x={x + dx * sideMultiplier - 40} y={y + dy * sideMultiplier - 12} width={80} height={22} style={{ overflow: "visible" }}>
             <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
               <MathText text={el.label} />
             </div>

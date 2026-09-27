@@ -75,13 +75,13 @@ export function renderCircuitSystem(plane, elements, relationships, isMobile = f
       {/* existing: main-loop components */}
       {orderedIds.map((id) => {
         const el = elements.find((e) => e.id === id);
-        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize, isMobile) : null;
       })}
 
       {/* NEW: tap components (voltmeter/ammeter) themselves */}
       {tapIds.map((id) => {
         const el = elements.find((e) => e.id === id);
-        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize, isMobile) : null;
       })}
 
       {relationships
@@ -176,7 +176,7 @@ export function renderParallelCircuitSystem(plane, elements, relationships, isMo
 
       {allPositionedIds.map((id) => {
         const el = elements.find((e) => e.id === id);
-        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize, isMobile) : null;
       })}
 
       
@@ -237,7 +237,7 @@ export function renderBridgeCircuitSystem(plane, elements, relationships, isMobi
 
       {[leftTopId, rightTopId, leftBottomId, rightBottomId, galvId, battId, switchId].map((id) => {
         const el = elements.find((e) => e.id === id);
-        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize, isMobile) : null;
       })}
 
       {relationships
@@ -328,7 +328,7 @@ export function renderCombinationCircuitSystem(plane, elements, relationships, i
 
       {Object.keys(positions).map((id) => {
         const el = elements.find((e) => e.id === id);
-        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize, isMobile) : null;
       })}
     </g>
   );
@@ -422,7 +422,7 @@ export function renderTwoSourceCombinationSystem(plane, elements, isMobile = fal
 
       {Object.keys(positions).map((id) => {
         const el = elements.find((e) => e.id === id);
-        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize) : null;
+        return el && positions[id] ? renderComponent(el, positions[id], strokeWidth, fontSize, isMobile) : null;
       })}
     </g>
   );
@@ -452,8 +452,8 @@ export function renderMeterBridge(plane, isMobile = false) {
       <line x1={wireRight} y1={stripY} x2={wireRight} y2={wireY} stroke={wireColor} strokeWidth={strokeWidth} />
 
       {/* R and S sitting in the two gaps */}
-      {renderComponent({ id: "r", type: "resistor", label: rLabel }, { x: rCenterX, y: stripY, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize)}
-      {renderComponent({ id: "s", type: "resistor", label: sLabel }, { x: sCenterX, y: stripY, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize)}
+      {renderComponent({ id: "r", type: "resistor", label: rLabel }, { x: rCenterX, y: stripY, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize, isMobile)}
+      {renderComponent({ id: "s", type: "resistor", label: sLabel }, { x: sCenterX, y: stripY, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize, isMobile)}
 
       {/* Midpoint node dot, between the two gaps */}
       <JunctionDot x={midX} y={stripY} />
@@ -488,14 +488,14 @@ export function renderMeterBridge(plane, isMobile = false) {
         return renderComponent(
           { id: "g", type: "galvanometer", label: galvLabel },
           { x: galvX, y: galvY, rotation: (Math.atan2(jockeyTipY - stripY, nullX - midX) * 180) / Math.PI, labelSide: "outer" },
-          strokeWidth, fontSize
+          strokeWidth, fontSize, isMobile
         );
       })()}
 
       {/* Battery + closing wire beneath the measuring wire, A to C */}
       <line x1={wireLeft} y1={wireY} x2={wireLeft} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
       <line x1={wireRight} y1={wireY} x2={wireRight} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
-      {renderComponent({ id: "batt", type: "battery", label: batteryLabel }, { x: midX, y: wireY + 30, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize)}
+      {renderComponent({ id: "batt", type: "battery", label: batteryLabel }, { x: midX, y: wireY + 30, rotation: 0, labelSide: "outer" }, strokeWidth, fontSize, isMobile)}
       <line x1={wireLeft} y1={wireY + 30} x2={midX - COMPONENT_REACH.battery} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
       <line x1={midX + COMPONENT_REACH.battery} y1={wireY + 30} x2={wireRight} y2={wireY + 30} stroke={wireColor} strokeWidth={strokeWidth} />
     </g>
