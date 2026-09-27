@@ -238,7 +238,7 @@ export function SwitchSymbol({ strokeWidth, state = "open" }) {
         stroke={color} strokeWidth={strokeWidth * 1.4} strokeLinecap="round"
       />
       <circle cx={gap} cy={0} r={2.5} fill={color} />
-      <line x1={gap} y1={0} x2={gap + LEAD} y2={0} stroke={CIRCUIT_COLORS.wire} strokeWidth={strokeWidth} />
+      <line x1={gap} y1={0} x2={gap + LEAD} y2={0} stroke={CIRCUIT_COLORS.wire} strokeWidth={strokeWidth*1.2} />
     </g>
   );
 }
@@ -258,7 +258,7 @@ export function MeterSymbol({ strokeWidth, symbol = "A", variant = "meter", rota
           {symbol}
         </text>
       </g>
-      <line x1={r} y1={0} x2={r + LEAD} y2={0} stroke={CIRCUIT_COLORS.wire} strokeWidth={strokeWidth} />
+      <line x1={r} y1={0} x2={r + LEAD} y2={0} stroke={CIRCUIT_COLORS.wire} strokeWidth={strokeWidth*1.2} />
     </g>
   );
 }
@@ -275,8 +275,8 @@ export function OpenBreakSymbol({ strokeWidth }) {
       <circle cx={-gap} cy={0} r={2.5} fill={color} />
       <circle cx={gap} cy={0} r={2.5} fill={color} />
       {/* red X marks the fault, distinguishing it from a user-controlled open switch */}
-      <line x1={-4} y1={-4} x2={4} y2={4} stroke={color} strokeWidth={strokeWidth * 1.2} strokeLinecap="round" />
-      <line x1={-4} y1={4} x2={4} y2={-4} stroke={color} strokeWidth={strokeWidth * 1.2} strokeLinecap="round" />
+      <line x1={-4} y1={-4} x2={4} y2={4} stroke={color} strokeWidth={strokeWidth * 1.3} strokeLinecap="round" />
+      <line x1={-4} y1={4} x2={4} y2={-4} stroke={color} strokeWidth={strokeWidth * 1.3} strokeLinecap="round" />
     </g>
   );
 }
@@ -301,7 +301,7 @@ export function renderShortBypass(shortEl, targetPos, targetEl, strokeWidth) {
       d={`M ${leadA.x} ${leadA.y} L ${bowA.x} ${bowA.y} L ${bowB.x} ${bowB.y} L ${leadB.x} ${leadB.y}`}
       fill="none"
       stroke={CIRCUIT_COLORS.wire}
-      strokeWidth={strokeWidth}
+      strokeWidth={strokeWidth*1.15}
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -489,43 +489,79 @@ export function renderComponent(el, pos, strokeWidth, fontSize) {
         {el.label && !symbolAlreadyShowsLabel(el) && (() => {
         const normalizedRot = ((rotation % 180) + 180) % 180;
         const isVertical = Math.abs(normalizedRot - 90) < 1;
+        const isHorizontal = Math.abs(normalizedRot - 0) < 1 || Math.abs(normalizedRot - 180) < 1;
+        const isDiagonal = !isVertical && !isHorizontal; // NEW — bridge arms fall here
 
-      // renderComponent.jsx — vertical-label branch, updated
+        if (isVertical) {
+          const clearance = labelDistance
+          const boxWidth = 95;
 
-      if (isVertical) {
-        const clearance = labelDistance
-        const boxWidth = 95;
+          if (el.type === "battery") {
+            const boxX = x - clearance - boxWidth;
+            return (
+              <foreignObject x={boxX} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                  <MathText text={el.label} />
+                </div>
+              </foreignObject>
+            );
+          }
 
-        // NEW: battery's own label always goes to the LEFT (outside the loop),
-        // since it sits on the leftmost leg and reads more naturally there —
-        // every other vertical rung keeps the existing right-side placement.
-        if (el.type === "battery") {
-          const boxX = x - clearance - boxWidth;
+          if (el.type === "switch") {
+            const boxX = x - clearance - boxWidth;
+            return (
+              <foreignObject x={boxX+50} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize:fontSize*1.3, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                  <MathText text={el.label} />
+                </div>
+              </foreignObject>
+            );
+          }
+          // NEW: rotate 90° so the label reads parallel to the vertical wire,
+          // anchored at the same right-side clearance point as before.
+          const boxX = x + clearance;
           return (
-            <foreignObject x={boxX} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
-              <div style={{ display: "flex", justifyContent: "flex-end", fontSize, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
-                <MathText text={el.label} />
-              </div>
-            </foreignObject>
+            <g transform={`translate(${boxX},${y}) rotate(90)`}>
+              <foreignObject x={-boxWidth / 2 *0.40} y={-11} width={boxWidth} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "flex-start", fontSize: fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                  <MathText text={el.label} />
+                </div>
+              </foreignObject>
+            </g>
           );
         }
-        // Value labels: ALWAYS to the right of the component, full stop —
-        // no left/right toggle based on labelSign anymore for vertical rungs.
-        const boxX = x + clearance;
-        return (
-          <foreignObject x={boxX} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
-            <div style={{ display: "flex", justifyContent: "flex-start", fontSize, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
-              <MathText text={el.label} />
-            </div>
-          </foreignObject>
-        );
-      }
+
+        // NEW: diagonal case (bridge arms) — label tilts to follow the
+        // wire's own angle instead of staying horizontal, so it takes up
+        // far less perpendicular clearance — this is what fixes mobile
+        // overlap on the diamond's four arms.
+        if (isDiagonal) {
+          const { dx, dy } = perpOffset(rotation, labelDistance);
+          const labelX = x + dx * sideMultiplier;
+          const labelY = y + dy * sideMultiplier;
+
+          // Clamp to -90..90 so the text never renders upside-down —
+          // flip by 180° whenever the raw rotation would tip past vertical.
+          let displayAngle = rotation % 180;
+          if (displayAngle > 90) displayAngle -= 180;
+          if (displayAngle < -90) displayAngle += 180;
+
+          return (
+            <g transform={`translate(${labelX},${labelY}) rotate(${displayAngle})`}>
+              <foreignObject x={-40} y={-11} width={80} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                  <MathText text={el.label} />
+                </div>
+              </foreignObject>
+            </g>
+          );
+        }
 
         // unchanged — horizontal-leg case (rotation 0/180)
         const { dx, dy } = perpOffset(rotation, labelDistance);
         return (
           <foreignObject x={x + dx * sideMultiplier - 40} y={y + dy * sideMultiplier - 7} width={80} height={22} style={{ overflow: "visible" }}>
-            <div style={{ display: "flex", justifyContent: "center", fontSize, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+            <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
               <MathText text={el.label} />
             </div>
           </foreignObject>

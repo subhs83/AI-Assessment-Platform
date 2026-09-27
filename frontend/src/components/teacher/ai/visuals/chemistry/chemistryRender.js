@@ -8,14 +8,16 @@ export function renderLewisStructure(plane, relationships, figure, isMobile = fa
   const { positions } = plane;
 
   const bondRels = relationships.filter((r) => r.type === "forms_bond");
-  const lonePairRels = extractLonePairRels(relationships);
+  const lonePairs = extractLonePairRels(relationships);
   const chargeRels = relationships.filter((r) => r.type === "has_charge");
 
   return (
     <g> 
-      {bondRels.map((rel, i) => renderBond(rel, positions, strokeWidth, `bond-${i}`,plane.labelClearance))}
+      {bondRels.map((rel, i) => renderBond(rel, positions, strokeWidth, `bond-${i}`, plane.labelClearance))}
       {Object.entries(positions).map(([id, p]) => renderAtomLabel(id, p, fontSize))}
-      {lonePairRels.map((rel, i) => renderLonePairs(rel, positions, bondRels, `lonepairs-${i}`, plane.labelClearance))}
+      {lonePairs.map((lp, i) =>
+        renderLonePairs({ elements: [lp.atomId], count: lp.count }, positions, bondRels, `lonepairs-${i}`, plane.labelClearance)
+      )}
       {chargeRels.map((rel, i) => renderChargeLabel(rel, positions, fontSize, `charge-${i}`))}
     </g>
   );
