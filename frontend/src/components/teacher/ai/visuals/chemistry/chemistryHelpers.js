@@ -80,7 +80,7 @@ export function renderBond(rel, positions, strokeWidth, key, labelClearance) {
 
   const lines = [];
   for (let k = 0; k < order; k++) {
-    const offset = (k - (order - 1) / 2) * 5;
+    const offset = (k - (order - 1) / 2) * 4.5;
     lines.push(
       <line key={`${key}-${k}`}
         x1={sp1.x + perpX * offset} y1={sp1.y + perpY * offset}
@@ -223,3 +223,4 @@ export const INVERTED_TRIGONAL_LAYOUT = {
   bottom_left: { x: -1.3, y: 1.1 },
   bottom_right: { x: 1.3, y: 1.1 },
 };
+

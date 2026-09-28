@@ -223,23 +223,32 @@ Do not use numeric coordinates, percentages, or any position term outside this l
 
 RULE: show_image flag for ray_diagram_lens / ray_diagram_mirror
 
-When generating a visual payload for ray_diagram_lens or ray_diagram_mirror,
-set the "forms_image_of" relationship's show_image field based on what the
-question is actually asking:
+When generating a visual payload for `ray_diagram_lens` or
+`ray_diagram_mirror`, set `forms_image_of.show_image` based on
+whether rendering the formed image would reveal the answer.
 
-  show_image: false
-  — when any answer option (option_a/b/c/d) states or implies WHERE the
-    image forms — e.g. "At F", "Between F and O", "Beyond 2F", "Behind
-    the mirror", "On the same side as the object". Rendering the image
-    would draw the correct zone directly on the figure, giving away the
-    answer.
+show_image: false
+— If the question asks for any image property that can be determined
+directly from the completed ray diagram, including:
+- image location
+- real/virtual
+- erect/inverted
+- magnified/diminished
+- image size or orientation
 
-  show_image: true
-  — for all other question types: image characteristics (real/virtual,
-    inverted/erect, magnified/diminished), ray identification, comparing
-    two setups, magnification calculations, or any question where seeing
-    the full construction supports understanding without stating the
-    answer outright.
+show_image: true
+— If the question asks about something that cannot be answered simply
+by looking at the completed image, such as:
+- ray identification
+- optical/ray rule
+- numerical calculation
+- comparing setups where the image does not reveal the answer
+
+IMPORTANT:
+Do not decide only from the wording of the options.
+If displaying the formed image would allow the student to visually
+identify the correct answer without doing the intended reasoning,
+use `show_image: false`.
 
 Rule of thumb: if a correct answer option is itself a location on the
 principal axis relative to the lens/mirror, mark show_image: false.
@@ -2105,6 +2114,31 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ],
   "overall_charge": -1
 }}
+
+
+--- MOLECULAR GEOMETRY PAYLOAD (vsepr_shape) ---
+"visual": {{
+  "figure": {{
+    "type": "chemistry",
+    "subtype": "molecular_geometry",
+    "feature": "vsepr_shape",
+    "electron_geometry": "tetrahedral"
+  }},
+  "elements": [
+    {{ "id": "atom_n", "label": "N", "type": "atom", "position_role": "center" }},
+    {{ "id": "atom_h1", "label": "H", "type": "atom", "position_role": "plane_left" }},
+    {{ "id": "atom_h2", "label": "H", "type": "atom", "position_role": "plane_right" }},
+    {{ "id": "atom_h3", "label": "H", "type": "atom", "position_role": "wedge" }},
+    {{ "id": "lone_pair_n", "type": "lone_pair", "on_atom": "atom_n", "position_role": "dash" }}
+  ],
+  "relationships": [
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h1"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h2"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_n", "atom_h3"], "type": "forms_bond" }}
+  ]
+}}
+
+
 # SILENT PRE-OUTPUT VERIFICATION PROTOCOL
 
 Before generating the final JSON response, perform a silent internal check to verify that:

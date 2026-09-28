@@ -126,7 +126,7 @@ export const MAG_COLORS = {
   fieldLine: "#475569",
 };
 
-export function BarMagnetSymbol({ cx, cy, width, height, horizontal = true }) {
+export function BarMagnetSymbol({ cx, cy, width, height, horizontal = true, counterRotate = 0 }) {
   const w = horizontal ? width : height;
   const h = horizontal ? height : width;
   const halfW = w / 2;
@@ -135,8 +135,12 @@ export function BarMagnetSymbol({ cx, cy, width, height, horizontal = true }) {
     <g transform={`translate(${cx},${cy}) rotate(${horizontal ? 0 : 90})`}>
       <rect x={-halfW} y={-h / 2} width={halfW} height={h} fill={MAG_COLORS.north.fill} stroke={MAG_COLORS.north.stroke} strokeWidth={2} />
       <rect x={0} y={-h / 2} width={halfW} height={h} fill={MAG_COLORS.south.fill} stroke={MAG_COLORS.south.stroke} strokeWidth={2} />
-      <text x={-halfW / 2} y={6} fontSize={h * 0.5} fontWeight={800} fill="#FFFFFF" textAnchor="middle">N</text>
-      <text x={halfW / 2} y={6} fontSize={h * 0.5} fontWeight={800} fill="#FFFFFF" textAnchor="middle">S</text>
+      <g transform={`translate(${-halfW / 2},0) rotate(${counterRotate})`}>
+        <text x={0} y={0} dominantBaseline="central" fontSize={h * 0.5} fontWeight={800} fill="#FFFFFF" textAnchor="middle">N</text>
+      </g>
+      <g transform={`translate(${halfW / 2},0) rotate(${counterRotate})`}>
+        <text x={0} y={0} dominantBaseline="central" fontSize={h * 0.5} fontWeight={800} fill="#FFFFFF" textAnchor="middle">S</text>
+      </g>
     </g>
   );
 }
@@ -164,7 +168,7 @@ export function arrowOnCubicMidpoint(d) {
 
 // fieldIndicator.jsx — reusable dots/×'s background pattern
 
-export function FieldIntoPageIndicator({ width, height, rows = 3, cols = 5 }) {
+export function FieldIntoPageIndicator({ width, height, direction = "into", rows = 3, cols = 5 }) {
   const cells = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -177,10 +181,41 @@ export function FieldIntoPageIndicator({ width, height, rows = 3, cols = 5 }) {
     <g opacity={0.55}>
       {cells.map(({ x, y }, i) => (
         <g key={i}>
-          <line x1={x - 5} y1={y - 5} x2={x + 5} y2={y + 5} stroke="#94A3B8" strokeWidth={1.5} />
-          <line x1={x - 5} y1={y + 5} x2={x + 5} y2={y - 5} stroke="#94A3B8" strokeWidth={1.5} />
+          {direction === "out" ? (
+            <>
+              <circle cx={x} cy={y} r={6} fill="none" stroke="#94A3B8" strokeWidth={1.5} />
+              <circle cx={x} cy={y} r={1.8} fill="#94A3B8" />
+            </>
+          ) : (
+            <>
+              <line x1={x - 5} y1={y - 5} x2={x + 5} y2={y + 5} stroke="#94A3B8" strokeWidth={1.5} />
+              <line x1={x - 5} y1={y + 5} x2={x + 5} y2={y - 5} stroke="#94A3B8" strokeWidth={1.5} />
+            </>
+          )}
         </g>
       ))}
     </g>
   );
+}
+
+export function getFieldDirection(elements) {
+  const fieldEl = elements.find((el) => typeof el.type === "string" && el.type.startsWith("field_"));
+  return `${fieldEl?.type ?? ""} ${fieldEl?.direction ?? ""}`.includes("out") ? "out" : "into";
+}
+
+
+// magneticFieldSymbols.jsx
+
+export function CurrentArrow({ wireTop, wireBottom, direction }) {
+  const vecs = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const [dx, dy] = vecs[direction] || vecs.up;
+  // up/left arrows sit at the wire's start point, down/right at its end point
+  const tip = direction === "up" || direction === "left" ? wireTop : wireBottom;
+  const px = -dy, py = dx; // perpendicular, for the arrowhead's base width
+  const pts = [
+    [tip.x + dx * 10, tip.y + dy * 10],
+    [tip.x - dx * 4 + px * 6, tip.y - dy * 4 + py * 6],
+    [tip.x - dx * 4 - px * 6, tip.y - dy * 4 - py * 6],
+  ].map((p) => p.join(",")).join(" ");
+  return <polygon points={pts} fill="#1E293B" />;
 }

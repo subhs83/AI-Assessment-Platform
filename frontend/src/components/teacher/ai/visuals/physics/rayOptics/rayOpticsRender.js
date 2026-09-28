@@ -3,8 +3,8 @@ import {
     renderVectorToPoint, renderLensSymbol, renderDimensionLine, OPTICS_COLORS,
     renderMathLabel,renderConcaveMirrorSymbol,renderVerticalDimensionLine,
     renderDirectionAngleArc, angleOfVector,mediumFill, renderMidRayArrow,
-    renderConcaveLensSymbol, interpretRayPath, buildStubRayPaths, lineAtX,
-    interpretMirrorRayPath, renderConvexMirrorSymbol
+    renderConcaveLensSymbol, interpretRayPath, buildStubRayPaths, lineAtX, intersectLines,
+    interpretMirrorRayPath, renderConvexMirrorSymbol, convexMirrorCurve, intersectWithSurface
     } from "./rayOpticsHelpers";
 
 
@@ -362,6 +362,7 @@ export function renderConvexMirrorSystem(plane, elements, isMobile = false) {
   const { mirrorX, axisY, positions, showImage, useExplicitRays, rayConstructionRays, frontFPoint, extend } = plane;
   const { mirror, object, image, F_right, C_right } = positions;
   const objectTip = { x: object.x, y: object.tipY };
+  let imageTipDrawn = { x: image.x, y: image.tipY };
   const EXPLICIT_RAY_COLORS = ["#e8870a", "#c0392b", "#2980b9"]; // extend if a payload ever has more than 3 rays
   let rayGroups, rayLabels;
 
@@ -369,36 +370,53 @@ export function renderConvexMirrorSystem(plane, elements, isMobile = false) {
     rayGroups = rayConstructionRays.map((rayDef) => interpretMirrorRayPath(rayDef, objectTip, mirrorX, axisY, positions, frontFPoint, extend));
     // Spread labels out (different t per ray, alternating vertical offset) since
     // renderConvexMirrorSystem — replace the rayLabels construction inside useExplicitRays:
-    rayLabels = rayConstructionRays.map((rayDef, i) => {
-      const segs = rayGroups[i];
-      if (!segs || segs.length === 0) return null;
-      const targetSeg = segs[segs.length - 1];
-      const labelText = elements.find((e) => e.id === rayDef.id)?.label || rayDef.id;
-      const t = 0.6;
-      const baseX = targetSeg.from.x + (targetSeg.to.x - targetSeg.from.x) * t;
-      const baseY = targetSeg.from.y + (targetSeg.to.y - targetSeg.from.y) * t;
-      const dx = targetSeg.to.x - targetSeg.from.x, dy = targetSeg.to.y - targetSeg.from.y;
-      const mag = Math.hypot(dx, dy) || 1;
-      const perpX = -dy / mag
-      const offset = 16 * (i - (rayConstructionRays.length - 1) / 2);
-      return { x: baseX + perpX * offset, y: baseY - 10, text: labelText, color: EXPLICIT_RAY_COLORS[i % EXPLICIT_RAY_COLORS.length] };
-    });
+    // THIS is where "Ray A" / "Ray B" / "Ray C" labels get computed:
+    // renderConvexMirrorSystem — rayLabels construction, replace the whole map body:
+      rayLabels = rayConstructionRays.map((rayDef, i) => {
+        const segs = rayGroups[i];
+        if (!segs || segs.length === 0) return null;
+        const targetSeg = segs[segs.length - 1];
+        const labelText = elements.find((e) => e.id === rayDef.id)?.label || rayDef.id;
+
+        const t = 0.85; // near the tip, away from where rays commonly cross mid-segment
+        const baseX = targetSeg.from.x + (targetSeg.to.x - targetSeg.from.x) * t;
+        const baseY = targetSeg.from.y + (targetSeg.to.y - targetSeg.from.y) * t;
+
+        const dx = targetSeg.to.x - targetSeg.from.x, dy = targetSeg.to.y - targetSeg.from.y;
+        const mag = Math.hypot(dx, dy) || 1;
+        let perpX = -dy / mag, perpY = dx / mag;
+        if (perpY > 0) { perpX = -perpX; perpY = -perpY; } // always push upward, never downward
+
+        const vertOffset = 20;
+        const horizOffset = 20 * (i - (rayConstructionRays.length - 1) / 2); // spreads labels apart HORIZONTALLY, independent of ray slope
+
+        return {
+          x: baseX + perpX * vertOffset + horizOffset,
+          y: baseY + perpY * vertOffset,
+          text: labelText,
+          color: EXPLICIT_RAY_COLORS[i % EXPLICIT_RAY_COLORS.length],
+        };
+      });
   } else {
       rayLabels = [];
-      const ray1MirrorPoint = { x: mirrorX, y: object.tipY };
-      const imageTip = { x: image.x, y: image.tipY };
-      const ray2MirrorPoint = C_right ? lineAtX(objectTip, C_right, mirrorX) : { x: mirrorX, y: axisY };
+      const { surfaceX } = convexMirrorCurve(mirrorX, mirror.topY, mirror.bottomY);
+      const ray1MirrorPoint = { x: surfaceX(object.tipY), y: object.tipY };
+      const ray2MirrorPoint = C_right
+        ? intersectWithSurface(objectTip, C_right, surfaceX, mirrorX)
+        : { x: surfaceX(axisY), y: axisY };
+
+      if (showImage && F_right && C_right) {
+        const hit = intersectLines(ray1MirrorPoint, F_right, ray2MirrorPoint, C_right);
+        if (hit) imageTipDrawn = hit;
+      }
 
       rayGroups = [
+        [{ from: objectTip, to: ray1MirrorPoint }, { from: ray1MirrorPoint, to: F_right, dashed: true }],
         showImage
-          ? [{ from: objectTip, to: ray1MirrorPoint }, { from: ray1MirrorPoint, to: F_right, dashed: true }, { from: F_right, to: imageTip, dashed: true }]
-          : [{ from: objectTip, to: ray1MirrorPoint }, { from: ray1MirrorPoint, to: F_right, dashed: true }],
-        showImage
-          ? [{ from: objectTip, to: ray2MirrorPoint, reversedArrow: true }, { from: ray2MirrorPoint, to: C_right, dashed: true }, { from: C_right, to: imageTip, dashed: true }]
+          ? [{ from: objectTip, to: ray2MirrorPoint, reversedArrow: true }, { from: ray2MirrorPoint, to: C_right, dashed: true }]
           : [{ from: objectTip, to: ray2MirrorPoint, reversedArrow: true }],
       ];
     }
-
   const polePoint = { x: mirrorX, y: axisY };
 
   return (
@@ -420,9 +438,9 @@ export function renderConvexMirrorSystem(plane, elements, isMobile = false) {
         </g>
       ))}
 
-      {renderVectorToPoint({ x: object.x, y: object.baseY, toX: object.x, toY: object.tipY, color: OPTICS_COLORS.object })}
+      { renderVectorToPoint({ x: object.x, y: object.baseY, toX: object.x, toY: object.tipY, color: OPTICS_COLORS.object })}
       {renderDimensionLine(object.x, mirrorX, axisY + 30, object.distanceLabel, strokeWidth, fontSize)}
-      {(useExplicitRays || showImage) && renderVectorToPoint({ x: image.x, y: image.baseY, toX: image.x, toY: image.tipY, color: OPTICS_COLORS.image, dashed: true })}
+      {showImage && renderVectorToPoint({ x: imageTipDrawn.x, y: image.baseY, toX: imageTipDrawn.x, toY: imageTipDrawn.y, color: OPTICS_COLORS.image, dashed: true })}
 
       {rayGroups.map((group, rayIndex) => group.map((seg, i) => {
         const color = useExplicitRays ? EXPLICIT_RAY_COLORS[rayIndex % EXPLICIT_RAY_COLORS.length] : OPTICS_COLORS.ray;

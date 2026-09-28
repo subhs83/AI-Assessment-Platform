@@ -1,6 +1,6 @@
 import { getSvgDimensions } from "../../geometry/geometryHelpers";
 import {
-  FieldLineRay, PointChargeSymbol,FIELD_COLORS, arrowOnQuadraticCurve,
+  FieldLineRay, PointChargeSymbol,FIELD_COLORS, arrowOnQuadraticCurve, CurrentArrow,
   MAG_COLORS, BarMagnetSymbol, normalizeMathLabel, FieldIntoPageIndicator
 } from "./emfHelpers"
 import MathText from "../../../../../common/MathText"
@@ -263,14 +263,14 @@ export function renderBarMagnetField(plane, isMobile = false) {
       {loops.map((d, i) => (
         <path key={i} d={d} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />
       ))}
-      <BarMagnetSymbol cx={0} cy={0} width={magnetWidth} height={magnetHeight} horizontal={true} />
+      <BarMagnetSymbol cx={0} cy={0} width={magnetWidth} height={magnetHeight} horizontal={true} counterRotate={horizontal ? 0 : -90} />
     </g>
   );
 }
 
 export function renderCurrentWireField(plane, isMobile = false) {
   if (!plane) return null;
-  const { cx, cy, wireHalfLength, horizontal, currentLabel, point, segmentLabel } = plane;
+  const { cx, cy, wireHalfLength, horizontal, currentLabel, point, segmentLabel, currentDirection } = plane;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
 
   const wireTop = { x: horizontal ? cx - wireHalfLength : cx, y: horizontal ? cy : cy - wireHalfLength };
@@ -287,14 +287,7 @@ export function renderCurrentWireField(plane, isMobile = false) {
       <line x1={wireTop.x} y1={wireTop.y} x2={wireBottom.x} y2={wireBottom.y} stroke="#1E293B" strokeWidth={strokeWidth * 1.8} strokeLinecap="round" />
 
       {/* Current direction arrow — GIVEN data, safe to show */}
-      <polygon
-        points={
-          horizontal
-            ? `${wireBottom.x + 10},${wireBottom.y} ${wireBottom.x - 4},${wireBottom.y - 6} ${wireBottom.x - 4},${wireBottom.y + 6}`
-            : `${wireTop.x},${wireTop.y - 10} ${wireTop.x - 6},${wireTop.y + 4} ${wireTop.x + 6},${wireTop.y + 4}`
-        }
-        fill="#1E293B"
-      />
+      <CurrentArrow wireTop={wireTop} wireBottom={wireBottom} direction={currentDirection} />
       {currentLabel && (
         <foreignObject x={cx - 60} y={horizontal ? cy - 34 : cy - wireHalfLength - 26} width={120} height={22} style={{ overflow: "visible" }}>
           <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.3, fontWeight: 600, color: "#1E293B" }}>
@@ -405,17 +398,19 @@ export function renderSolenoidField(plane, isMobile = false) {
 
 export function renderMovingChargeForce(plane, isMobile = false) {
   if (!plane) return null;
-  const { fieldWidth, fieldHeight, cx, cy, chargeSign, chargeLabel, vectorAngle, vectorLength, vectorLabel } = plane;
+  const { fieldWidth, fieldHeight, cx, cy, chargeSign, chargeLabel, vectorAngle, vectorLength, vectorLabel, fieldDirection } = plane;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
 
   const rad = (vectorAngle * Math.PI) / 180;
   const vEndX = cx + Math.cos(rad) * vectorLength;
   const vEndY = cy - Math.sin(rad) * vectorLength;
+  const startX = cx + Math.cos(rad) * 20;
+  const startY = cy - Math.sin(rad) * 20;
 
   return (
     <g>
       <g transform={`translate(${cx},${cy })`}>
-        <FieldIntoPageIndicator width={fieldWidth} height={fieldHeight} />
+        <FieldIntoPageIndicator width={fieldWidth} height={fieldHeight} direction={fieldDirection} />
       </g>
 
       {/* Charge — sign shown, it's given data (proton, +q) */}
@@ -424,13 +419,19 @@ export function renderMovingChargeForce(plane, isMobile = false) {
       </g>
 
       {/* Velocity vector — given data, shown */}
-      <line x1={cx+20} y1={cy} x2={vEndX} y2={vEndY} stroke="#1E293B" strokeWidth={strokeWidth * 1.3} />
+      <line x1={startX} y1={startY} x2={vEndX} y2={vEndY} stroke="#1E293B" strokeWidth={strokeWidth * 1.3} />
       <polygon points={`${vEndX},${vEndY} ${vEndX - 8 * Math.cos(rad - 0.4)},${vEndY + 8 * Math.sin(rad - 0.4)} ${vEndX - 8 * Math.cos(rad + 0.4)},${vEndY + 8 * Math.sin(rad + 0.4)}`} fill="#1E293B" />
-      {vectorLabel && (
-        <foreignObject x={vEndX + 6} y={vEndY - 16} width={40} height={22} style={{ overflow: "visible" }}>
-          <div style={{ fontSize:fontSize*1.5, fontWeight: 700, color: "#1E293B" }}><MathText text={normalizeMathLabel(vectorLabel)} /></div>
-        </foreignObject>
-      )}
+      {vectorLabel && (() => {
+        const lx = vEndX + Math.cos(rad) * 18;
+        const ly = vEndY - Math.sin(rad) * 18;
+        return (
+          <foreignObject x={lx - 20} y={ly - 11} width={40} height={22} style={{ overflow: "visible" }}>
+            <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize * 1.5, fontWeight: 700, color: "#1E293B" }}>
+              <MathText text={normalizeMathLabel(vectorLabel)} />
+            </div>
+          </foreignObject>
+        );
+      })()}
 
       {/* NOTE: force vector deliberately NOT drawn — that's the answer */}
     </g>
@@ -439,7 +440,7 @@ export function renderMovingChargeForce(plane, isMobile = false) {
 
 export function renderWireForceField(plane, isMobile = false) {
   if (!plane) return null;
-  const { cx, cy, wireHalfLength, horizontal, currentLabel, fieldWidth, fieldHeight } = plane;
+  const { cx, cy, wireHalfLength, horizontal, currentLabel, fieldWidth, fieldHeight, currentDirection } = plane;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
 
   const wireTop = { x: horizontal ? cx - wireHalfLength : cx, y: horizontal ? cy : cy - wireHalfLength };
@@ -452,12 +453,7 @@ export function renderWireForceField(plane, isMobile = false) {
       </g>
 
       <line x1={wireTop.x} y1={wireTop.y} x2={wireBottom.x} y2={wireBottom.y} stroke="#1E293B" strokeWidth={strokeWidth * 1.8} strokeLinecap="round" />
-      <polygon
-        points={horizontal
-          ? `${wireBottom.x + 10},${wireBottom.y} ${wireBottom.x - 4},${wireBottom.y - 6} ${wireBottom.x - 4},${wireBottom.y + 6}`
-          : `${wireTop.x},${wireTop.y - 10} ${wireTop.x - 6},${wireTop.y + 4} ${wireTop.x + 6},${wireTop.y + 4}`}
-        fill="#1E293B"
-      />
+      <CurrentArrow wireTop={wireTop} wireBottom={wireBottom} direction={currentDirection} />
       {currentLabel && (
         <foreignObject x={cx - 40} y={horizontal ? cy - 34 : cy - wireHalfLength - 26} width={80} height={22} style={{ overflow: "visible" }}>
           <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize*1.5, fontWeight: 600, color: "#1E293B" }}>

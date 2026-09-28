@@ -1,7 +1,7 @@
 
 import { getSvgDimensions } from "../../geometry/geometryHelpers";
-// calculatePointChargePositions.js
-
+import {getFieldDirection} from "./emfHelpers"
+ 
 // calculatePointChargePositions — add label to the returned plane object
 export function calculatePointChargePositions({ elements, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
@@ -151,23 +151,33 @@ export function calculateCurrentWirePositions({ elements, isMobile = false }) {
   const segmentEl = elements.find((el) => el.type === "segment");
 
   const horizontal = wireEl?.orientation === "horizontal";
+  const dirRaw = wireEl?.current_direction;
+  
   const cx = SVG_WIDTH * 0.38;
   const cy = SVG_HEIGHT / 2;
   const wireHalfLength = Math.min(SVG_HEIGHT, SVG_WIDTH) * 0.32;
 
   // Scale the point's data-space x_position into pixels — bounded so it
   // never runs past the canvas regardless of the given value.
-  const availableRight = SVG_WIDTH - paddingX - cx;
   const rawX = pointEl?.x_position ?? 1;
-  const scale = Math.min(availableRight / Math.max(rawX, 1), 90);
+  const rawY = pointEl?.y_position ?? 0;
+  const availableSideX = rawX < 0 ? cx - paddingX : SVG_WIDTH - paddingX - cx;
+  const availableSideY = cy - 20;
+  const scale = Math.min(
+    availableSideX / Math.max(Math.abs(rawX), 1),
+    rawY !== 0 ? availableSideY / Math.abs(rawY) : Infinity,
+    90
+  );
   const pointX = cx + rawX * scale;
-  const pointY = cy + (pointEl?.y_position ?? 0) * scale;
+  const pointY = cy - rawY * scale; // SVG y points down, so "above" needs a minus
+
+  const currentDirection = horizontal ? (dirRaw === "left" ? "left" : "right") : (dirRaw === "down" ? "down" : "up");
 
   return {
     cx, cy, wireHalfLength, horizontal,
     currentLabel: wireEl?.label,
     point: pointEl ? { x: pointX, y: pointY, label: pointEl.label || "P" } : null,
-    segmentLabel: segmentEl?.label,
+    segmentLabel: segmentEl?.label, currentDirection,
   };
 }
 
@@ -204,6 +214,7 @@ export function calculateMovingChargePositions({ elements, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
   const chargeEl = elements.find((el) => el.type === "moving_charge");
   const vectorEl = elements.find((el) => el.type === "vector");
+  const fieldDirection= getFieldDirection(elements)
 
   return {
     fieldWidth: SVG_WIDTH,
@@ -215,12 +226,14 @@ export function calculateMovingChargePositions({ elements, isMobile = false }) {
     vectorAngle: vectorEl?.angle ?? 0,
     vectorLength: { small: 30, medium: 60, large: 75 }[vectorEl?.length] || 60,
     vectorLabel: vectorEl?.label,
+    fieldDirection,
   };
 }
 
 export function calculateWireForcePositions({ elements, isMobile = false }) {
   const base = calculateCurrentWirePositions({ elements, isMobile }); // reuse existing wire-position logic
   const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
-  return { ...base, fieldWidth: SVG_WIDTH, fieldHeight: SVG_HEIGHT };
+  const fieldDirection= getFieldDirection(elements)
+  return { ...base, fieldWidth: SVG_WIDTH, fieldHeight: SVG_HEIGHT, fieldDirection, };
 }
 

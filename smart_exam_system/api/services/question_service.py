@@ -28,7 +28,7 @@ def upload_questions(exam_uid, school_id, excel_file):
 
     try:
         # ---------------------------------
-        # SECURITY CHECK (IMPORTANT)
+        # SECURITY CHECK
         # ---------------------------------
         exam = ExamModel.query.filter_by(
             exam_uid=exam_uid,
@@ -54,10 +54,22 @@ def upload_questions(exam_uid, school_id, excel_file):
             if not row or all(cell is None for cell in row):
                 continue
 
-            if len(row) < 6:
-                return False, f"Excel format error at row {row_index}: Expected 6 columns."
+            # Now expecting 7 columns
+            if len(row) < 7:
+                return False, (
+                    f"Excel format error at row {row_index}: "
+                    "Expected 7 columns."
+                )
 
-            question, option_a, option_b, option_c, option_d, correct_option = row[:6]
+            (
+                question,
+                option_a,
+                option_b,
+                option_c,
+                option_d,
+                correct_option,
+                explanation
+            ) = row[:7]
 
             question = clean_excel_text(question)
             option_a = clean_excel_text(option_a)
@@ -65,17 +77,30 @@ def upload_questions(exam_uid, school_id, excel_file):
             option_c = clean_excel_text(option_c)
             option_d = clean_excel_text(option_d)
             correct_option = clean_excel_text(correct_option).upper()
+            explanation = clean_excel_text(explanation)
 
+            # ---------------------------------
+            # REQUIRED FIELDS
+            # ---------------------------------
             required_fields = [
-                question, option_a, option_b,
-                option_c, option_d, correct_option
+                question,
+                option_a,
+                option_b,
+                option_c,
+                option_d,
+                correct_option,
             ]
 
             if any(field == "" for field in required_fields):
-                return False, f"Missing required data at row {row_index}."
+                return False, (
+                    f"Missing required data at row {row_index}."
+                )
 
             if correct_option not in ["A", "B", "C", "D"]:
-                return False, f"Invalid correct option at row {row_index}. Use A, B, C, or D."
+                return False, (
+                    f"Invalid correct option at row {row_index}. "
+                    "Use A, B, C, or D."
+                )
 
             validated_questions.append({
                 "question_text": question,
@@ -83,14 +108,15 @@ def upload_questions(exam_uid, school_id, excel_file):
                 "option_b": option_b,
                 "option_c": option_c,
                 "option_d": option_d,
-                "correct_option": correct_option
+                "correct_option": correct_option,
+                "explanation": explanation
             })
 
         if not validated_questions:
             return False, "No valid questions found in Excel file."
 
         # ---------------------------------
-        # DELETE OLD QUESTIONS (SAFE SCOPED)
+        # DELETE OLD QUESTIONS
         # ---------------------------------
         db.session.query(QuestionModel).filter_by(
             exam_id=exam.id
@@ -100,19 +126,24 @@ def upload_questions(exam_uid, school_id, excel_file):
         # INSERT NEW QUESTIONS
         # ---------------------------------
         for q in validated_questions:
-            db.session.add(QuestionModel(
-                exam_id=exam.id,
-                question_text=q["question_text"],
-                option_a=q["option_a"],
-                option_b=q["option_b"],
-                option_c=q["option_c"],
-                option_d=q["option_d"],
-                correct_option=q["correct_option"]
-            ))
+            db.session.add(
+                QuestionModel(
+                    exam_id=exam.id,
+                    question_text=q["question_text"],
+                    option_a=q["option_a"],
+                    option_b=q["option_b"],
+                    option_c=q["option_c"],
+                    option_d=q["option_d"],
+                    correct_option=q["correct_option"],
+                    explanation=q["explanation"]
+                )
+            )
 
         db.session.commit()
 
-        return True, f"{len(validated_questions)} questions uploaded successfully."
+        return True, (
+            f"{len(validated_questions)} questions uploaded successfully."
+        )
 
     except Exception:
         db.session.rollback()

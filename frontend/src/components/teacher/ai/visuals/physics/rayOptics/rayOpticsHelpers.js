@@ -105,16 +105,33 @@ export function renderConcaveLensSymbol(lensX, topY, bottomY, strokeWidth) {
   );
 }
 
-export function renderConvexMirrorSymbol(mirrorX, topY, bottomY, strokeWidth) {
-  const midY = (topY + bottomY) / 2;
+export function convexMirrorCurve(mirrorX, topY, bottomY) {
   const bulge = (bottomY - topY) * 0.15;
-  const archD = `M ${mirrorX} ${topY} Q ${mirrorX - bulge} ${midY} ${mirrorX} ${bottomY}`;
-  // in renderConvexMirrorSymbol — fix the hatch direction (only the sign inside x2 changes):
+  const xEnd = mirrorX + bulge / 2;   // top/bottom tips sit slightly behind the pole
+  const xCtrl = mirrorX - bulge / 2;  // pulls the middle forward so it lands exactly on mirrorX
+  const midY = (topY + bottomY) / 2;
+  const surfaceX = (y) => {
+    const t = Math.min(Math.max((y - topY) / (bottomY - topY), 0), 1);
+    return xEnd - 2 * t * (1 - t) * bulge;
+  };
+  return { bulge, xEnd, xCtrl, midY, surfaceX };
+}
+
+// Where a line from p toward q actually meets the curved surface.
+export function intersectWithSurface(p, q, surfaceX, xStart) {
+  let hit = lineAtX(p, q, xStart);
+  for (let k = 0; k < 3; k++) hit = lineAtX(p, q, surfaceX(hit.y));
+  return { x: surfaceX(hit.y), y: hit.y };
+}
+
+
+export function renderConvexMirrorSymbol(mirrorX, topY, bottomY, strokeWidth) {
+  const { bulge, xEnd, xCtrl, midY, surfaceX } = convexMirrorCurve(mirrorX, topY, bottomY);
+  const archD = `M ${xEnd} ${topY} Q ${xCtrl} ${midY} ${xEnd} ${bottomY}`;
   const hatches = Array.from({ length: 8 }, (_, i) => {
-    const t = i / 7;
-    const y = topY + t * (bottomY - topY);
-    const archX = (1 - t) ** 2 * mirrorX + 2 * (1 - t) * t * (mirrorX - bulge) + t ** 2 * mirrorX;
-    return <line key={i} x1={archX} y1={y} x2={archX + bulge * 0.9} y2={y} stroke={OPTICS_COLORS.marker} strokeWidth={strokeWidth * 0.9} strokeOpacity={0.5} />;
+    const y = topY + (i / 7) * (bottomY - topY);
+    const x = surfaceX(y);
+    return <line key={i} x1={x} y1={y} x2={x + bulge * 0.9} y2={y} stroke={OPTICS_COLORS.marker} strokeWidth={strokeWidth * 0.9} strokeOpacity={0.5} />;
   });
   return (
     <g>
@@ -123,6 +140,8 @@ export function renderConvexMirrorSymbol(mirrorX, topY, bottomY, strokeWidth) {
     </g>
   );
 }
+
+
 
 export function renderDimensionLine(x1, x2, y, label, strokeWidth, fontSize) {
   const [xa, xb] = x1 < x2 ? [x1, x2] : [x2, x1];
@@ -350,13 +369,23 @@ export function interpretMirrorRayPath(rayDef, objectTip, mirrorX, axisY, positi
   let currentPoint = objectTip;
   const target = resolveMirrorTarget(rayDef, positions);
 
+  // add right after `const target = resolveMirrorTarget(...)`:
+const { surfaceX } = convexMirrorCurve(mirrorX, positions.mirror.topY, positions.mirror.bottomY);
+
+
   rayDef.path.forEach((step) => {
+    // replace the parallel_to_axis branch:
     if (step === "parallel_to_axis") {
-      const next = { x: mirrorX, y: currentPoint.y };
+      const next = { x: surfaceX(currentPoint.y), y: currentPoint.y };
       segments.push({ from: currentPoint, to: next });
       currentPoint = next;
-    } else if (step === "directed_towards_center_of_curvature") {
-      const next = target ? lineAtX(currentPoint, target, mirrorX) : { x: mirrorX, y: axisY };
+    }
+
+    // replace the directed_towards_center_of_curvature branch:
+    else if (step === "directed_towards_center_of_curvature") {
+      const next = target
+        ? intersectWithSurface(currentPoint, target, surfaceX, mirrorX)
+        : { x: surfaceX(axisY), y: axisY };
       segments.push({ from: currentPoint, to: next });
       currentPoint = next;
     } else if (step === "diverges_from_focal_point" && target) {
@@ -368,14 +397,13 @@ export function interpretMirrorRayPath(rayDef, objectTip, mirrorX, axisY, positi
     }  else if (step === "reflects_back_along_itself") {
       if (segments.length > 0) segments[segments.length - 1].reversedArrow = true;
     } else if (step === "reflects_through_focal_point_front") {
-        const dx = currentPoint.x - frontFPoint.x, dy = currentPoint.y - frontFPoint.y;
-        const mag = Math.hypot(dx, dy) || 1;
-        const near = { x: currentPoint.x + (dx / mag) * (extend * 0.6), y: currentPoint.y + (dy / mag) * (extend * 0.6) };
-        segments.push({ from: currentPoint, to: near });
-        currentPoint = near;
-      }
+      const dx = frontFPoint.x - currentPoint.x, dy = frontFPoint.y - currentPoint.y;
+      const mag = Math.hypot(dx, dy) || 1;
+      const far = { x: frontFPoint.x + (dx / mag) * extend, y: frontFPoint.y + (dy / mag) * extend };
+      segments.push({ from: currentPoint, to: far }); // one solid segment, bending toward frontFPoint and continuing past it
+      currentPoint = far;
+    }
   });
-    console.log(`[${rayDef.id}]`, JSON.stringify({ objectTip, target, frontFPoint, segments }, null, 2));
   return segments;
 }
 
@@ -390,4 +418,11 @@ export function renderArrowAtT(from, to, t, color, reversed = false) {
       <path d="M-5,-4 L5,0 L-5,4 Z" fill={color} />
     </g>
   );
+}
+
+export function intersectLines(a1, a2, b1, b2) {
+  const d = (a2.x - a1.x) * (b2.y - b1.y) - (a2.y - a1.y) * (b2.x - b1.x);
+  if (Math.abs(d) < 1e-9) return null;
+  const t = ((b1.x - a1.x) * (b2.y - b1.y) - (b1.y - a1.y) * (b2.x - b1.x)) / d;
+  return { x: a1.x + t * (a2.x - a1.x), y: a1.y + t * (a2.y - a1.y) };
 }
