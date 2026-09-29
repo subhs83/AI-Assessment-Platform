@@ -510,7 +510,7 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
           if (el.type === "switch") {
             const boxX = x - clearance - boxWidth;
             return (
-              <foreignObject x={boxX+50} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
+              <foreignObject x={boxX+(isMobile ? 60 : 50)} y={y - (isMobile ? 15 : 11)} width={boxWidth} height={22} style={{ overflow: "visible" }}>
                 <div style={{ display: "flex", justifyContent: "flex-end", fontSize:fontSize*1.3, fontWeight: 700, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
