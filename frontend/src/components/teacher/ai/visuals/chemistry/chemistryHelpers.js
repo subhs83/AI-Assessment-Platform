@@ -224,3 +224,106 @@ export const INVERTED_TRIGONAL_LAYOUT = {
   bottom_right: { x: 1.3, y: 1.1 },
 };
 
+// Slot coordinates in layout units (y down), central atom at (0,0).
+export const VSEPR_SLOTS = {
+  linear: {
+    left: { x: -1.7, y: 0, style: "plain" },
+    right: { x: 1.7, y: 0, style: "plain" },
+  },
+  trigonal_planar: {
+    top: { x: 0, y: -1.6, style: "plain" },
+    bottom_left: { x: -1.4, y: 0.85, style: "plain" },
+    bottom_right: { x: 1.4, y: 0.85, style: "plain" },
+  },
+  tetrahedral: {
+    plane_upper: { x: -0.9, y: -1.3, style: "plain" },
+    plane_lower: { x: -0.9, y: 1.3, style: "plain" },
+    wedge: { x: 1.5, y: 0.75, style: "wedge" },
+    dash: { x: 1.5, y: -0.75, style: "dash" },
+  },
+  trigonal_bipyramidal: {
+    axial_top: { x: 0, y: -1.7, style: "plain" },
+    axial_bottom: { x: 0, y: 1.7, style: "plain" },
+    eq_plain: { x: -1.7, y: 0, style: "plain" },
+    eq_wedge: { x: 1.2, y: 0.9, style: "wedge" },
+    eq_dash: { x: 1.2, y: -0.9, style: "dash" },
+  },
+  octahedral: {
+    axial_top: { x: 0, y: -1.7, style: "plain" },
+    axial_bottom: { x: 0, y: 1.7, style: "plain" },
+    eq_left: { x: -1.7, y: 0, style: "plain" },
+    eq_right: { x: 1.7, y: 0, style: "plain" },
+    eq_wedge: { x: 0.9, y: 1.0, style: "wedge" },
+    eq_dash: { x: -0.9, y: -1.0, style: "dash" },
+  },
+};
+
+// key = "bondCount,lonePairCount" on the central atom
+export const VSEPR_OCCUPANCY = {
+  "2,0": { name: "linear", family: "linear", bonds: ["left", "right"], lps: [] },
+  "3,0": { name: "trigonal_planar", family: "trigonal_planar", bonds: ["top", "bottom_left", "bottom_right"], lps: [] },
+  "2,1": { name: "bent", family: "trigonal_planar", bonds: ["bottom_left", "bottom_right"], lps: ["top"] },
+  "4,0": { name: "tetrahedral", family: "tetrahedral", bonds: ["plane_upper", "plane_lower", "wedge", "dash"], lps: [] },
+  "3,1": { name: "trigonal_pyramidal", family: "tetrahedral", bonds: ["plane_lower", "wedge", "dash"], lps: ["plane_upper"] },
+  "2,2": { name: "bent", family: "tetrahedral", bonds: ["plane_lower", "wedge"], lps: ["plane_upper", "dash"] },
+  "5,0": { name: "trigonal_bipyramidal", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom", "eq_plain", "eq_wedge", "eq_dash"], lps: [] },
+  "4,1": { name: "see_saw", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom", "eq_wedge", "eq_dash"], lps: ["eq_plain"] },
+  "3,2": { name: "t_shaped", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom", "eq_plain"], lps: ["eq_wedge", "eq_dash"] },
+  "2,3": { name: "linear", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom"], lps: ["eq_plain", "eq_wedge", "eq_dash"] },
+  "6,0": { name: "octahedral", family: "octahedral", bonds: ["axial_top", "axial_bottom", "eq_left", "eq_right", "eq_wedge", "eq_dash"], lps: [] },
+  "5,1": { name: "square_pyramidal", family: "octahedral", bonds: ["axial_top", "eq_left", "eq_right", "eq_wedge", "eq_dash"], lps: ["axial_bottom"] },
+  "4,2": { name: "square_planar", family: "octahedral", bonds: ["eq_left", "eq_right", "eq_wedge", "eq_dash"], lps: ["axial_top", "axial_bottom"] },
+};
+
+// Normalises "see-saw", "T-shaped", "Square Planar" -> "see_saw", "t_shaped", "square_planar"
+export const normalizeGeometryName = (s) =>
+  String(s || "").toLowerCase().replace(/[\s-]+/g, "_");
+
+// Lone pairs can arrive as a relationship (has_lone_pairs / lone_pairs)
+// OR as an element (type "lone_pairs"). Collect every variant.
+export function extractLonePairsAll(elements, relationships) {
+  const fromRels = extractLonePairRels(relationships);
+  const fromEls = elements
+    .filter((el) => el.type === "lone_pairs" || el.type === "lone_pair")
+    .map((el) => ({ atomId: el.on_atom, count: el.count ?? 1 }));
+  return [...fromRels, ...fromEls];
+}
+
+// Solid wedge: narrow at the central atom, wide at the outer atom (toward viewer)
+export function renderWedgeBond(p1, p2, clearance, key) {
+  const full = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const { p1: a, p2: b } = shrinkSegment(p1, p2, Math.min(clearance, full * 0.35));
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len, py = dx / len;
+  const W = 5;
+  return (
+    <polygon key={key}
+      points={`${a.x},${a.y} ${b.x + px * W},${b.y + py * W} ${b.x - px * W},${b.y - py * W}`}
+      fill="#1e293b" />
+  );
+}
+
+// Hashed wedge: short lines that widen toward the outer atom (away from viewer)
+export function renderDashBond(p1, p2, clearance, key) {
+  const full = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const { p1: a, p2: b } = shrinkSegment(p1, p2, Math.min(clearance, full * 0.35));
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len, py = dx / len;
+  const N = 6, W = 5;
+  const lines = [];
+  for (let i = 1; i <= N; i++) {
+    const t = i / N;
+    const cx = a.x + dx * t, cy = a.y + dy * t;
+    const half = 1 + (W - 1) * t;
+    lines.push(
+      <line key={`${key}-${i}`}
+        x1={cx + px * half} y1={cy + py * half}
+        x2={cx - px * half} y2={cy - py * half}
+        stroke="#1e293b" strokeWidth={2} strokeLinecap="round"
+        vectorEffect="non-scaling-stroke" />
+    );
+  }
+  return <g key={key}>{lines}</g>;
+}

@@ -2,8 +2,13 @@
 import { getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile";
 
-import {calculateLewisStructurePositions, calculateMolecular2DPositions, calculateResonancePositions} from "./chemistry/chemistyPositions"
-import {renderLewisStructure, renderMolecular2D, renderResonanceStructures} from "./chemistry/chemistryRender"
+import {
+  calculateLewisStructurePositions, calculateMolecular2DPositions, calculateResonancePositions,
+  calculateVseprPositions
+} from "./chemistry/chemistyPositions"
+import {
+  renderLewisStructure, renderMolecular2D, renderResonanceStructures, renderMolecularGeometry
+} from "./chemistry/chemistryRender"
 
 export default function ChemistryVisual({ visual }) {
   const isMobile = useIsMobile();
@@ -31,6 +36,11 @@ export default function ChemistryVisual({ visual }) {
       plane = calculateResonancePositions({ elements, isMobile });
       content = renderResonanceStructures(plane, relationships, isMobile);
     }
+} 
+
+  else if (figure.subtype === "molecular_geometry") {
+  plane = calculateVseprPositions({ elements, relationships, figure, isMobile });
+  content = renderMolecularGeometry(plane, isMobile);
 }
     
 

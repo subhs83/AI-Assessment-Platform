@@ -1,6 +1,9 @@
 
 import { getSvgDimensions } from "../geometry/geometryHelpers";
-import {renderBond, renderLonePairs, renderAtomLabel, renderChargeLabel, extractLonePairRels, renderIonBrackets } from "./chemistryHelpers";
+import {
+  renderBond, renderLonePairs, renderAtomLabel, renderChargeLabel, extractLonePairRels, 
+  renderIonBrackets, renderWedgeBond, renderDashBond,
+ } from "./chemistryHelpers";
 
 export function renderLewisStructure(plane, relationships, figure, isMobile = false) {
   if (!plane) return null;
@@ -108,6 +111,39 @@ export function renderResonanceStructures(plane, relationships, isMobile = false
             />
           );
         })}
+    </g>
+  );
+}
+
+
+export function renderMolecularGeometry(plane, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+  const { positions, bondDrawList, lonePairSlots, labelClearance } = plane;
+
+  return (
+    <g>
+      {bondDrawList.map((b, i) => {
+        const p1 = positions[b.centralId], p2 = positions[b.outerId];
+        if (b.style === "wedge") return renderWedgeBond(p1, p2, labelClearance, `bond-${i}`);
+        if (b.style === "dash") return renderDashBond(p1, p2, labelClearance, `bond-${i}`);
+        return renderBond(b.rel, positions, strokeWidth, `bond-${i}`, labelClearance);
+      })}
+
+      {Object.entries(positions).map(([id, p]) => renderAtomLabel(id, p, fontSize))}
+
+      {lonePairSlots.map((s, i) => {
+        const perpX = -s.dirY, perpY = s.dirX;
+        return (
+          <g key={`lp-${i}`}>
+            <circle cx={s.x - perpX * 3} cy={s.y - perpY * 3} r={2} fill="#1e293b" />
+            <circle cx={s.x + perpX * 3} cy={s.y + perpY * 3} r={2} fill="#1e293b" />
+          </g>
+        );
+      })}
+
+      {/* has_vsepr_geometry is NEVER rendered (it is the answer), and no
+          bond-angle values are drawn (Q2-style questions give them as options). */}
     </g>
   );
 }

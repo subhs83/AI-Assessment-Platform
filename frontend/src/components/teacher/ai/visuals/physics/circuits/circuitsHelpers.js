@@ -494,13 +494,13 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
 
         if (isVertical) {
           const clearance = labelDistance
-          const boxWidth = 95;
+          const boxWidth = isMobile ? 120 : 95;
 
           if (el.type === "battery") {
             const boxX = x - clearance - boxWidth;
             return (
               <foreignObject x={boxX} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
-                <div style={{ display: "flex", justifyContent: "flex-end", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize: fontSize*(isMobile ? 1.1 : 1.3), fontWeight: 700, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
               </foreignObject>
@@ -511,7 +511,7 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
             const boxX = x - clearance - boxWidth;
             return (
               <foreignObject x={boxX+50} y={y - 8} width={boxWidth} height={22} style={{ overflow: "visible" }}>
-                <div style={{ display: "flex", justifyContent: "flex-end", fontSize:fontSize*1.3, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize:fontSize*1.3, fontWeight: 700, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
               </foreignObject>
@@ -522,8 +522,8 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
           const boxX = x + clearance;
           return (
             <g transform={`translate(${boxX},${y}) rotate(90)`}>
-              <foreignObject x={-boxWidth / 2 *0.45} y={-11} width={boxWidth} height={22} style={{ overflow: "visible" }}>
-                <div style={{ display: "flex", justifyContent: "flex-start", fontSize: fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+              <foreignObject x={-boxWidth / 2 *0.50} y={isMobile ? -15 : -10} width={boxWidth} height={22} style={{ overflow: "visible" }}>
+                <div style={{ display: "flex", justifyContent: "flex-start", fontSize: fontSize*(isMobile ? 1.1 : 1.3), fontWeight: 700, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
               </foreignObject>
@@ -549,7 +549,7 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
           return (
             <g transform={`translate(${labelX},${labelY}) rotate(${displayAngle})`}>
               <foreignObject x={isMobile ? -50: -40} y={isMobile? -15: -10} width={100} height={22} style={{ overflow: "visible" }}>
-                <div style={{ display: "flex", justifyContent: "center", fontSize, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+                <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize*(isMobile ? 1.1 : 1.3), fontWeight: 700, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
               </foreignObject>
@@ -560,8 +560,8 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
         // unchanged — horizontal-leg case (rotation 0/180)
         const { dx, dy } = perpOffset(rotation, labelDistance);
         return (
-          <foreignObject x={x + dx * sideMultiplier - 40} y={y + dy * sideMultiplier - 12} width={80} height={22} style={{ overflow: "visible" }}>
-            <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.15, fontWeight: 600, color: CIRCUIT_COLORS.label }}>
+          <foreignObject x={x + dx * sideMultiplier - 40} y={y + dy * sideMultiplier - 15} width={80} height={22} style={{ overflow: "visible" }}>
+            <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize*(isMobile ? 1.1 : 1.3), fontWeight: 700, color: CIRCUIT_COLORS.label }}>
               <MathText text={el.label} />
             </div>
           </foreignObject>

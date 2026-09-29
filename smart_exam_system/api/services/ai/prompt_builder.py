@@ -325,6 +325,11 @@ LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substitue
   -> "subtype": "ray_diagram_lens" | "ray_diagram_mirror" | "refraction" | "total_internal_reflection"
      "feature": "none" | "convex" | "concave" | "plane" | "image_formation"
 
+  -> "subtype": "reflection" | "ray_diagram_mirror" | "prism" | "human_eye" | "optical_instrument"
+     "feature": "plane"                                   (reflection, ray_diagram_mirror)
+              | "deviation" | "dispersion"                (prism)
+              | "structure" | "myopia" | "hypermetropia"  (human_eye)
+              | "simple_microscope" | "compound_microscope" | "astronomical_telescope"  (optical_instrument)
   --------------------------------------------------
   6. SOUND & WAVE
   --------------------------------------------------
@@ -1884,6 +1889,143 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+--- PHYSICS: LAW OF REFLECTION (plane mirror) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "reflection", "feature": "plane" }},
+  "elements": [
+    {{ "id": "mirror_1", "label": "Plane Mirror", "type": "mirror" }},
+    {{ "id": "normal_1", "label": "Normal", "type": "normal_line" }},
+    {{ "id": "incident_ray_1", "label": "Incident Ray", "type": "ray", "role": "incident", "angle": 35 }},
+    {{ "id": "reflected_ray_1", "label": "Reflected Ray", "type": "ray", "role": "reflected" }},
+    {{ "id": "angle_i", "label": "$\\theta_i = 35^\\circ$", "type": "angle", "start_element": "incident_ray_1", "end_element": "normal_1", "value": "35" }},
+    {{ "id": "angle_r", "label": "$\\theta_r$", "type": "angle", "start_element": "reflected_ray_1", "end_element": "normal_1" }}
+  ],
+  "relationships": [
+    {{ "type": "reflects_at_boundary", "elements": ["incident_ray_1", "reflected_ray_1"], "via": "mirror_1", "show_reflected_ray": true }}
+  ]
+}}
+
+--- PHYSICS: PLANE MIRROR IMAGE FORMATION ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "ray_diagram_mirror", "feature": "plane" }},
+  "elements": [
+    {{ "id": "mirror_1", "label": "Plane Mirror", "type": "mirror" }},
+    {{ "id": "object_1", "label": "Object", "type": "object_arrow", "height": 4, "distance_from_mirror": 6, "side": "left" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_image_of", "elements": ["object_1"], "via": "mirror_1", "show_image": true }},
+    {{ "type": "ray_construction", "style": "standard", "elements": ["object_1", "mirror_1"], "rays": ["perpendicular_to_mirror", "oblique_to_mirror"] }}
+  ]
+}}
+
+--- PHYSICS: PRISM DEVIATION ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "prism", "feature": "deviation" }},
+  "elements": [
+    {{ "id": "prism_1", "label": "Glass Prism ($n=1.5$)", "type": "prism", "index": 1.5, "apex_angle": 60 }},
+    {{ "id": "incident_ray_1", "label": "Incident Ray", "type": "ray", "role": "incident", "angle": 40 }},
+    {{ "id": "angle_A", "label": "$A = 60^\\circ$", "type": "angle", "at": "apex", "value": "60" }}
+  ],
+  "relationships": [
+    {{ "type": "refracts_through", "elements": ["incident_ray_1"], "via": "prism_1", "condition": "general", "show_emergent_ray": true, "show_deviation": false }}
+  ]
+}}
+# condition: "general" | "minimum_deviation" (the ray may then omit "angle"; it is derived)
+
+--- PHYSICS: PRISM DISPERSION ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "prism", "feature": "dispersion" }},
+  "elements": [
+    {{ "id": "prism_1", "label": "Glass Prism", "type": "prism", "apex_angle": 60 }},
+    {{ "id": "incident_ray_1", "label": "White Light", "type": "ray", "role": "incident", "color": "white", "angle": 45 }},
+    {{ "id": "screen_1", "label": "Screen", "type": "screen" }}
+  ],
+  "relationships": [
+    {{ "type": "disperses", "elements": ["incident_ray_1"], "via": "prism_1", "show_spectrum": true, "label_colors": true }}
+  ]
+}}
+# label_colors: false for "which colour deviates most" style questions
+
+--- PHYSICS: HUMAN EYE STRUCTURE ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "human_eye", "feature": "structure" }},
+  "elements": [
+    {{ "id": "part_1", "part": "cornea", "label": "A", "type": "eye_part" }},
+    {{ "id": "part_2", "part": "iris", "label": "B", "type": "eye_part" }},
+    {{ "id": "part_3", "part": "retina", "label": "C", "type": "eye_part" }}
+  ],
+  "relationships": [
+    {{ "type": "labels_parts", "elements": ["part_1", "part_2", "part_3"], "show_labels": true }}
+  ]
+}}
+# part vocabulary: cornea, aqueous_humour, iris, pupil, lens, ciliary_muscles,
+# vitreous_humour, retina, optic_nerve, sclera, blind_spot, fovea
+
+--- PHYSICS: EYE DEFECT (myopia; hypermetropia is the same with feature changed and a convex corrective lens) ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "human_eye", "feature": "myopia" }},
+  "elements": [
+    {{ "id": "eye_1", "label": "Eye", "type": "eye" }},
+    {{ "id": "object_1", "label": "Distant Object", "type": "object_arrow", "side": "left", "distance_label": "$100\\text{ cm}$" }},
+    {{ "id": "retina_1", "label": "Retina", "type": "retina" }},
+    {{ "id": "corrective_lens_1", "label": "Concave Lens", "type": "lens", "shape": "concave", "role": "corrective" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_image_of", "elements": ["object_1"], "via": "eye_1", "show_image": true }},
+    {{ "type": "corrected_by", "elements": ["eye_1", "corrective_lens_1"], "show_correction": false }}
+  ]
+}}
+# image position (in front of / behind / on the retina) is NOT in the payload.
+# It is derived from feature + show_correction. distance_label only if the question states it.
+
+--- PHYSICS: SIMPLE MICROSCOPE ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "optical_instrument", "feature": "simple_microscope" }},
+  "elements": [
+    {{ "id": "lens_1", "label": "Convex Lens", "type": "lens", "focal_length": 5 }},
+    {{ "id": "object_1", "label": "Object", "type": "object_arrow", "height": 2, "distance_from_lens": 4, "side": "left" }},
+    {{ "id": "F1", "label": "F", "type": "focal_point", "side": "left" }},
+    {{ "id": "eye_1", "label": "Eye", "type": "observer", "side": "right" }}
+  ],
+  "relationships": [
+    {{ "type": "forms_image_of", "elements": ["object_1"], "via": "lens_1", "show_image": true }},
+    {{ "type": "ray_construction", "style": "standard", "elements": ["object_1", "lens_1"], "rays": ["parallel_to_axis", "through_center"] }}
+  ]
+}}
+
+--- PHYSICS: COMPOUND MICROSCOPE ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "optical_instrument", "feature": "compound_microscope" }},
+  "elements": [
+    {{ "id": "objective_1", "label": "Objective", "type": "lens", "role": "objective", "focal_length": 1 }},
+    {{ "id": "eyepiece_1", "label": "Eyepiece", "type": "lens", "role": "eyepiece", "focal_length": 5 }},
+    {{ "id": "object_1", "label": "Object", "type": "object_arrow", "height": 1, "distance_from_lens": 1.5, "side": "left" }}
+  ],
+  "relationships": [
+    {{ "type": "lens_separation", "elements": ["objective_1", "eyepiece_1"], "distance": 12 }},
+    {{ "type": "forms_image_of", "elements": ["object_1"], "via": "objective_1", "result_id": "image_1", "show_image": true }},
+    {{ "type": "forms_image_of", "elements": ["image_1"], "via": "eyepiece_1", "result_id": "image_2", "show_image": true }}
+  ]
+}}
+# distance_from_lens on the object is measured from the objective.
+# The first lens's image becomes the second lens's object, chained by result_id.
+
+--- PHYSICS: ASTRONOMICAL TELESCOPE ---
+"visual": {{
+  "figure": {{ "type": "physics", "subtype": "optical_instrument", "feature": "astronomical_telescope" }},
+  "elements": [
+    {{ "id": "objective_1", "label": "Objective", "type": "lens", "role": "objective", "focal_length": 100 }},
+    {{ "id": "eyepiece_1", "label": "Eyepiece", "type": "lens", "role": "eyepiece", "focal_length": 5 }},
+    {{ "id": "source_1", "label": "Distant Object", "type": "distant_source" }}
+  ],
+  "relationships": [
+    {{ "type": "lens_separation", "elements": ["objective_1", "eyepiece_1"], "distance": 105 }},
+    {{ "type": "adjustment", "elements": ["eyepiece_1"], "value": "normal" }},
+    {{ "type": "forms_image_of", "elements": ["source_1"], "via": "objective_1", "result_id": "image_1", "show_image": true }},
+    {{ "type": "forms_image_of", "elements": ["image_1"], "via": "eyepiece_1", "result_id": "image_2", "show_image": true }}
+  ]
+}}
+# adjustment: "normal" (final image at infinity, separation = fo + fe) | "near_point"
 
 
 ##################################################
