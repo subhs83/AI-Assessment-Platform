@@ -548,7 +548,7 @@ export function renderComponent(el, pos, strokeWidth, fontSize, isMobile) {
 
           return (
             <g transform={`translate(${labelX},${labelY}) rotate(${displayAngle})`}>
-              <foreignObject x={isMobile ? -50: -40} y={isMobile? -15: -10} width={100} height={22} style={{ overflow: "visible" }}>
+              <foreignObject x={isMobile ? -45: -40} y={isMobile? -20: -10} width={100} height={22} style={{ overflow: "visible" }}>
                 <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize*(isMobile ? 1.1 : 1.3), fontWeight: 700, color: CIRCUIT_COLORS.label }}>
                   <MathText text={el.label} />
                 </div>
