@@ -110,6 +110,7 @@ BLOOM'S TAXONOMY: {blooms_level}
 - Write inline LaTeX using $...$ inside "question_text", options, and "explanation".
 - Use LaTeX backslashes only for mathematical notation and symbols, not for ordinary text. (e.g., "\\\\frac{{1}}{{2}}", "\\\\angle ABC", "\\\\theta", "\\\\pi r^2").
 - Do not use Unicode superscripts or subscripts when LaTeX can represent them.
+- When LaTeX appears inside a JSON string, every backslash MUST be escaped according to JSON syntax.
 
 # QUESTION & EXPLANATION CONSTRAINTS
 
@@ -253,6 +254,12 @@ use `show_image: false`.
 Rule of thumb: if a correct answer option is itself a location on the
 principal axis relative to the lens/mirror, mark show_image: false.
 Otherwise, default to show_image: true.
+
+Angle labels (the "label" field on any "angle" element) must contain ONLY the
+numeric value in math notation (e.g. "$45^\\circ$"), never a verdict or
+commentary ("(Incorrect)", "(wrong)", "(should be X)"). The figure must show
+the drawn angle without revealing whether it's right or wrong — that judgment
+is what the question is testing.
 
 LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substituent above and TWO below (e.g. formate HCO2-, where H sits above C and two O's sit below), use "x_position": "top" for the upper atom, and "side": "bottom_left" | "bottom_right" for the two lower atoms. Do not reuse "top_left"/"top_right" for this arrangement — those are reserved for the opposite case (2 above, 1 below).
 --------------------------------------------------
@@ -1966,7 +1973,7 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   "figure": {{ "type": "physics", "subtype": "human_eye", "feature": "myopia" }},
   "elements": [
     {{ "id": "eye_1", "label": "Eye", "type": "eye" }},
-    {{ "id": "object_1", "label": "Distant Object", "type": "object_arrow", "side": "left", "distance_label": "$100\\text{ cm}$" }},
+    {{ "id": "object_1", "label": "Distant Object", "type": "object_arrow", "side": "left", "distance_label": "$100\\text{{ cm}}$" }},
     {{ "id": "retina_1", "label": "Retina", "type": "retina" }},
     {{ "id": "corrective_lens_1", "label": "Concave Lens", "type": "lens", "shape": "concave", "role": "corrective" }}
   ],
@@ -2277,6 +2284,28 @@ When "visual_required": true, return the corresponding semantic "visual" payload
     {{ "bond_type": "single", "elements": ["atom_n", "atom_h1"], "type": "forms_bond" }},
     {{ "bond_type": "single", "elements": ["atom_n", "atom_h2"], "type": "forms_bond" }},
     {{ "bond_type": "single", "elements": ["atom_n", "atom_h3"], "type": "forms_bond" }}
+  ]
+}}
+
+--- BOND ANGLE PAYLOAD ---
+"visual": {{
+  "figure": {{
+    "type": "chemistry",
+    "subtype": "molecular_geometry",
+    "feature": "bond_angle",
+    "electron_geometry": "trigonal_planar"
+  }},
+  "elements": [
+    {{ "id": "atom_c", "label": "C", "position_role": "center", "type": "atom" }},
+    {{ "id": "atom_o1", "label": "O", "position_role": "top", "type": "atom" }},
+    {{ "id": "atom_o2", "label": "O", "position_role": "bottom_left", "type": "atom" }},
+    {{ "id": "atom_h", "label": "H", "position_role": "bottom_right", "type": "atom" }}
+  ],
+  "relationships": [
+    {{ "bond_type": "double", "elements": ["atom_c", "atom_o1"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_c", "atom_o2"], "type": "forms_bond" }},
+    {{ "bond_type": "single", "elements": ["atom_c", "atom_h"], "type": "forms_bond" }},
+    {{ "id": "angle_marker", "elements": ["atom_o2", "atom_c", "atom_h"], "type": "marks_bond_angle" }}
   ]
 }}
 

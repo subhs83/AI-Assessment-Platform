@@ -33,11 +33,16 @@ import {
 
 import {
   calculateConvexLensPositions,calculateConcaveMirrorPositions,calculateRefractionPositions,
-  calculateTIRPositions, calculateConcaveLensPositions, calculateConvexMirrorPositions
+  calculateTIRPositions, calculateConcaveLensPositions, calculateConvexMirrorPositions,
+  calculateLawOfReflectionPositions, calculatePlaneMirrorPositions, calculatePrismDeviationPositions,
+  calculatePrismDispersionPositions, calculateSimpleMicroscopePositions
+
 } from "./physics/rayOptics/rayOpticsPositions"
 import {
   renderConvexLensSystem, renderConcaveMirrorSystem,renderRefractionSystem,
-  renderTIRSystem, renderConcaveLensSystem, renderConvexMirrorSystem
+  renderTIRSystem, renderConcaveLensSystem, renderConvexMirrorSystem,
+  renderLawOfReflectionSystem, renderPlaneMirrorSystem, renderPrismDeviationSystem,
+  renderPrismDispersionSystem, renderSimpleMicroscopeSystem
 } from "./physics/rayOptics/rayOpticsRender"
 
 import {
@@ -226,6 +231,10 @@ else if (figure.subtype === "ray_diagram_mirror" ){
    plane = calculateConvexMirrorPositions({ elements, relationships, isMobile });
    content = renderConvexMirrorSystem(plane, elements, isMobile);
   }
+  else if (figure.feature === "plane") {
+  plane = calculatePlaneMirrorPositions({ elements, relationships, isMobile });
+  content = renderPlaneMirrorSystem(plane, elements, isMobile);
+}
 }
 // else if (figure.subtype === "ray_diagram_mirror" && figure.feature === "concave") { ... }
 else if (figure.subtype === "refraction") {
@@ -237,6 +246,23 @@ else if (figure.subtype === "total_internal_reflection") {
   content = renderTIRSystem(plane, elements, isMobile);
 }
  
+else if (figure.subtype === "reflection" && figure.feature === "plane") {
+  plane = calculateLawOfReflectionPositions({ elements, relationships, isMobile });
+  content = renderLawOfReflectionSystem(plane, elements, isMobile);
+} 
+
+else if (figure.subtype === "prism" && figure.feature === "deviation") {
+  plane = calculatePrismDeviationPositions({ elements, relationships, isMobile });
+  content = renderPrismDeviationSystem(plane, elements, isMobile);
+} else if (figure.subtype === "prism" && figure.feature === "dispersion") {
+  plane = calculatePrismDispersionPositions({ elements, relationships, isMobile });
+  content = renderPrismDispersionSystem(plane, elements, isMobile);
+}
+
+else if (figure.subtype === "optical_instrument" && figure.feature === "simple_microscope") {
+  plane = calculateSimpleMicroscopePositions({ elements, relationships, isMobile });
+  content = renderSimpleMicroscopeSystem(plane, elements, isMobile);
+}
 
 else if (figure.subtype === "electric_field" && figure.feature === "point_charge") {
   const variant = detectPointChargeVariant(elements);

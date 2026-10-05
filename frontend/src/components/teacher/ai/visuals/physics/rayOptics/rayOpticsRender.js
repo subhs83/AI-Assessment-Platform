@@ -1,8 +1,8 @@
 import { getSvgDimensions } from "../../geometry/geometryHelpers";
 import { 
     renderVectorToPoint, renderLensSymbol, renderDimensionLine, OPTICS_COLORS,
-    renderMathLabel,renderConcaveMirrorSymbol,renderVerticalDimensionLine,
-    renderDirectionAngleArc, angleOfVector,mediumFill, renderMidRayArrow,
+    renderMathLabel,renderConcaveMirrorSymbol,renderVerticalDimensionLine, renderEyeIcon,
+    renderDirectionAngleArc, angleOfVector,mediumFill, renderMidRayArrow, closerNormalSide,
     renderConcaveLensSymbol, interpretRayPath, buildStubRayPaths, lineAtX, intersectLines,
     interpretMirrorRayPath, renderConvexMirrorSymbol, convexMirrorCurve, intersectWithSurface
     } from "./rayOpticsHelpers";
@@ -457,6 +457,167 @@ export function renderConvexMirrorSystem(plane, elements, isMobile = false) {
       {rayLabels.filter(Boolean).map((l, i) => (
         <g key={`label-${i}`}>{renderMathLabel(l.x, l.y, l.text, fontSize, l.color)}</g>
       ))}
+    </g>
+  );
+}
+
+
+export function renderLawOfReflectionSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize, width } = getSvgDimensions(isMobile);
+  const { axisX, mirrorY, vertex, incidentFrom, reflectedTo, incidentAngleLabel, reflectedAngleLabel, showReflectedRay, measuredFromSurface } = plane;
+  const towardSource = { dx: incidentFrom.x - vertex.x, dy: incidentFrom.y - vertex.y };
+
+  return (
+    <g>
+      <line x1={0} y1={mirrorY} x2={width} y2={mirrorY} stroke={OPTICS_COLORS.marker} strokeWidth={strokeWidth * 1.5} />
+      <line x1={axisX} y1={mirrorY - 70} x2={axisX} y2={mirrorY + 20} stroke={OPTICS_COLORS.axis} strokeDasharray="4,3" strokeWidth={strokeWidth * 0.8} />
+
+      <line x1={incidentFrom.x} y1={incidentFrom.y} x2={vertex.x} y2={vertex.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+      {renderMidRayArrow(incidentFrom, vertex, OPTICS_COLORS.ray, strokeWidth)}
+      {incidentAngleLabel && renderDirectionAngleArc(
+        vertex,
+        measuredFromSurface ? angleOfVector(towardSource.dx >= 0 ? 1 : -1, 0) : angleOfVector(0, -1),
+        angleOfVector(towardSource.dx, towardSource.dy),
+        40, OPTICS_COLORS.object, incidentAngleLabel, fontSize
+      )}
+
+      {showReflectedRay && (
+        <>
+          <line x1={vertex.x} y1={vertex.y} x2={reflectedTo.x} y2={reflectedTo.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+          {renderMidRayArrow(vertex, reflectedTo, OPTICS_COLORS.ray, strokeWidth)}
+          {reflectedAngleLabel && renderDirectionAngleArc(vertex, angleOfVector(0, -1), angleOfVector(reflectedTo.x - vertex.x, reflectedTo.y - vertex.y), 40, OPTICS_COLORS.image, reflectedAngleLabel, fontSize)}
+        </>
+      )}
+    </g>
+  );
+}
+
+export function renderPlaneMirrorSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { mirrorX, axisY, positions, showImage } = plane;
+  const { object, image } = positions;
+  const objectTip = { x: object.x, y: object.tipY };
+  const mirrorFoot = { x: mirrorX, y: object.baseY };
+
+  return (
+    <g>
+      <line x1={mirrorX} y1={0} x2={mirrorX} y2={height} stroke={OPTICS_COLORS.marker} strokeWidth={strokeWidth * 1.5} />
+      <line x1={0} y1={axisY} x2={width} y2={axisY} stroke={OPTICS_COLORS.axis} strokeDasharray="4,3" strokeWidth={strokeWidth * 0.6} />
+
+      {renderVectorToPoint({ x: object.x, y: object.baseY, toX: object.x, toY: object.tipY, color: OPTICS_COLORS.object })}
+      {renderDimensionLine(object.x, mirrorX, axisY + 30, object.distanceLabel, strokeWidth, fontSize)}
+
+      <line x1={object.x} y1={object.baseY} x2={mirrorFoot.x} y2={mirrorFoot.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+      {renderMidRayArrow({ x: object.x, y: object.baseY }, mirrorFoot, OPTICS_COLORS.ray, strokeWidth)}
+
+      <line x1={objectTip.x} y1={objectTip.y} x2={mirrorX} y2={objectTip.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+      {renderMidRayArrow(objectTip, { x: mirrorX, y: objectTip.y }, OPTICS_COLORS.ray, strokeWidth)}
+
+      {showImage && (
+        <>
+          {renderVectorToPoint({ x: image.x, y: image.baseY, toX: image.x, toY: image.tipY, color: OPTICS_COLORS.image, dashed: true })}
+          <line x1={mirrorX} y1={objectTip.y} x2={image.x} y2={image.tipY} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} strokeDasharray="5,4" />
+        </>
+      )}
+    </g>
+  );
+}
+
+export function renderPrismDeviationSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+  const { geo, P1, P2, incidentFrom, emergentTo, undeviatedTo, i1Label, deltaLabel, showEmergentRay, r1Label, r2Label, eLabel } = plane;
+
+  return (
+    <g>
+      <path d={`M ${geo.apexPoint.x} ${geo.apexPoint.y} L ${geo.leftBottom.x} ${geo.leftBottom.y} L ${geo.rightBottom.x} ${geo.rightBottom.y} Z`}
+        fill="url(#lens-glass-gradient)" fillOpacity={0.4} stroke="#1F6E8C" strokeWidth={strokeWidth * 1.3} strokeLinejoin="round" />
+
+      <line x1={P1.x - geo.dirLeft.y * 40} y1={P1.y + geo.dirLeft.x * 40} x2={P1.x + geo.dirLeft.y * 40} y2={P1.y - geo.dirLeft.x * 40}
+        stroke={OPTICS_COLORS.axis} strokeDasharray="4,3" strokeWidth={strokeWidth * 0.7} />
+      <line x1={P2.x - geo.dirRight.y * 40} y1={P2.y + geo.dirRight.x * 40} x2={P2.x + geo.dirRight.y * 40} y2={P2.y - geo.dirRight.x * 40}
+        stroke={OPTICS_COLORS.axis} strokeDasharray="4,3" strokeWidth={strokeWidth * 0.7} />
+
+      <line x1={incidentFrom.x} y1={incidentFrom.y} x2={P1.x} y2={P1.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+      {renderMidRayArrow(incidentFrom, P1, OPTICS_COLORS.ray, strokeWidth)}
+
+      <line x1={P1.x} y1={P1.y} x2={P2.x} y2={P2.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+      {renderMidRayArrow(P1, P2, OPTICS_COLORS.ray, strokeWidth)}
+
+      {showEmergentRay && emergentTo && (
+        <>
+          <line x1={P2.x} y1={P2.y} x2={emergentTo.x} y2={emergentTo.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+          {renderMidRayArrow(P2, emergentTo, OPTICS_COLORS.ray, strokeWidth)}
+        </>
+      )}
+
+      {undeviatedTo && (
+        <line x1={P2.x} y1={P2.y} x2={undeviatedTo.x} y2={undeviatedTo.y} stroke={OPTICS_COLORS.ray} strokeDasharray="5,4" strokeWidth={strokeWidth} />
+      )}
+
+      {i1Label && (() => {
+        const dir = angleOfVector(incidentFrom.x - P1.x, incidentFrom.y - P1.y);
+        return renderDirectionAngleArc(P1, closerNormalSide(geo.normalLeftDeg, dir), dir, 36, OPTICS_COLORS.object, i1Label, fontSize);
+      })()}
+
+      {r1Label && (() => {
+        const dir = angleOfVector(P2.x - P1.x, P2.y - P1.y);
+        return renderDirectionAngleArc(P1, closerNormalSide(geo.normalLeftDeg, dir), dir, 36, OPTICS_COLORS.ray, r1Label, fontSize);
+      })()}
+
+      {r2Label && (() => {
+        const dir = angleOfVector(P1.x - P2.x, P1.y - P2.y);
+        return renderDirectionAngleArc(P2, closerNormalSide(geo.normalRightDeg, dir), dir, 36, OPTICS_COLORS.ray, r2Label, fontSize);
+      })()}
+
+      {eLabel && emergentTo && (() => {
+        const dir = angleOfVector(emergentTo.x - P2.x, emergentTo.y - P2.y);
+        return renderDirectionAngleArc(P2, closerNormalSide(geo.normalRightDeg, dir), dir, 24, OPTICS_COLORS.object, eLabel, fontSize);
+      })()}
+
+      {deltaLabel && undeviatedTo && emergentTo && renderDirectionAngleArc(P2, angleOfVector(undeviatedTo.x - P2.x, undeviatedTo.y - P2.y), angleOfVector(emergentTo.x - P2.x, emergentTo.y - P2.y), 50, OPTICS_COLORS.image, deltaLabel, fontSize)}
+    </g>
+  );
+}
+
+export function renderPrismDispersionSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
+  const { geo, P1, incidentFrom, bands, labelColors, colorNames } = plane;
+
+  return (
+    <g>
+      <path d={`M ${geo.apexPoint.x} ${geo.apexPoint.y} L ${geo.leftBottom.x} ${geo.leftBottom.y} L ${geo.rightBottom.x} ${geo.rightBottom.y} Z`}
+        fill="url(#lens-glass-gradient)" fillOpacity={0.4} stroke="#1F6E8C" strokeWidth={strokeWidth * 1.3} strokeLinejoin="round" />
+      <line x1={incidentFrom.x} y1={incidentFrom.y} x2={P1.x} y2={P1.y} stroke={OPTICS_COLORS.object} strokeWidth={strokeWidth * 1.3} />
+      {renderMidRayArrow(incidentFrom, P1, OPTICS_COLORS.object, strokeWidth)}
+      {bands.map((b, i) => (
+        <g key={i}>
+          <line x1={P1.x} y1={P1.y} x2={b.P2.x} y2={b.P2.y} stroke={b.color} strokeWidth={strokeWidth} strokeOpacity={0.4} />
+          <line x1={b.P2.x} y1={b.P2.y} x2={b.emergentTo.x} y2={b.emergentTo.y} stroke={b.color} strokeWidth={strokeWidth * 1.2} />
+          {renderMidRayArrow(b.P2, b.emergentTo, b.color, strokeWidth)}
+          {labelColors && renderMathLabel(b.emergentTo.x + 14, b.emergentTo.y, colorNames[i], fontSize * 0.75, b.color)}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+export function renderSimpleMicroscopeSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { fontSize } = getSvgDimensions(isMobile);
+  const observerPos = plane.positions.observer;
+  return (
+    <g>
+      {renderConvexLensSystem(plane, elements, isMobile)}
+      {observerPos && (
+        <g>
+          {renderEyeIcon(observerPos.x, observerPos.y)}
+          {renderMathLabel(observerPos.x, observerPos.y + 28, "Eye", fontSize, OPTICS_COLORS.marker)}
+        </g>
+      )}
     </g>
   );
 }

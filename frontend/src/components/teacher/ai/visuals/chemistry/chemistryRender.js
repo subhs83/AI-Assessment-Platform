@@ -2,7 +2,7 @@
 import { getSvgDimensions } from "../geometry/geometryHelpers";
 import {
   renderBond, renderLonePairs, renderAtomLabel, renderChargeLabel, extractLonePairRels, 
-  renderIonBrackets, renderWedgeBond, renderDashBond,
+  renderIonBrackets, renderWedgeBond, renderDashBond, renderBondAngleArc,
  } from "./chemistryHelpers";
 
 export function renderLewisStructure(plane, relationships, figure, isMobile = false) {
@@ -116,10 +116,12 @@ export function renderResonanceStructures(plane, relationships, isMobile = false
 }
 
 
-export function renderMolecularGeometry(plane, isMobile = false) {
+export function renderMolecularGeometry(plane, relationships, isMobile = false) {
   if (!plane) return null;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
   const { positions, bondDrawList, lonePairSlots, labelClearance } = plane;
+
+  const angleRel = relationships?.find((r) => r.type === "marks_bond_angle");
 
   return (
     <g>
@@ -129,6 +131,14 @@ export function renderMolecularGeometry(plane, isMobile = false) {
         if (b.style === "dash") return renderDashBond(p1, p2, labelClearance, `bond-${i}`);
         return renderBond(b.rel, positions, strokeWidth, `bond-${i}`, labelClearance);
       })}
+
+      {/* Bond angle arc — drawn BEFORE atom labels so the labels sit on top */}
+      {angleRel && (() => {
+        const [id1, vertexId, id2] = angleRel.elements;
+        const vertex = positions[vertexId], p1 = positions[id1], p2 = positions[id2];
+        if (!vertex || !p1 || !p2) return null;
+        return renderBondAngleArc(vertex, p1, p2, "angle-arc");
+      })()}
 
       {Object.entries(positions).map(([id, p]) => renderAtomLabel(id, p, fontSize))}
 
@@ -142,8 +152,8 @@ export function renderMolecularGeometry(plane, isMobile = false) {
         );
       })}
 
-      {/* has_vsepr_geometry is NEVER rendered (it is the answer), and no
-          bond-angle values are drawn (Q2-style questions give them as options). */}
+      {/* No angle VALUE is ever rendered — the arc marks WHICH angle
+          the question is about, but the number is always the answer. */}
     </g>
   );
 }

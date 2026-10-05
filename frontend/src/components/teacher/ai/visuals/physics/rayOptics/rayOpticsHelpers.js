@@ -171,12 +171,15 @@ export function renderVerticalDimensionLine(x, y1, y2, label, strokeWidth, fontS
 
 // add near renderDimensionLine / OPTICS_COLORS — shared across the optics family
 export function renderMathLabel(x, y, text, fontSize, color = "#1E293B") {
-  const boxWidth = Math.max(30, (text?.length || 0) * (fontSize * 0.85));
+  const safeText = typeof text === "string"
+    ? text.replace(/\\\\/g, "\\").replace(/\s*\([^)]*\)\s*$/, "")
+    : text;
+  const boxWidth = Math.max(30, (safeText?.length || 0) * (fontSize * 0.85));
   const boxHeight = fontSize * 1.8;
   return (
     <foreignObject x={x - boxWidth / 2} y={y - boxHeight / 2} width={boxWidth} height={boxHeight} overflow="visible">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize, color, fontWeight: 600, whiteSpace: "nowrap" }}>
-        <MathText text={text} />
+        <MathText text={safeText} />
       </div>
     </foreignObject>
   );
@@ -206,7 +209,7 @@ export function renderDirectionAngleArc(vertex, thetaFromDeg, thetaToDeg, radius
   const STEPS = 16;
   const points = Array.from({ length: STEPS + 1 }, (_, i) => pointAt(thetaFromDeg + (diff * i) / STEPS, radius));
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  const labelPoint = pointAt(thetaFromDeg + diff / 2, radius + 18);
+  const labelPoint = pointAt(thetaFromDeg + diff / 2, radius + 32); // was radius + 18
 
   return (
     <g>
@@ -425,4 +428,45 @@ export function intersectLines(a1, a2, b1, b2) {
   if (Math.abs(d) < 1e-9) return null;
   const t = ((b1.x - a1.x) * (b2.y - b1.y) - (b1.y - a1.y) * (b2.x - b1.x)) / d;
   return { x: a1.x + t * (a2.x - a1.x), y: a1.y + t * (a2.y - a1.y) };
+}
+
+
+
+// Shared by deviation and dispersion
+export function buildPrismGeometry(apexAngleDeg, apexPoint, faceLength) {
+  const half = (apexAngleDeg / 2) * Math.PI / 180;
+  const dirLeft = { x: -Math.sin(half), y: Math.cos(half) };
+  const dirRight = { x: Math.sin(half), y: Math.cos(half) };
+  return {
+    apexPoint,
+    leftBottom: { x: apexPoint.x + dirLeft.x * faceLength, y: apexPoint.y + dirLeft.y * faceLength },
+    rightBottom: { x: apexPoint.x + dirRight.x * faceLength, y: apexPoint.y + dirRight.y * faceLength },
+    dirLeft, dirRight,
+    normalLeftDeg: -(apexAngleDeg / 2) - 90,
+    normalRightDeg: (apexAngleDeg / 2) + 90,
+  };
+}
+
+export function pointAtDeg(origin, deg, r) {
+  const rad = (deg * Math.PI) / 180;
+  return { x: origin.x + Math.sin(rad) * r, y: origin.y + Math.cos(rad) * r };
+}
+
+// pick whichever orientation of a normal LINE (normalDeg or normalDeg+180) is
+// within 90° of the real ray direction — guarantees a small, correct arc
+// without needing to hand-track inward/outward semantics per face
+export function closerNormalSide(normalDeg, rayDirDeg) {
+  const diff = ((rayDirDeg - normalDeg + 180) % 360 + 360) % 360 - 180;
+  return Math.abs(diff) <= 90 ? normalDeg : normalDeg + 180;
+}
+
+
+export function renderEyeIcon(cx, cy, size = 14) {
+  return (
+    <g>
+      <path d={`M ${cx - size} ${cy} Q ${cx} ${cy - size * 0.7} ${cx + size} ${cy} Q ${cx} ${cy + size * 0.7} ${cx - size} ${cy} Z`}
+        fill="#FFFFFF" stroke={OPTICS_COLORS.marker} strokeWidth={1.5} />
+      <circle cx={cx} cy={cy} r={size * 0.35} fill={OPTICS_COLORS.marker} />
+    </g>
+  );
 }

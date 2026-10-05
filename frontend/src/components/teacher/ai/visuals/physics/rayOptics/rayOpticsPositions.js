@@ -1,11 +1,12 @@
 import { getSvgDimensions,} from "../../geometry/geometryHelpers";
-import {getShowImage} from "./rayOpticsHelpers"
+import {getShowImage, pointAtDeg, intersectLines, buildPrismGeometry} from "./rayOpticsHelpers"
 export function calculateConvexLensPositions({ elements, relationships, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
   const showImage = getShowImage(relationships);
   const lensEl = elements.find((e) => e.type === "lens");
   const objectEl = elements.find((e) => e.type === "object_arrow");
-  const focalEls = elements.filter((e) => e.type === "focal_point");
+  // calculateConvexLensPositions — fix the focalEls filter:
+  const focalEls = elements.filter((e) => e.type === "focal_point" && e.show !== false);
 
   const f = lensEl.focal_length;
   const uMag = objectEl.distance_from_lens;
@@ -367,4 +368,191 @@ export function calculateConvexMirrorPositions({ elements, relationships, isMobi
   const frontFPoint = { x: mirrorX - fDist * scale, y: axisY };
 
   return { mirrorX, axisY, positions, showImage, useExplicitRays, rayConstructionRays: rayConstructionRel?.rays, frontFPoint, extend: isMobile ? 35 : 55 };
+}
+
+export function calculateLawOfReflectionPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const mirrorEl = elements.find((e) => e.type === "mirror");
+  const incidentEl = elements.find((e) => e.type === "ray" && e.role === "incident");
+  const reflectedEl = elements.find((e) => e.type === "ray" && e.role === "reflected");
+  const angleIEl = elements.find((e) => e.type === "angle" && e.start_element === incidentEl?.id);
+  const angleREl = elements.find((e) => e.type === "angle" && e.start_element === reflectedEl?.id);
+
+  const axisX = SVG_WIDTH / 2;
+  const mirrorY = SVG_HEIGHT / 2;
+  const vertex = { x: axisX, y: mirrorY };
+
+  const rawValue = Number(angleIEl?.value);
+  const measuredFromSurface = angleIEl?.end_element === mirrorEl?.id;
+  const incidentAngleDeg = Number.isFinite(rawValue) ? (measuredFromSurface ? 90 - rawValue : rawValue) : (incidentEl?.angle ?? 45);
+
+  // Trust angle_i.value over the ray's own "angle" field — confirmed to disagree in real data.
+  if (Number.isFinite(rawValue) && incidentEl?.angle != null && Math.abs(incidentAngleDeg - incidentEl.angle) > 0.5) {
+    console.warn(`[reflection] incident_ray.angle (${incidentEl.angle}) disagrees with the stated angle (${incidentAngleDeg}). Rendering from the stated value.`);
+  }
+
+  const rawReflected = Number(angleREl?.value);
+  const reflectedAngleDeg = Number.isFinite(rawReflected) ? rawReflected : incidentAngleDeg; // law of reflection by default; explicit value wins for wrong-ray distractors
+
+  const RAY_RUN_PX = isMobile ? 90 : 130;
+  const rad = (incidentAngleDeg * Math.PI) / 180;
+  const incidentFrom = { x: axisX - Math.tan(rad) * RAY_RUN_PX, y: mirrorY - RAY_RUN_PX };
+  const radR = (reflectedAngleDeg * Math.PI) / 180;
+  const reflectedTo = { x: axisX + Math.tan(radR) * RAY_RUN_PX, y: mirrorY - RAY_RUN_PX };
+
+  return {
+    axisX, mirrorY, vertex, incidentFrom, reflectedTo,
+    incidentAngleLabel: angleIEl?.label, reflectedAngleLabel: angleREl?.label,
+    showReflectedRay: relationships.find((r) => r.type === "reflects_at_boundary")?.show_reflected_ray !== false,
+    measuredFromSurface,
+  };
+}
+
+export function calculatePlaneMirrorPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+  const objectEl = elements.find((e) => e.type === "object_arrow");
+  const uMag = objectEl.distance_from_mirror;
+  const ho = objectEl.height;
+  const showImage = getShowImage(relationships);
+
+  const mirrorX = SVG_WIDTH / 2;
+  const scale = Math.min((SVG_WIDTH / 2 - paddingX) / uMag, 12);
+  const axisY = SVG_HEIGHT / 2;
+  const heightScale = Math.min((SVG_HEIGHT / 2 - paddingY - 20) / ho, scale * 1.5);
+
+  return {
+    mirrorX, axisY, showImage,
+    positions: {
+      object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+      image: { x: mirrorX + uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale }, // image distance = object distance, always
+    },
+  };
+}
+
+export function calculatePrismDeviationPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const prismEl = elements.find((e) => e.type === "prism");
+  const incidentEl = elements.find((e) => e.type === "ray" && e.role === "incident");
+  const angleAEl = elements.find((e) => e.type === "angle" && e.at === "apex");
+  const angleI1El = elements.find((e) => e.type === "angle" && e.at === "incident_surface");
+  const angleDeltaEl = elements.find((e) => e.type === "angle" && e.at === "deviation");
+  const angleR1El = elements.find((e) => e.type === "angle" && e.between_ray_and_normal === "incident");
+  const angleR2El = elements.find((e) => e.type === "angle" && e.between_ray_and_normal === "emergent");
+  const angleEEl = elements.find((e) => e.type === "angle" && e.at === "emergent_surface");
+
+
+  const rel = relationships.find((r) => r.type === "refracts_through");
+  const isMinDeviation = rel?.condition === "minimum_deviation";
+  const n = prismEl.index ?? 1.5;
+  const A = prismEl.apex_angle ?? Number(angleAEl?.value) ?? 60;
+
+  const rawI1 = Number(angleI1El?.value);
+  const i1 = Number.isFinite(rawI1) ? rawI1 : incidentEl.angle;
+  if (Number.isFinite(rawI1) && incidentEl.angle != null && Math.abs(i1 - incidentEl.angle) > 0.5) {
+    console.warn(`[prism] incident_ray.angle (${incidentEl.angle}) disagrees with stated i1 (${i1}). Rendering from the stated value.`);
+  }
+
+  let r1, r2, e;
+  if (isMinDeviation) {
+    r1 = r2 = A / 2;
+    e = i1;
+  } else {
+    const sinR1 = Math.sin((i1 * Math.PI) / 180) / n;
+    r1 = (Math.asin(Math.min(Math.max(sinR1, -1), 1)) * 180) / Math.PI;
+    r2 = A - r1;
+    const sinE = n * Math.sin((r2 * Math.PI) / 180);
+    e = Math.abs(sinE) > 1 ? null : (Math.asin(sinE) * 180) / Math.PI; // null = TIR inside — unexpected for standard prism questions, guarded anyway
+  }
+
+  const FACE_LENGTH = isMobile ? 160 : 180; // was 140 / 190
+  const apexPoint = { x: SVG_WIDTH / 2, y: SVG_HEIGHT * 0.1 }; 
+  const geo = buildPrismGeometry(A, apexPoint, FACE_LENGTH);
+  const P1 = { x: geo.apexPoint.x + geo.dirLeft.x * FACE_LENGTH * 0.55, y: geo.apexPoint.y + geo.dirLeft.y * FACE_LENGTH * 0.55 };
+
+  const RUN = isMobile ? 90 : 130;
+  // ASSUMPTION, unverified: +i1 tilts the incident ray to visually arrive from
+  // the upper-left, matching every other subtype's convention.
+  const travelInDeg = geo.normalLeftDeg + 180 + i1;
+  const incidentFrom = pointAtDeg(P1, travelInDeg + 180, RUN);
+
+  const travelRefractedDeg = geo.normalLeftDeg + 180 + r1;
+  const refractedDir = pointAtDeg({ x: 0, y: 0 }, travelRefractedDeg, 1);
+  const P2 = intersectLines(P1, { x: P1.x + refractedDir.x, y: P1.y + refractedDir.y }, geo.apexPoint, geo.rightBottom) || geo.rightBottom;
+
+  // ASSUMPTION, unverified: the emergent ray mirrors the incident ray's sign
+  // convention across the prism's axis of symmetry — minus instead of plus.
+  let emergentTo = null;
+  if (e != null) {
+    const travelOutDeg = geo.normalRightDeg - e;
+    emergentTo = pointAtDeg(P2, travelOutDeg, RUN);
+  }
+
+  // Deviation construction (dashed "what if it hadn't bent" line) is drawn only
+  // when the payload actually wants it LABELED — Q1 has no angle_delta element,
+  // so no such line is drawn there, keeping its numeric answer un-measurable.
+  const undeviatedTo = angleDeltaEl ? pointAtDeg(P2, travelInDeg, RUN) : null;
+
+  return {
+    geo, P1, P2, incidentFrom, emergentTo, undeviatedTo,
+    i1Label: angleI1El?.label, ALabel: angleAEl?.label, deltaLabel: angleDeltaEl?.label,
+    showEmergentRay: rel?.show_emergent_ray !== false,
+    r1Label: angleR1El?.label, r2Label: angleR2El?.label, eLabel: angleEEl?.label,
+  };
+}
+
+export function calculatePrismDispersionPositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH, height: SVG_HEIGHT } = getSvgDimensions(isMobile);
+  const prismEl = elements.find((e) => e.type === "prism");
+  const incidentEl = elements.find((e) => e.type === "ray" && e.role === "incident");
+  const rel = relationships.find((r) => r.type === "disperses");
+
+  const A = prismEl.apex_angle ?? 60;
+  const i1 = incidentEl.angle ?? 45;
+  // calculatePrismDispersionPositions — reduce these two values:
+  const FACE_LENGTH = isMobile ? 160 : 180; // was 140/190
+  const apexPoint = { x: SVG_WIDTH * 0.4, y: SVG_HEIGHT * 0.1 }; // was 0.22 — push the whole prism up, more clearance below
+  const geo = buildPrismGeometry(A, apexPoint, FACE_LENGTH);
+  const P1 = { x: geo.apexPoint.x + geo.dirLeft.x * FACE_LENGTH * 0.55, y: geo.apexPoint.y + geo.dirLeft.y * FACE_LENGTH * 0.55 };
+
+  const RUN = isMobile ? 90 : 130;
+  const travelInDeg = geo.normalLeftDeg + 180 + i1;
+  const incidentFrom = pointAtDeg(P1, travelInDeg + 180, RUN);
+
+  // calculatePrismDispersionPositions — replace the bands construction:
+  const COLORS = ["#E53935", "#FB8C00", "#FDD835", "#43A047", "#1E88E5", "#3949AB", "#8E24AA"];
+  const n0 = 1.5;
+  const SPREAD_DEG = isMobile ? 10 : 12; // schematic exaggeration — the real spread is too small to see
+
+  const bands = COLORS.map((color, idx) => {
+    const n = n0 + idx * 0.004;
+    const r1c = (Math.asin(Math.sin((i1 * Math.PI) / 180) / n) * 180) / Math.PI;
+    const r2c = A - r1c;
+    const sinE = n * Math.sin((r2c * Math.PI) / 180);
+    const baseEc = Math.abs(sinE) > 1 ? 90 : (Math.asin(sinE) * 180) / Math.PI;
+
+    const mid = (COLORS.length - 1) / 2;
+    const ec = baseEc + (idx - mid) * (SPREAD_DEG / (COLORS.length - 1)); // evenly fan out around the true center angle
+
+    const refractedDir = pointAtDeg({ x: 0, y: 0 }, geo.normalLeftDeg + 180 + r1c, 1);
+    const P2 = intersectLines(P1, { x: P1.x + refractedDir.x, y: P1.y + refractedDir.y }, geo.apexPoint, geo.rightBottom) || geo.rightBottom;
+    const emergentTo = pointAtDeg(P2, geo.normalRightDeg - ec, RUN * 1.15); // slightly longer run too, more room for the fan to read
+
+    return { color, P2, emergentTo };
+  });
+
+  return { geo, P1, incidentFrom, bands, labelColors: rel?.label_colors === true, colorNames: ["Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet"] };
+}
+
+export function calculateSimpleMicroscopePositions({ elements, relationships, isMobile = false }) {
+  const { width: SVG_WIDTH } = getSvgDimensions(isMobile);
+  const base = calculateConvexLensPositions({ elements, relationships, isMobile });
+  const observerEl = elements.find((e) => e.type === "observer");
+  if (observerEl) {
+    base.positions.observer = {
+      x: SVG_WIDTH - (isMobile ? 30 : 50), // fixed near the right edge — independent of lens/image geometry, so it never collides with the ray construction regardless of scale
+      y: base.axisY,
+      label: observerEl.label,
+    };
+  }
+  return base;
 }

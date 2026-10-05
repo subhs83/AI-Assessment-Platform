@@ -1,6 +1,7 @@
 import { getSvgDimensions } from "../geometry/geometryHelpers";
 import {
-  VSEPR_SLOTS, VSEPR_OCCUPANCY, normalizeGeometryName, extractLonePairsAll, resolveAtomOffset
+  VSEPR_SLOTS, VSEPR_OCCUPANCY, normalizeGeometryName, extractLonePairsAll, resolveAtomOffset,
+  ELECTRON_GEOMETRY_OF_FAMILY,
 } from "./chemistryHelpers";
 
 export function calculateLewisStructurePositions({ elements, relationships, isMobile = false, overrideCenterX, overrideCenterY, scaleOverride,}) {
@@ -88,8 +89,9 @@ export function calculateVseprPositions({ elements, relationships, figure, isMob
   }
 
   const statedElectron = normalizeGeometryName(figure?.electron_geometry);
-  if (statedElectron && statedElectron !== occ.family) {
-    console.warn("[VSEPR] electron_geometry says", statedElectron, "but counts imply", occ.family);
+  const expectedElectron = ELECTRON_GEOMETRY_OF_FAMILY[occ.family] || occ.family;
+  if (statedElectron && statedElectron !== expectedElectron) {
+    console.warn("[VSEPR] electron_geometry says", statedElectron, "but counts imply", expectedElectron);
   }
 
   const stated = relationships.find((r) => r.type === "has_vsepr_geometry")?.geometry;

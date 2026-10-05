@@ -40,7 +40,7 @@ export default function ChemistryVisual({ visual }) {
 
   else if (figure.subtype === "molecular_geometry") {
   plane = calculateVseprPositions({ elements, relationships, figure, isMobile });
-  content = renderMolecularGeometry(plane, isMobile);
+  content = renderMolecularGeometry(plane, relationships, isMobile);
 }
     
 

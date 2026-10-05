@@ -224,6 +224,19 @@ export const INVERTED_TRIGONAL_LAYOUT = {
   bottom_right: { x: 1.3, y: 1.1 },
 };
 
+
+// Maps an occupancy "family" (which selects slot COORDINATES) back to
+// the electron-geometry NAME a generator would use. tetrahedral_bent
+// is a rendering-only variant of tetrahedral, not a different
+// electron geometry, so both must compare equal here.
+export const ELECTRON_GEOMETRY_OF_FAMILY = {
+  linear: "linear",
+  trigonal_planar: "trigonal_planar",
+  tetrahedral: "tetrahedral",
+  tetrahedral_bent: "tetrahedral",
+  trigonal_bipyramidal: "trigonal_bipyramidal",
+  octahedral: "octahedral",
+};
 // Slot coordinates in layout units (y down), central atom at (0,0).
 export const VSEPR_SLOTS = {
   linear: {
@@ -240,6 +253,16 @@ export const VSEPR_SLOTS = {
     plane_lower: { x: -0.9, y: 1.3, style: "plain" },
     wedge: { x: 1.5, y: 0.75, style: "wedge" },
     dash: { x: 1.5, y: -0.75, style: "dash" },
+  },
+
+  // Dedicated symmetric layout for the 2-bond, 2-lone-pair (bent) case
+  // — the generic tetrahedral slots above are asymmetric and only look
+  // right for the 4-bond and 3-bond-1-lone-pair cases.
+  tetrahedral_bent: {
+    bond_left: { x: -1.3, y: 1.1, style: "plain" },
+    bond_right: { x: 1.3, y: 1.1, style: "wedge" },
+    lp_left: { x: -1.1, y: -1.3, style: "plain" },
+    lp_right: { x: 1.1, y: -1.3, style: "plain" },
   },
   trigonal_bipyramidal: {
     axial_top: { x: 0, y: -1.7, style: "plain" },
@@ -265,7 +288,7 @@ export const VSEPR_OCCUPANCY = {
   "2,1": { name: "bent", family: "trigonal_planar", bonds: ["bottom_left", "bottom_right"], lps: ["top"] },
   "4,0": { name: "tetrahedral", family: "tetrahedral", bonds: ["plane_upper", "plane_lower", "wedge", "dash"], lps: [] },
   "3,1": { name: "trigonal_pyramidal", family: "tetrahedral", bonds: ["plane_lower", "wedge", "dash"], lps: ["plane_upper"] },
-  "2,2": { name: "bent", family: "tetrahedral", bonds: ["plane_lower", "wedge"], lps: ["plane_upper", "dash"] },
+  "2,2": { name: "bent", family: "tetrahedral_bent", bonds: ["bond_left", "bond_right"], lps: ["lp_left", "lp_right"] },
   "5,0": { name: "trigonal_bipyramidal", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom", "eq_plain", "eq_wedge", "eq_dash"], lps: [] },
   "4,1": { name: "see_saw", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom", "eq_wedge", "eq_dash"], lps: ["eq_plain"] },
   "3,2": { name: "t_shaped", family: "trigonal_bipyramidal", bonds: ["axial_top", "axial_bottom", "eq_plain"], lps: ["eq_wedge", "eq_dash"] },
@@ -276,8 +299,12 @@ export const VSEPR_OCCUPANCY = {
 };
 
 // Normalises "see-saw", "T-shaped", "Square Planar" -> "see_saw", "t_shaped", "square_planar"
-export const normalizeGeometryName = (s) =>
-  String(s || "").toLowerCase().replace(/[\s-]+/g, "_");
+const GEOMETRY_NAME_ALIASES = {sawhorse: "see_saw", seesaw: "see_saw",};
+
+export const normalizeGeometryName = (s) => {
+  const n = String(s || "").toLowerCase().replace(/[\s-]+/g, "_");
+  return GEOMETRY_NAME_ALIASES[n] || n;
+};
 
 // Lone pairs can arrive as a relationship (has_lone_pairs / lone_pairs)
 // OR as an element (type "lone_pairs"). Collect every variant.
@@ -285,7 +312,7 @@ export function extractLonePairsAll(elements, relationships) {
   const fromRels = extractLonePairRels(relationships);
   const fromEls = elements
     .filter((el) => el.type === "lone_pairs" || el.type === "lone_pair")
-    .map((el) => ({ atomId: el.on_atom, count: el.count ?? 1 }));
+    .map((el) => ({ atomId: el.on_atom, count: el.count ?? 1 })); // count = number of PAIRS, defaults to 1 pair per element
   return [...fromRels, ...fromEls];
 }
 
@@ -326,4 +353,30 @@ export function renderDashBond(p1, p2, clearance, key) {
     );
   }
   return <g key={key}>{lines}</g>;
+}
+
+export function renderBondAngleArc(vertex, p1, p2, key) {
+  const RADIUS = 26;
+  const a1 = Math.atan2(p1.y - vertex.y, p1.x - vertex.x);
+  const a2 = Math.atan2(p2.y - vertex.y, p2.x - vertex.x);
+
+  // Always find the MINOR angular separation (<=180 degrees) — a bond
+  // angle is never reflex — then draw the arc through that gap,
+  // regardless of which direction a2-a1 happens to point numerically.
+  let delta = a2 - a1;
+  while (delta <= -Math.PI) delta += 2 * Math.PI;
+  while (delta > Math.PI) delta -= 2 * Math.PI;
+  // delta is now in (-pi, pi]; its absolute value IS the minor angle.
+
+  const sweepFlag = delta >= 0 ? 1 : 0;
+  const largeArc = 0; // minor angle is always <= 180, so never the "large" SVG arc
+
+  const start = { x: vertex.x + Math.cos(a1) * RADIUS, y: vertex.y + Math.sin(a1) * RADIUS };
+  const end = { x: vertex.x + Math.cos(a2) * RADIUS, y: vertex.y + Math.sin(a2) * RADIUS };
+
+  return (
+    <path key={key}
+      d={`M ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 ${largeArc} ${sweepFlag} ${end.x} ${end.y}`}
+      fill="none" stroke="#170bbc" strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
+  );
 }
