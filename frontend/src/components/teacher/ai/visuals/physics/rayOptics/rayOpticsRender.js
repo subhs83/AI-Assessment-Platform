@@ -10,8 +10,8 @@ import {
 
 export function renderConvexLensSystem(plane, elements, isMobile = false) {
   if (!plane) return null;
-  const { strokeWidth, fontSize, width } = getSvgDimensions(isMobile);
-  const { lensX, axisY, positions, isVirtual, isAtF, showImage } = plane;
+  const { strokeWidth, fontSize, width, height } = getSvgDimensions(isMobile);
+  const { lensX, axisY, positions, isVirtual, isAtF, showImage, drawFocalRay } = plane;
   const { lens, object, image } = positions;
   const extend = isMobile ? 35 : 55;
 
@@ -36,10 +36,15 @@ export function renderConvexLensSystem(plane, elements, isMobile = false) {
   } else if (isAtF) {
     const dirX = centerPoint.x - object.x;
     const dirY = centerPoint.y - objectTip.y;
-    const farPoint = (from) => {
-      const t = (width - from.x) / dirX;
-      return { x: width, y: from.y + dirY * t };
+    const margin = 14;
+    const reach = (from) => {
+      const tx = (width - margin - from.x) / dirX;
+      const ty = dirY > 0 ? (height - margin - from.y) / dirY : dirY < 0 ? (margin - from.y) / dirY : Infinity;
+      return Math.min(tx, ty);
     };
+    const t = Math.min(reach(ray1Entry), reach(centerPoint)); // same length for both rays
+    const farPoint = (from) => ({ x: from.x + dirX * t, y: from.y + dirY * t });
+    
     rayPaths = [
       [{ points: [objectTip, ray1Entry, farPoint(ray1Entry)] }],
       [{ points: [objectTip, centerPoint, farPoint(centerPoint)] }],
@@ -58,6 +63,7 @@ export function renderConvexLensSystem(plane, elements, isMobile = false) {
         ? [{ points: [objectTip, ray3Entry] }, { points: [ray3Entry, extendPoint(ray3Entry, imageTip, extend)] }, { points: [ray3Entry, imageTip], dashed: true }]
         : [{ points: [objectTip, ray3Entry, imageTip] }],
     ];
+    rayPaths = rayPaths.filter((_, i) => i < 2 || drawFocalRay);
   }
 
   return (
@@ -66,7 +72,7 @@ export function renderConvexLensSystem(plane, elements, isMobile = false) {
       {renderLensSymbol(lensX, lens.topY, lens.bottomY, strokeWidth)}
 
       {Object.entries(positions)
-        .filter(([id]) => !["lens", "object", "image"].includes(id))
+        .filter(([id]) => !["lens", "object", "image", "observer"].includes(id))
         .map(([id, pos]) => (
           <g key={id}>
             <circle cx={pos.x} cy={pos.y} r={7} fill={OPTICS_COLORS.marker} fillOpacity={0.15} />
@@ -615,7 +621,7 @@ export function renderSimpleMicroscopeSystem(plane, elements, isMobile = false) 
       {observerPos && (
         <g>
           {renderEyeIcon(observerPos.x, observerPos.y)}
-          {renderMathLabel(observerPos.x, observerPos.y + 28, "Eye", fontSize, OPTICS_COLORS.marker)}
+          {renderMathLabel(observerPos.x, observerPos.y + 28, observerPos.label, fontSize, OPTICS_COLORS.marker)}
         </g>
       )}
     </g>

@@ -261,6 +261,11 @@ commentary ("(Incorrect)", "(wrong)", "(should be X)"). The figure must show
 the drawn angle without revealing whether it's right or wrong — that judgment
 is what the question is testing.
 
+If the question asks for the object's distance, or any answer option states
+the object distance, set "show_distance_label": false on the object_arrow.
+The object is still drawn at that distance, but the figure must not print
+the number.
+
 LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substituent above and TWO below (e.g. formate HCO2-, where H sits above C and two O's sit below), use "x_position": "top" for the upper atom, and "side": "bottom_left" | "bottom_right" for the two lower atoms. Do not reuse "top_left"/"top_right" for this arrangement — those are reserved for the opposite case (2 above, 1 below).
 --------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY

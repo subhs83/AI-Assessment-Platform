@@ -233,7 +233,7 @@ export function renderAxisPositionsCharges(plane, isMobile = false) {
 
 export function renderBarMagnetField(plane, isMobile = false) {
   if (!plane) return null;
-  const { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfHeight } = plane;
+  const { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfHeight, points } = plane;
   const { strokeWidth } = getSvgDimensions(isMobile);
 
   const halfW = magnetWidth / 2;
@@ -259,12 +259,29 @@ export function renderBarMagnetField(plane, isMobile = false) {
   }
 
   return (
-    <g transform={`translate(${cx},${cy}) rotate(${horizontal ? 0 : 90})`}>
-      {loops.map((d, i) => (
-        <path key={i} d={d} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />
-      ))}
-      <BarMagnetSymbol cx={0} cy={0} width={magnetWidth} height={magnetHeight} horizontal={true} counterRotate={horizontal ? 0 : -90} />
-    </g>
+    <>
+      <g transform={`translate(${cx},${cy}) rotate(${horizontal ? 0 : 90})`}>
+        {loops.map((d, i) => (
+          <path key={i} d={d} fill="none" stroke={MAG_COLORS.fieldLine} strokeWidth={strokeWidth} />
+        ))}
+        <BarMagnetSymbol cx={0} cy={0} width={magnetWidth} height={magnetHeight} horizontal={true} counterRotate={horizontal ? 0 : -90} />
+      </g>
+      {points.length > 0 && (
+        <g>
+          {points.map((p) => {
+            const labelBelow = p.y > cy; // lower half of the canvas
+            return (
+              <g key={p.id}>
+                <circle cx={p.x} cy={p.y} r={4} fill="#1E293B" />
+                <text x={p.x} y={labelBelow ? p.y + 20 : p.y - 10} fontSize={14} fontWeight={700} textAnchor="middle" fill="#1E293B">
+                  {p.label}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      )}
+    </>
   );
 }
 
@@ -280,6 +297,15 @@ export function renderCurrentWireField(plane, isMobile = false) {
   // direction is what the question tests.
   const ringCount = 3;
   const ringGap = isMobile ? 14 : 18;
+  const dirVecs = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+  const [ddx, ddy] = dirVecs[currentDirection] || dirVecs.up;
+  const tip = currentDirection === "up" || currentDirection === "left" ? wireTop : wireBottom;
+  const tail = tip === wireTop ? wireBottom : wireTop;
+  const labelMargin = currentDirection === "left"? 45 : 26;
+  // Continue PAST the tail, away from the wire — same side the label always
+  // sat on for the one direction we'd tested, now computed for every direction.
+  const labelAnchorX = tail.x - ddx * labelMargin;
+  const labelAnchorY = tail.y - ddy * labelMargin;
 
   return (
     <g>
@@ -289,8 +315,8 @@ export function renderCurrentWireField(plane, isMobile = false) {
       {/* Current direction arrow — GIVEN data, safe to show */}
       <CurrentArrow wireTop={wireTop} wireBottom={wireBottom} direction={currentDirection} />
       {currentLabel && (
-        <foreignObject x={cx - 60} y={horizontal ? cy - 34 : cy - wireHalfLength - 26} width={120} height={22} style={{ overflow: "visible" }}>
-          <div style={{ display: "flex", justifyContent: "center", fontSize:fontSize*1.3, fontWeight: 600, color: "#1E293B" }}>
+        <foreignObject x={labelAnchorX - 60} y={labelAnchorY - 11} width={120} height={22} style={{ overflow: "visible" }}>
+          <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize * 1.3, fontWeight: 600, color: "#1E293B" }}>
             <MathText text={normalizeMathLabel(currentLabel)} />
           </div>
         </foreignObject>
@@ -440,7 +466,7 @@ export function renderMovingChargeForce(plane, isMobile = false) {
 
 export function renderWireForceField(plane, isMobile = false) {
   if (!plane) return null;
-  const { cx, cy, wireHalfLength, horizontal, currentLabel, fieldWidth, fieldHeight, currentDirection } = plane;
+  const { cx, cy, wireHalfLength, horizontal, currentLabel, fieldWidth, fieldHeight, currentDirection, fieldDirection } = plane;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
 
   const wireTop = { x: horizontal ? cx - wireHalfLength : cx, y: horizontal ? cy : cy - wireHalfLength };
@@ -448,21 +474,22 @@ export function renderWireForceField(plane, isMobile = false) {
 
   return (
     <g>
-      <g transform={`translate(${cx},${cy})`}>
-        <FieldIntoPageIndicator width={fieldWidth} height={fieldHeight} />
+      {/* FIX: indicator now centered on true canvas center (fieldWidth/2,
+          fieldHeight/2), not on the wire's own cx/cy — the field fills
+          the whole canvas, it isn't anchored to the wire's position. */}
+      <g transform={`translate(${fieldWidth / 2},${fieldHeight / 2})`}>
+        <FieldIntoPageIndicator width={fieldWidth} height={fieldHeight} direction={fieldDirection} />
       </g>
 
       <line x1={wireTop.x} y1={wireTop.y} x2={wireBottom.x} y2={wireBottom.y} stroke="#1E293B" strokeWidth={strokeWidth * 1.8} strokeLinecap="round" />
       <CurrentArrow wireTop={wireTop} wireBottom={wireBottom} direction={currentDirection} />
       {currentLabel && (
-        <foreignObject x={cx - 40} y={horizontal ? cy - 34 : cy - wireHalfLength - 26} width={80} height={22} style={{ overflow: "visible" }}>
-          <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize*1.5, fontWeight: 600, color: "#1E293B" }}>
+        <foreignObject x={cx - 40} y={horizontal ? cy - 34 : cy - wireHalfLength - 36} width={80} height={22} style={{ overflow: "visible" }}>
+          <div style={{ display: "flex", justifyContent: "center", fontSize: fontSize * 1.5, fontWeight: 600, color: "#1E293B" }}>
             <MathText text={normalizeMathLabel(currentLabel)} />
           </div>
         </foreignObject>
       )}
-      {/* NOTE: force vector deliberately NOT drawn */}
     </g>
   );
 }
-

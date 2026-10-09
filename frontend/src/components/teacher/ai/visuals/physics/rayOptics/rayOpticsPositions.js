@@ -1,8 +1,13 @@
 import { getSvgDimensions,} from "../../geometry/geometryHelpers";
-import {getShowImage, pointAtDeg, intersectLines, buildPrismGeometry} from "./rayOpticsHelpers"
+import {getShowImage, pointAtDeg, intersectLines, buildPrismGeometry, getDistanceLabel} from "./rayOpticsHelpers"
+
 export function calculateConvexLensPositions({ elements, relationships, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
   const showImage = getShowImage(relationships);
+  // calculateConvexLensPositions: after showImage
+  const listedRays = relationships.find((r) => r.type === "ray_construction")?.rays;
+  const drawFocalRay = !Array.isArray(listedRays) || listedRays.some((r) => typeof r !== "string" || /focal/.test(r));
+  // add drawFocalRay to the returned object
   const lensEl = elements.find((e) => e.type === "lens");
   const objectEl = elements.find((e) => e.type === "object_arrow");
   // calculateConvexLensPositions — fix the focalEls filter:
@@ -14,7 +19,13 @@ export function calculateConvexLensPositions({ elements, relationships, isMobile
 
   const isAtF = Math.abs(uMag - f) < 1e-6; // epsilon, not exact ===, in case of float payloads
 
-  const uSigned = -uMag;
+  const MAX_VIRTUAL_RATIO = 2.5; // drawn virtual image is never farther than 2.5f
+  const uPlot =
+    !isAtF && uMag < f && (f * uMag) / (f - uMag) > MAX_VIRTUAL_RATIO * f
+      ? (MAX_VIRTUAL_RATIO * f) / (1 + MAX_VIRTUAL_RATIO)   // ≈ 0.71f
+      : uMag;
+
+  const uSigned = -uPlot;   // was -uMag
   const v = isAtF ? null : 1 / (1 / f + 1 / uSigned);
   const m = isAtF ? null : v / uSigned;
   const isVirtual = isAtF ? false : v < 0;
@@ -27,7 +38,7 @@ export function calculateConvexLensPositions({ elements, relationships, isMobile
   // No finite image to size the canvas around in this case — use a fixed
   // nominal extent (2f) on the emergent-ray side so the parallel rays have
   // visible room before hitting the canvas edge.
-  const leftExtent = Math.max(uMag, isAtF ? 0 : (isVirtual ? Math.abs(v) : 0), 2 * f);
+  const leftExtent = Math.max(uPlot, isAtF ? 0 : (isVirtual ? Math.abs(v) : 0), 2 * f);
   const rightExtent = isAtF ? 2 * f : Math.max(isVirtual ? 0 : v, 2 * f);
   const scale = (SVG_WIDTH - 2 * paddingX) / (leftExtent + rightExtent);
   const lensX = paddingX + leftExtent * scale;
@@ -43,7 +54,7 @@ export function calculateConvexLensPositions({ elements, relationships, isMobile
 
   const positions = {
     lens: { x: lensX, topY: axisY - lensHalf, bottomY: axisY + lensHalf },
-    object: { x: lensX + uSigned * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+    object: { x: lensX + uSigned * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: getDistanceLabel(objectEl, uMag) },
     image: isAtF ? null : {
       x: lensX + v * scale,
       baseY: axisY,
@@ -60,7 +71,7 @@ export function calculateConvexLensPositions({ elements, relationships, isMobile
     positions[el.id] = { x: lensX + sign * dist * scale, y: axisY, label: el.label };
   });
 
-  return { lensX, axisY, scale, heightScale, f, uMag, v, m, caseLabel, isVirtual, isAtF, positions, showImage  };
+  return { lensX, axisY, scale, heightScale, f, uMag, v, m, caseLabel, isVirtual, isAtF, positions, showImage, drawFocalRay };
 }
 
 export function calculateConcaveMirrorPositions({ elements, relationships, isMobile = false }) {
@@ -124,7 +135,7 @@ export function calculateConcaveMirrorPositions({ elements, relationships, isMob
 
   const positions = {
     mirror: { x: mirrorX, topY: axisY - mirrorHalf, bottomY: axisY + mirrorHalf },
-    object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+    object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: getDistanceLabel(objectEl, uMag) },
     F: focalEl ? { x: mirrorX - fDist * scale, y: axisY, label: focalEl.label } : null,
     C: centerEl ? { x: mirrorX - cPlotDist * scale, y: axisY, label: centerEl.label } : null,
     image: isAtF ? null : {
@@ -297,7 +308,7 @@ export function calculateConcaveLensPositions({ elements, relationships, isMobil
 
   const positions = {
     lens: { x: lensX, topY: axisY - lensHalf, bottomY: axisY + lensHalf },
-    object: { x: lensX + uSigned * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+    object: { x: lensX + uSigned * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: getDistanceLabel(objectEl, uMag) },
     image: { x: lensX + v * scale, baseY: axisY, tipY: axisY - imageHeightSigned * heightScale, isVirtual: true },
   };
 
@@ -357,7 +368,7 @@ export function calculateConvexMirrorPositions({ elements, relationships, isMobi
 
   const positions = {
     mirror: { x: mirrorX, topY: axisY - mirrorHalf, bottomY: axisY + mirrorHalf },
-    object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+    object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: getDistanceLabel(objectEl, uMag) },
     image: { x: mirrorX + Math.abs(v) * scale, baseY: axisY, tipY: axisY - imageHeightSigned * heightScale, isVirtual: true },
     F_right: focalEl ? { x: mirrorX + fDist * scale, y: axisY, label: focalEl.label } : null,
     C_right: centerEl ? { x: mirrorX + cPlotDist * scale, y: axisY, label: centerEl.label } : null,
@@ -423,7 +434,7 @@ export function calculatePlaneMirrorPositions({ elements, relationships, isMobil
   return {
     mirrorX, axisY, showImage,
     positions: {
-      object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: String(uMag) },
+      object: { x: mirrorX - uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale, distanceLabel: getDistanceLabel(objectEl, uMag) },
       image: { x: mirrorX + uMag * scale, baseY: axisY, tipY: axisY - ho * heightScale }, // image distance = object distance, always
     },
   };
@@ -544,15 +555,13 @@ export function calculatePrismDispersionPositions({ elements, relationships, isM
 }
 
 export function calculateSimpleMicroscopePositions({ elements, relationships, isMobile = false }) {
-  const { width: SVG_WIDTH } = getSvgDimensions(isMobile);
   const base = calculateConvexLensPositions({ elements, relationships, isMobile });
   const observerEl = elements.find((e) => e.type === "observer");
-  if (observerEl) {
-    base.positions.observer = {
-      x: SVG_WIDTH - (isMobile ? 30 : 50), // fixed near the right edge — independent of lens/image geometry, so it never collides with the ray construction regardless of scale
-      y: base.axisY,
-      label: observerEl.label,
-    };
-  }
+if (observerEl) {
+  const fPx = base.f * base.scale;
+  const eyeX = base.lensX + Math.max(70, Math.min(fPx * 0.5, 160));
+  const slope = (base.axisY - base.positions.object.tipY) / (base.lensX - base.positions.object.x);
+  base.positions.observer = { x: eyeX, y: base.axisY + slope * (eyeX - base.lensX), label: observerEl.label };
+}
   return base;
 }

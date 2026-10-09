@@ -470,3 +470,8 @@ export function renderEyeIcon(cx, cy, size = 14) {
     </g>
   );
 }
+
+// shared helper, next to getShowImage
+export function getDistanceLabel(objectEl, value) {
+  return objectEl.show_distance_label === false ? null : String(value);
+}

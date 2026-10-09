@@ -141,7 +141,29 @@ export function calculateBarMagnetPositions({ elements, isMobile = false }) {
   const availableHalfHeight = cy - paddingY;
   const loopCount = 3;
 
-  return { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfWidth, availableHalfHeight };
+  const pointEls = elements.filter((el) => el.type === "point");
+  const poleClearance = isMobile ? 16 : 22;
+
+  const screenLongHalf = magnetWidth / 2;
+  const screenShortHalf = magnetHeight / 2;
+  const xClearanceScale = (horizontal ? screenLongHalf : screenShortHalf) + poleClearance;
+  const yClearanceScale = (horizontal ? screenShortHalf : screenLongHalf) + poleClearance;
+
+  const points = pointEls.map((p) => {
+    const rawX = p.x_position ?? 0;
+    const rawY = p.y_position ?? 0;
+    // Each point's own raw screen offset, using the pole-clearance scale —
+    // NOT divided down by how far away some other point happens to be.
+    let px = cx + rawX * xClearanceScale;
+    let py = cy - rawY * yClearanceScale;
+    // Clamp only THIS point to the canvas, independently, if it runs past
+    // the edge — this never touches any other point's placement.
+    px = Math.max(paddingX + 10, Math.min(SVG_WIDTH - paddingX - 10, px));
+    py = Math.max(paddingY + 10, Math.min(SVG_HEIGHT - paddingY - 10, py));
+    return { id: p.id, label: p.label, x: px, y: py };
+  });
+
+  return { cx, cy, magnetWidth, magnetHeight, horizontal, loopCount, availableHalfWidth, availableHalfHeight, points };
 }
 
 export function calculateCurrentWirePositions({ elements, isMobile = false }) {
