@@ -2025,7 +2025,7 @@ export const getSvgDimensions = (isMobile = false) => {
       width: 400,
       height:  240, // taller for coordinate planes
       paddingX: 20,
-      paddingY: 10,
+      paddingY: 25,
       strokeWidth: 3,
       fontSize: 16,
     };
