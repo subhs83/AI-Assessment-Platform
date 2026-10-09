@@ -122,7 +122,17 @@ export function calculateGeometryPositions({
         isCircleFamily && feature === "secant_secant";
 
       const hasTangentSecantFeature =
-        isCircleFamily && feature === "tangent_secant";
+        isCircleFamily &&
+        (
+          feature === "tangent_secant" ||
+          (
+            relationships.some(
+              (r) => r.type === "tangent_to" || r.type === "is_tangent_to" ) &&
+            relationships.some(
+              (r) => r.type === "secant_to" || r.type === "forms_secant_through_points"
+            )
+          )
+        );
 
       const hasSectorFeature =
         isCircleFamily && feature === "sector";
@@ -552,8 +562,54 @@ export function calculateGeometryPositions({
           }
         }
         else if (hasTangentSecantFeature) {
-        const tangentRel = relationships.find((r) => r.type === "is_tangent_to");
-        const secantRel = relationships.find((r) => r.type === "forms_secant_through_points");
+        const tangentRel = relationships.find( (r) => r.type === "tangent_to" || r.type === "is_tangent_to" );
+        let secantRel = relationships.find( (r) => r.type === "forms_secant_through_points")       // Convert the segment-based secant description into
+        // [external point, near intersection, far intersection].
+        if (!secantRel) {
+          const sourceRel = relationships.find(
+            (r) =>
+              r.type === "secant_to" &&
+              (!tangentRel?.target_circle ||
+                r.target_circle === tangentRel.target_circle)
+          );
+
+          if (sourceRel) {
+            const segmentId = sourceRel.elements?.[0];
+
+            const segment =
+              segments.find((s) => s.id === segmentId) ||
+              { id: segmentId };
+
+            const endpoints = getSegmentEndpoints(segment, points);
+            const intersections = sourceRel.at_points || [];
+
+            const externalId = endpoints
+              ? [endpoints.firstId, endpoints.secondId].find(
+                  (id) => !intersections.includes(id)
+                )
+              : null;
+
+            if (externalId && intersections.length === 2) {
+              const betweenRel = relationships.find(
+                (r) =>
+                  r.type === "between" &&
+                  r.targets?.includes(externalId) &&
+                  intersections.includes(r.elements?.[0]) &&
+                  intersections.some((id) => r.targets?.includes(id))
+              );
+
+              const nearId =
+                betweenRel?.elements?.[0] || intersections[0];
+
+              const farId = intersections.find((id) => id !== nearId);
+
+              secantRel = {
+                type: "forms_secant_through_points",
+                elements: [externalId, nearId, farId],
+              };
+            }
+          }
+        }
 
         if (tangentRel && secantRel) {
           const tangentPointId = tangentRel.at_point;
@@ -2192,10 +2248,16 @@ export function calculateGeometryPositions({
           const medianLines = [];
 
           relationships
-            .filter((r) => r.type === "is_midpoint_of")
+            .filter((r) => r.type === "midpoint_of" || r.type === "is_midpoint_of")
             .forEach((rel) => {
-              const pointId = rel.elements?.[0];
-              const endpoints = getSegmentEndpoints({ id: rel.target }, points);
+              const pointId = rel.element_id || rel.elements?.[0];
+              const targetSegmentId = rel.target_segment || rel.target;
+
+              const targetSegment =
+                segments.find((segment) => segment.id === targetSegmentId) ||
+                { id: targetSegmentId };
+
+              const endpoints = getSegmentEndpoints(targetSegment, points);
               if (!pointId || !endpoints) return;
 
               const A = positions[endpoints.firstId];
