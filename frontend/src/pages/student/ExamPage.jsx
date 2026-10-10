@@ -55,11 +55,12 @@ export default function ExamPage() {
   const showStartOverlay = useExamStore((s) => s.showStartOverlay);
   const setShowStartOverlay = useExamStore((s) => s.setShowStartOverlay);
 
+  const saveStatusQuestionKey = useExamStore((state) => state.saveStatusQuestionKey);
+
   // Keep store currentIndex aligned with URL route index
- useEffect(() => {
-  useExamStore.setState({ saveStatus: "" });
-  setIsNavigating(false);
-}, [safeIndex]);
+  useEffect(() => {
+    setIsNavigating(false);
+  }, [attemptId, safeIndex]);
 
   // =====================
   // HOOKS
@@ -89,6 +90,12 @@ export default function ExamPage() {
   useWakeLock();
 
   const { resumeFullscreen } = useResumeFullscreen();
+
+  const currentQuestionKey = `${attemptId}_${safeIndex}`;
+
+  const currentSaveStatus =  saveStatusQuestionKey === currentQuestionKey ? saveStatus : "";
+
+  const currentSaving =  saveStatusQuestionKey === currentQuestionKey && saving;
 
   // =====================
   // LOADING
@@ -191,7 +198,7 @@ export default function ExamPage() {
                     question={currentQuestion}
                     questionNumber={safeIndex + 1}
                     selected={selectedOption}
-                    saving={saving}
+                    saving={currentSaving}
                     isOffline={isOffline}
                     onSelect={(option) => {
                       saveAnswer(
@@ -203,7 +210,10 @@ export default function ExamPage() {
                   />
 
                   <div className="absolute top-4 right-4 z-20">
-                    <SaveStatus key={`${attemptId}-${safeIndex}`} status={saveStatus} />
+                    <SaveStatus
+                      key={currentQuestionKey}
+                      status={currentSaveStatus}
+                    />
                   </div>
                 </div>
 

@@ -3,21 +3,22 @@ import { examApi } from "../api/examApi";
 
 export function useAnswerActions(schoolSlug, attemptId) {
   const setAnswer = useExamStore((state) => state.setAnswer);
-  const setSaving = useExamStore((state) => state.setSaving);
-  const setSaveStatus = useExamStore((state) => state.setSaveStatus);
 
   const saveAnswer = async (questionId, option, index) => {
-    console.log({
-    questionId,
-    option,
-    index,
-  });
-    // 🔥 instantly reset UI (prevents old state sticking)
-    setSaving(true);
-    setSaveStatus("saving");
+    const questionKey = `${attemptId}_${index}`;
+    const requestId = Symbol("answer-save");
 
-    // optimistic UI update
+    useExamStore.setState({
+      saving: true,
+      saveStatus: "saving",
+      saveStatusQuestionKey: questionKey,
+      activeSaveRequestId: requestId,
+    });
+
     setAnswer(index, option, attemptId);
+
+    const isLatestRequest = () =>
+      useExamStore.getState().activeSaveRequestId === requestId;
 
     try {
       await examApi.saveAnswer(schoolSlug, attemptId, {
@@ -25,12 +26,22 @@ export function useAnswerActions(schoolSlug, attemptId) {
         selected_option: option,
       });
 
-      setSaveStatus("saved"); // ✅ clean state
+      if (isLatestRequest()) {
+        useExamStore.setState({ saveStatus: "saved" });
+      }
     } catch (err) {
-      setSaveStatus("error");
-      console.log(err.response?.data || err.message);
+      if (isLatestRequest()) {
+        useExamStore.setState({ saveStatus: "error" });
+      }
+
+      console.error(err.response?.data || err.message);
     } finally {
-      setSaving(false);
+      if (isLatestRequest()) {
+        useExamStore.setState({
+          saving: false,
+          activeSaveRequestId: null,
+        });
+      }
     }
   };
 
