@@ -264,7 +264,7 @@ export function renderPoints(
     validPositions.reduce((sum, p) => sum + p.x, 0) / (validPositions.length || 1);
   const avgY =
     validPositions.reduce((sum, p) => sum + p.y, 0) / (validPositions.length || 1);
-    console.log("[renderPoints] centerId resolved to:", centerId, "| point_i position:", positions?.["point_i"]);
+    //console.log("[renderPoints] centerId resolved to:", centerId, "| point_i position:", positions?.["point_i"]);
   return Object.keys(points).map((id) => {
     const point = points[id];
     const position = positions?.[id];

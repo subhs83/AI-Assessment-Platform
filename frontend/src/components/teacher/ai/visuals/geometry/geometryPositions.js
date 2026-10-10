@@ -931,7 +931,7 @@ export function calculateGeometryPositions({
       * ------------------------------------------
       */
       if (isPolygonFamily) {
-        console.log("[DEBUG] Entered polygon branch", { figureType, feature });
+        //console.log("[DEBUG] Entered polygon branch", { figureType, feature });
 
         const formsRel = relationships.find((r) => r.type === "forms_polygon");
         const vertexIds = formsRel?.elements || [];
