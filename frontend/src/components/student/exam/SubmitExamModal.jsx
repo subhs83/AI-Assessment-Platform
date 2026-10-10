@@ -42,10 +42,15 @@ export default function SubmitExamModal({
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-5">
 
-      <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="submit-exam-title"
+        className="flex max-h-[calc(100dvh-2.5rem)] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+      >
 
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-6 text-center text-white">
+        <div className="shrink-0 bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4 sm:py-6 text-center text-white">
 
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15">
 
@@ -53,7 +58,7 @@ export default function SubmitExamModal({
 
           </div>
 
-          <h2 className="text-2xl font-bold">
+          <h2 id="submit-exam-title" className="text-2xl font-bold">
             Submit Exam
           </h2>
 
@@ -64,7 +69,7 @@ export default function SubmitExamModal({
         </div>
 
         {/* Body */}
-        <div className="space-y-5 p-6">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-4 sm:p-6">
 
           <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
 
@@ -113,9 +118,11 @@ export default function SubmitExamModal({
               ))}
             </div>
           </div>
-        )}
+        )} 
+        
+        </div>
 
-          <div className="flex gap-3">
+           <div className="flex shrink-0 gap-3 border-t border-slate-200 bg-white p-4 sm:p-6">
 
             <button
               onClick={() => setShow(false)}
@@ -129,9 +136,7 @@ export default function SubmitExamModal({
               className="flex-1 rounded-2xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.99]"
             >
               Submit Exam
-            </button>
-
-          </div>
+            </button>         
 
         </div>
 
