@@ -31,7 +31,17 @@ export function calculateCoordinateGeometryPositions({
   figure,
   isMobile = false,
 }) {
-  const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
+  const {
+  width: SVG_WIDTH,
+  height: SVG_HEIGHT,
+  paddingX,
+  paddingY,
+  fontSize,
+} = getSvgDimensions(isMobile);
+
+// Reserve space for tick numbers and axis labels.
+const planePaddingX = Math.max(paddingX, fontSize * 3);
+const planePaddingY = Math.max(paddingY, fontSize * 2.5);
   const positions = {};
 
   // --------------------------------------------------
@@ -65,7 +75,17 @@ export function calculateCoordinateGeometryPositions({
   // only one point, like Q3), falling back to inferring from the data
   // points themselves when bounds aren't provided.
   // --------------------------------------------------
-   const plane = computeCoordinatePlane(figure?.bounds, dataPoints, SVG_WIDTH, SVG_HEIGHT, paddingX, paddingY);
+   const plane = computeCoordinatePlane(
+        figure?.bounds,
+        dataPoints,
+        SVG_WIDTH,
+        SVG_HEIGHT,
+        planePaddingX,
+        planePaddingY,
+        {
+          tickStep: figure?.tick_step,
+        }
+      );
   // --------------------------------------------------
   // 3. Convert every real coordinate into a pixel position.
   // --------------------------------------------------

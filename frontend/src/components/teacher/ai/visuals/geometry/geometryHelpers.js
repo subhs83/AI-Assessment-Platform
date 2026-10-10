@@ -1958,64 +1958,97 @@ function niceTickIntervalForScale(scale, minPixelSpacing = 18) {
 }
 
 
-export function computeCoordinatePlane(bounds, dataPoints, svgWidth, svgHeight, paddingX, paddingY) {
- 
+export function computeCoordinatePlane(
+  bounds,
+  dataPoints,
+  svgWidth,
+  svgHeight,
+  paddingX,
+  paddingY,
+  { tickStep = null } = {}
+) {
   let minX, maxX, minY, maxY;
+
   if (bounds) {
-    ({ x_min: minX, x_max: maxX, y_min: minY, y_max: maxY } = bounds);
+    ({
+      x_min: minX,
+      x_max: maxX,
+      y_min: minY,
+      y_max: maxY,
+    } = bounds);
   } else {
     const xs = dataPoints.map((p) => p.x);
     const ys = dataPoints.map((p) => p.y);
+
     minX = Math.min(0, ...xs);
     maxX = Math.max(0, ...xs);
     minY = Math.min(0, ...ys);
     maxY = Math.max(0, ...ys);
+
     const rangeX = maxX - minX || 1;
     const rangeY = maxY - minY || 1;
+
     minX -= rangeX * 0.15;
     maxX += rangeX * 0.15;
     minY -= rangeY * 0.15;
     maxY += rangeY * 0.15;
   }
-  // Include the origin so both Cartesian axes lie inside the plane.
-    minX = Math.min(minX, 0);
-    maxX = Math.max(maxX, 0);
-    minY = Math.min(minY, 0);
-    maxY = Math.max(maxY, 0);
 
-    // Prevent zero-width or zero-height ranges.
-    if (minX === maxX) {
-      minX -= 1;
-      maxX += 1;
-    }
+  // Keep both axes inside the visible plane.
+  minX = Math.min(minX, 0);
+  maxX = Math.max(maxX, 0);
+  minY = Math.min(minY, 0);
+  maxY = Math.max(maxY, 0);
 
-    if (minY === maxY) {
-      minY -= 1;
-      maxY += 1;
-    }
+  if (minX === maxX) {
+    minX -= 1;
+    maxX += 1;
+  }
+
+  if (minY === maxY) {
+    minY -= 1;
+    maxY += 1;
+  }
+
   const availW = svgWidth - paddingX * 2;
   const availH = svgHeight - paddingY * 2;
-  const scaleX = availW / (maxX - minX);
-  const scaleY = availH / (maxY - minY);
-  const scale = Math.min(scaleX, scaleY);
 
-  // Center the used portion within the available canvas, rather than
-  // anchoring it to one corner — distributes any unused margin (from
-  // the aspect-ratio mismatch between data range and canvas) evenly.
+  // Equal scale on both axes preserves coordinate geometry.
+  const scale = Math.min(
+    availW / (maxX - minX),
+    availH / (maxY - minY)
+  );
+
   const usedW = (maxX - minX) * scale;
   const usedH = (maxY - minY) * scale;
+
   const offsetX = paddingX + (availW - usedW) / 2;
   const offsetY = paddingY + (availH - usedH) / 2;
 
-  const tickX = niceTickIntervalForScale(scale);
-  const tickY = niceTickIntervalForScale(scale);
+  // Preserve specified detail; otherwise use original automatic spacing.
+  const explicitTick =
+    Number.isFinite(tickStep) && tickStep > 0
+      ? tickStep
+      : null;
+
+  const tickX = explicitTick ?? niceTickIntervalForScale(scale);
+  const tickY = explicitTick ?? niceTickIntervalForScale(scale);
 
   const toPixel = (x, y) => ({
     x: offsetX + (x - minX) * scale,
     y: svgHeight - offsetY - (y - minY) * scale,
   });
 
-  return { minX, maxX, minY, maxY, tickX, tickY, scale, toPixel };
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    tickX,
+    tickY,
+    scale,
+    toPixel,
+  };
 }
 
 /*
@@ -2038,7 +2071,7 @@ export const getSvgDimensions = (isMobile = false) => {
     return {
       width: 400,
       height:  280, // taller for coordinate planes
-      paddingX: 20,
+      paddingX: 15,
       paddingY: 25,
       strokeWidth: 3,
       fontSize: 16,
