@@ -2949,26 +2949,31 @@ if (figure.type === "generic") {
    * visually consistent with the rest of the renderer.
    */
 
-  const unpositionedPointIds = pointIds.filter((id) => !positions[id]);
+  const unresolvedPointIds = pointIds.filter((id) => {
+  const position = positions[id];
 
-  if (unpositionedPointIds.length > 0) {
-    const angleStep = (2 * Math.PI) / Math.max(unpositionedPointIds.length, 1);
+  return (
+    !position ||
+    !Number.isFinite(position.x) ||
+    !Number.isFinite(position.y)
+  );
+});
 
-    unpositionedPointIds.forEach((id, index) => {
-      const angle = -Math.PI / 2 + index * angleStep;
+if (unresolvedPointIds.length > 0) {
+  console.warn(
+    "[GEOMETRY LAYOUT] Figure construction incomplete:",
+    {
+      figureType: figure?.type,
+      figureSubtype: figure?.subtype,
+      figureFeature: figure?.feature,
+      unresolvedPointIds,
+    }
+  );
 
-      positions[id] = {
-        x: centerX + Math.cos(angle) * HALF_W,
-        y: centerY + Math.sin(angle) * HALF_H,
-      };
-    });
+  // Prevent a partial or mathematically incorrect figure.
+  return {};
+}
 
-    console.warn(
-      "[GEOMETRY RENDER] Fallback-positioned points (no figure-specific rule matched):",
-      { figureType: figure?.type, unpositionedPointIds }
-    );
-  }
-
-  return positions;
+return positions;
 }
 

@@ -2023,7 +2023,7 @@ export const getSvgDimensions = (isMobile = false) => {
   if (isMobile) {
     return {
       width: 400,
-      height:  240, // taller for coordinate planes
+      height:  280, // taller for coordinate planes
       paddingX: 20,
       paddingY: 25,
       strokeWidth: 3,

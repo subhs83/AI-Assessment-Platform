@@ -87,6 +87,10 @@ def build_question_prompt(
     Enforces a strict visual taxonomy across Math, Physics, Chemistry, Data Interpretation,
     Coordinate Geometry, and IMO/ISO level composite figures.
     """
+    blooms_instruction = BLOOMS_PROMPTS.get(
+        blooms_level.strip().lower(),
+        BLOOMS_PROMPTS["mixed"],
+    )    
     return f"""You are an expert exam question generator for an educational assessment platform.
 
 DOCUMENT LANGUAGE:
@@ -97,6 +101,7 @@ Generate exactly {question_count} self-contained, academically correct multiple-
 
 DIFFICULTY: {difficulty}
 BLOOM'S TAXONOMY: {blooms_level}
+{blooms_instruction}
 
 
 # SOURCE CONTENT
@@ -141,14 +146,17 @@ Do NOT include a segment element solely because its value can be trivially deriv
 
 When in doubt, prefer fewer labeled segments: a diagram should show only what a student needs to see to understand and solve the problem, not every true fact about the figure.
 
-VISUAL ELEMENT VALUE FIELDS — PLAIN NUMERIC ONLY:
+VISUAL ELEMENT VALUE FIELDS:
 
-The "value" field on any visual.elements[] entry (points, segments, angles, arcs, etc.) is a machine-parsed field consumed directly by the rendering engine and is never shown to the user as raw text. It must NOT contain LaTeX, delimiters, units words, or symbols. This is separate from the LaTeX formatting rule above, which governs question_text, options, and explanation only — those continue to use LaTeX normally.
+Visual value fields are machine-parsed data. Keep them separate from
+display labels.
 
-- Angle "value" fields must be a bare number representing DEGREES ONLY, e.g. "60", "90", "120". Never "\\\\(\\\\frac{{\\\\pi}}{{3}}\\\\)", never "90^\\\\circ", never any LaTeX delimiters, never the word "rad" or "deg" inside "value".
-- If a question is phrased using radians (e.g. "central angle of pi/3 radians"), still convert and store the DEGREE-EQUIVALENT bare number in "value" (e.g. "60"). The radian phrasing belongs only in question_text, explanation, and the element's own "label" field (e.g. "label": "\\\\(\\\\theta = \\\\frac{{\\\\pi}}{{3}}\\\\text{{ rad}}\\\\)"), which follow the LaTeX rule as normal.
-- Segment "value" fields must be a bare number or a number plus a short unit string (e.g. "10 cm", "6 in") — never LaTeX, never a fraction, never a symbol.
-- This rule applies uniformly across every figure.type / figure.feature combination.
+- Angle "value": a bare number or numeric string in DEGREES,such as 60 or "60". Never include LaTeX, degree symbols, or units.
+- If the question uses radians, store the equivalent degree value. Put the radian notation in question_text or the display label.
+- Segment "value": a bare number or numeric string, such as 10 or "10". For compatibility, a number followed by a short unit is also allowed, such as "10 cm". Never include LaTeX or symbolic expressions.
+- Coordinates, bounds, and vector components must be JSON numbers, never strings.
+- Display labels may contain LaTeX, correctly escaped for JSON.
+- Omit the "value" field for an unknown quantity. Never populate it with the calculated answer.
 
 SEGMENT CONNECTIVITY — EXPLICIT ENDPOINTS REQUIRED:
 
@@ -2187,9 +2195,9 @@ When "visual_required": true, return the corresponding semantic "visual" payload
     "feature": "none"
   }},
   "elements": [
-    {{ "id": "atom_o", "type": "atom", "element": "O", "x_position": 0, "y_position": 0 }},
-    {{ "id": "atom_h1", "type": "atom", "element": "H", "x_position": -1.5, "y_position": -1.0 }},
-    {{ "id": "atom_h2", "type": "atom", "element": "H", "x_position": 1.5, "y_position": -1.0 }},
+    {{ "id": "atom_o", "type": "atom", "element": "O", "label": "O", "x_position": "center" }},
+    {{ "id": "atom_h1", "type": "atom", "element": "H", "label": "H", "x_position": "left" }},
+    {{ "id": "atom_h2", "type": "atom", "element": "H", "label": "H", "x_position": "right" }},
     {{
       "id": "bond_o_h1",
       "type": "bond",
@@ -2335,7 +2343,7 @@ The response must start with {{and end with}} — nothing else on any line befor
 REQUIRED TOP-LEVEL JSON STRUCTURE:
 
 "visual_type" must match the visual's category based on "figure.type":
-  - "geometry" for triangle, quadrilateral, circle, polygon, coordinate_geometry
+  - "geometry" for triangle, trapezoid, parallelogram, quadrilateral, circle, polygon, coordinate_geometry
   - "data_table" for table
   - "chart" for chart
   - "graph" for graph

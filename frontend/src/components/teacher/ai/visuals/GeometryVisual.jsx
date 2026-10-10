@@ -18,7 +18,7 @@ import {
 
 export default function GeometryVisual({ visual }) {
   const isMobile = useIsMobile();
-  
+  if (!visual) return null;
 
   /*
    * --------------------------------------------------
@@ -67,6 +67,7 @@ export default function GeometryVisual({ visual }) {
       figure,
       isMobile,
     });
+    
     positions = result.positions;
     plane = result.plane;
   } else {
@@ -76,9 +77,29 @@ export default function GeometryVisual({ visual }) {
       isMobile,
     });
   }
+  const hasUnresolvedPoints = Object.keys(points).some((id) => {
+  const position = positions?.[id];
 
+  return (
+    !position ||
+    !Number.isFinite(position.x) ||
+    !Number.isFinite(position.y)
+  );
+});
+
+if (hasUnresolvedPoints) {
+  return (
+    <div
+      className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600"
+      role="status"
+    >
+      This figure could not be displayed. Please review or regenerate
+      the question before using it.
+    </div>
+  );
+}
   const { width, height } = getSvgDimensions(isMobile);
-  if (!visual) return null;
+
 
   /*
    * --------------------------------------------------
