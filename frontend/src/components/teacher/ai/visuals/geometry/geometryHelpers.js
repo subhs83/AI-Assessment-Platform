@@ -1970,7 +1970,6 @@ export function computeCoordinatePlane(bounds, dataPoints, svgWidth, svgHeight, 
     maxX = Math.max(0, ...xs);
     minY = Math.min(0, ...ys);
     maxY = Math.max(0, ...ys);
-    maxX = maxY>maxX ? maxY : maxX
     const rangeX = maxX - minX || 1;
     const rangeY = maxY - minY || 1;
     minX -= rangeX * 0.15;
@@ -1978,7 +1977,22 @@ export function computeCoordinatePlane(bounds, dataPoints, svgWidth, svgHeight, 
     minY -= rangeY * 0.15;
     maxY += rangeY * 0.15;
   }
-  maxX = maxY>maxX ? maxY : maxX
+  // Include the origin so both Cartesian axes lie inside the plane.
+    minX = Math.min(minX, 0);
+    maxX = Math.max(maxX, 0);
+    minY = Math.min(minY, 0);
+    maxY = Math.max(maxY, 0);
+
+    // Prevent zero-width or zero-height ranges.
+    if (minX === maxX) {
+      minX -= 1;
+      maxX += 1;
+    }
+
+    if (minY === maxY) {
+      minY -= 1;
+      maxY += 1;
+    }
   const availW = svgWidth - paddingX * 2;
   const availH = svgHeight - paddingY * 2;
   const scaleX = availW / (maxX - minX);
