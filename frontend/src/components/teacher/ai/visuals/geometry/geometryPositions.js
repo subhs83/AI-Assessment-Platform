@@ -1750,6 +1750,84 @@ export function calculateGeometryPositions({
               seg.end = idB;
             }
           });
+
+          // Expand small quadrilateral constructions uniformly.
+          // Include derived points and circles so they stay aligned.
+          const validPositions = Object.values(positions).filter(
+            (p) => p && Number.isFinite(p.x) && Number.isFinite(p.y)
+          );
+
+          if (validPositions.length > 0) {
+            let minX = Math.min(...validPositions.map((p) => p.x));
+            let maxX = Math.max(...validPositions.map((p) => p.x));
+            let minY = Math.min(...validPositions.map((p) => p.y));
+            let maxY = Math.max(...validPositions.map((p) => p.y));
+
+            for (const circle of circles || []) {
+              const center = circle.__renderCenter;
+              const radius = circle.__renderRadius;
+
+              if (
+                center &&
+                Number.isFinite(center.x) &&
+                Number.isFinite(center.y) &&
+                Number.isFinite(radius) &&
+                radius > 0
+              ) {
+                minX = Math.min(minX, center.x - radius);
+                maxX = Math.max(maxX, center.x + radius);
+                minY = Math.min(minY, center.y - radius);
+                maxY = Math.max(maxY, center.y + radius);
+              }
+            }
+
+            const figureWidth = maxX - minX;
+            const figureHeight = maxY - minY;
+
+            if (figureWidth > 0 && figureHeight > 0) {
+              const scale = Math.min(
+                (HALF_W * 2) / figureWidth,
+                (HALF_H * 2) / figureHeight
+              );
+
+              if (Number.isFinite(scale) && scale > 1) {
+                const originX = (minX + maxX) / 2;
+                const originY = (minY + maxY) / 2;
+
+                const transform = (point) => ({
+                  ...point,
+                  x: centerX + (point.x - originX) * scale,
+                  y: centerY + (point.y - originY) * scale,
+                });
+
+                for (const [id, point] of Object.entries(positions)) {
+                  if (
+                    point &&
+                    Number.isFinite(point.x) &&
+                    Number.isFinite(point.y)
+                  ) {
+                    positions[id] = transform(point);
+                  }
+                }
+
+                for (const circle of circles || []) {
+                  const center = circle.__renderCenter;
+                  const radius = circle.__renderRadius;
+
+                  if (
+                    center &&
+                    Number.isFinite(center.x) &&
+                    Number.isFinite(center.y) &&
+                    Number.isFinite(radius) &&
+                    radius > 0
+                  ) {
+                    circle.__renderCenter = transform(center);
+                    circle.__renderRadius = radius * scale;
+                  }
+                }
+              }
+            }
+          }
         // ==================================================
         // ⬆️ END OF NEW BLOCK ⬆️
         // ==================================================
