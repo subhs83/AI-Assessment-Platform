@@ -13,7 +13,36 @@ export function renderFreeBodyDiagram(plane, isMobile = false) {
   const labelText = objectEl?.label || "";
   const estimatedTextWidth = labelText.length * 8 + 24; // rough char-width estimate + padding
   const objectSize = Math.max(50, estimatedTextWidth);
-  const objectHeight = 50;
+  // Group vectors by direction.
+  const directionGroups = new Map();
+
+  vectorEls.forEach((vector, index) => {
+    const angle = Number(vector.angle);
+    if (!Number.isFinite(angle)) return;
+
+    const normalizedAngle = ((angle % 360) + 360) % 360;
+    const key = normalizedAngle.toFixed(4);
+
+    if (!directionGroups.has(key)) {
+      directionGroups.set(key, []);
+    }
+
+    directionGroups.get(key).push(index);
+  });
+
+  // Separate parallel arrows enough to accommodate their labels.
+  const laneSpacing = Math.max(24, fontSize * 2.5);
+
+  const largestGroup = Math.max(
+    1,
+    ...Array.from(directionGroups.values(), (group) => group.length)
+  );
+
+  // Increase the box's height when horizontal forces need more lanes.
+  const objectHeight = Math.max(
+    50,
+    (largestGroup - 1) * laneSpacing + 24
+  );
 
   return (
     <g>
@@ -40,20 +69,75 @@ export function renderFreeBodyDiagram(plane, isMobile = false) {
         </g>
       )}
 
-      {vectorEls.map((v) => {
-        const rad = (v.angle * Math.PI) / 180;
-        // Start from whichever edge (horizontal or vertical) the arrow
-        // actually exits through, using the box's real half-width/height
-        // rather than a single shared radius — avoids the arrow visually
-        // clipping through a corner or starting inside the label text.
+      {vectorEls.map((v, index) => {
+        const rawAngle = Number(v.angle);
+        if (!Number.isFinite(rawAngle)) return null;
+
+        const angle = ((rawAngle % 360) + 360) % 360;
+        const rad = (angle * Math.PI) / 180;
+
+        // Direction in SVG coordinates.
+        const dx = Math.cos(rad);
+        const dy = -Math.sin(rad);
+
+        // Perpendicular direction for separating parallel vectors.
+        const nx = -dy;
+        const ny = dx;
+
+        const group = directionGroups.get(angle.toFixed(4)) || [index];
+        const laneIndex = group.indexOf(index);
+
+        const requestedOffset =  (laneIndex - (group.length - 1) / 2) * laneSpacing;
+
         const halfW = objectSize / 2;
         const halfH = objectHeight / 2;
-        const startX = centerX + Math.cos(rad) * halfW;
-        const startY = centerY - Math.sin(rad) * halfH;
 
-        return renderVector(
-          { x: startX, y: startY, angleDeg: v.angle, length: v.length, label: v.label,  dashed: v.dashed},
-          isMobile
+        // Keep each lane's origin inside the box.
+        const maxOffset = Math.min(
+          Math.abs(nx) > 1e-8
+            ? (halfW - 6) / Math.abs(nx)
+            : Infinity,
+          Math.abs(ny) > 1e-8
+            ? (halfH - 6) / Math.abs(ny)
+            : Infinity
+        );
+
+        const offset = Math.max( -maxOffset, Math.min(maxOffset, requestedOffset));
+
+        const originX = centerX + nx * offset;
+        const originY = centerY + ny * offset;
+
+        // Find where this ray actually intersects the box boundary.
+        const exitX =
+          dx > 1e-8
+            ? (centerX + halfW - originX) / dx
+            : dx < -1e-8
+              ? (centerX - halfW - originX) / dx
+              : Infinity;
+
+        const exitY =
+          dy > 1e-8
+            ? (centerY + halfH - originY) / dy
+            : dy < -1e-8
+              ? (centerY - halfH - originY) / dy
+              : Infinity;
+
+        const distance = Math.min(exitX, exitY);
+
+        return (
+          <g key={v.id || `force-${index}`}>
+            {renderVector(
+              {
+                x: originX + dx * distance,
+                y: originY + dy * distance,
+                angleDeg: angle,
+                length: v.length,
+                label: v.label,
+                dashed: v.dashed,
+              },
+              isMobile
+            )}
+          </g>
         );
       })}
     </g>

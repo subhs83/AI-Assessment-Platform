@@ -1,6 +1,9 @@
 import { parseGeometry } from "./geometry/geometryParser";
 import { calculateGeometryPositions } from "./geometry/geometryPositions";
 import { calculateCoordinateGeometryPositions } from "./geometry/coordinateGeometryPositions";
+import FractionVisual from "./FractionVisual";
+import ParallelLinesVisual from "./ParallelLinesVisual";
+import SolidGeometryVisual from "./SolidGeometryVisual";
 
 import { getSegmentEndpoints, getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile"
@@ -19,6 +22,19 @@ import {
 export default function GeometryVisual({ visual }) {
   const isMobile = useIsMobile();
   if (!visual) return null;
+
+  if (visual.figure?.type === "fraction_model") {
+    return <FractionVisual visual={visual} />;
+  }
+
+  if (visual.figure?.type === "parallel_lines") {
+    return <ParallelLinesVisual visual={visual} />;
+  }
+
+  if (visual.figure?.type === "solid_geometry") {
+    return <SolidGeometryVisual visual={visual} />;
+  }
+
 
   /*
    * --------------------------------------------------

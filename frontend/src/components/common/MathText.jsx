@@ -1,6 +1,24 @@
 import "katex/dist/katex.min.css";
 import { BlockMath, InlineMath } from "react-katex";
 
+// Turns slash fractions inside MATH content into \frac{}{}.
+// 1/f -> \frac{1}{f}    1/(-0.50) -> \frac{1}{-0.50}    1/(-\infty) -> \frac{1}{-\infty}
+// Skips \text{...} so units like \text{ m/s} are left alone.
+const ATOM = "(\\d+(?:\\.\\d+)?|[a-zA-Z]|\\([^()]+\\))";
+const SLASH_FRACTION = new RegExp("(?<![\\w.)}\\\\])" + ATOM + "\\/" + ATOM + "(?![\\w.(])", "g");
+const unwrap = (s) => (s.startsWith("(") ? s.slice(1, -1) : s);
+
+function fixSlashFractions(math) {
+  return math
+    .split(/(\\text\{[^}]*\})/g)
+    .map((seg, i) =>
+      i % 2 === 1
+        ? seg // a \text{...} segment, leave untouched
+        : seg.replace(SLASH_FRACTION, (_, a, b) => `\\frac{${unwrap(a)}}{${unwrap(b)}}`)
+    )
+    .join("");
+}
+
 export default function MathText({ text = "" }) {
   if (!text) return null;
 
@@ -9,24 +27,22 @@ export default function MathText({ text = "" }) {
   const sanitizedText = text.replace(/\\\$|\\\$/g, placeholder);
 
   // 2. Split by BlockMath ($$...$$) and InlineMath ($...$)
-  // Matches valid inline math including subscript (_) and superscript (^)
   const parts = sanitizedText.split(/(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g);
 
   return (
     <>
       {parts.map((part, index) => {
-        // Restore literal $ signs for plain text output
         const unescapedPart = part.replaceAll(placeholder, "$");
 
         // Case 1: Display/Block Math ($$...$$)
         if (part.startsWith("$$") && part.endsWith("$$") && part.length > 4) {
-          const mathContent = part.slice(2, -2).replaceAll(placeholder, "\\$");
+          const mathContent = fixSlashFractions(part.slice(2, -2).replaceAll(placeholder, "\\$")); // CHANGED
           return <BlockMath key={index} math={mathContent} />;
         }
 
-        // Case 2: Inline Math ($...$) — handles ^, _, {}, \text{}
+        // Case 2: Inline Math ($...$)
         if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
-          const mathContent = part.slice(1, -1).replaceAll(placeholder, "\\$");
+          const mathContent = fixSlashFractions(part.slice(1, -1).replaceAll(placeholder, "\\$")); // CHANGED
           return <InlineMath key={index} math={mathContent} />;
         }
 

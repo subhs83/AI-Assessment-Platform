@@ -1,5 +1,5 @@
 import { getSvgDimensions,} from "../../geometry/geometryHelpers";
-import {getShowImage, pointAtDeg, intersectLines, buildPrismGeometry, getDistanceLabel} from "./rayOpticsHelpers"
+import {getShowImage, pointAtDeg, intersectLines, buildPrismGeometry, getDistanceLabel, intersectWithSurface} from "./rayOpticsHelpers"
 
 export function calculateConvexLensPositions({ elements, relationships, isMobile = false }) {
   const { width: SVG_WIDTH, height: SVG_HEIGHT, paddingX, paddingY } = getSvgDimensions(isMobile);
@@ -557,11 +557,57 @@ export function calculatePrismDispersionPositions({ elements, relationships, isM
 export function calculateSimpleMicroscopePositions({ elements, relationships, isMobile = false }) {
   const base = calculateConvexLensPositions({ elements, relationships, isMobile });
   const observerEl = elements.find((e) => e.type === "observer");
-if (observerEl) {
-  const fPx = base.f * base.scale;
-  const eyeX = base.lensX + Math.max(70, Math.min(fPx * 0.5, 160));
-  const slope = (base.axisY - base.positions.object.tipY) / (base.lensX - base.positions.object.x);
-  base.positions.observer = { x: eyeX, y: base.axisY + slope * (eyeX - base.lensX), label: observerEl.label };
-}
-  return base;
-}
+  if (observerEl) {
+    const fPx = base.f * base.scale;
+    const eyeX = base.lensX + Math.max(70, Math.min(fPx * 0.5, 160));
+    const slope = (base.axisY - base.positions.object.tipY) / (base.lensX - base.positions.object.x);
+    base.positions.observer = { x: eyeX, y: base.axisY + slope * (eyeX - base.lensX), label: observerEl.label };
+  }
+    return base;
+  }
+
+
+ export function calculateEyeDefectPositions({ elements, relationships, feature, isMobile = false }) {
+  const { width: W, height: H } = getSvgDimensions(isMobile);
+  const eyeEl = elements.find((e) => e.type === "eye");
+  const retinaEl = elements.find((e) => e.type === "retina");
+  const objectEl = elements.find((e) => e.type === "object_arrow");
+  const isMyopia = feature === "myopia";
+
+  if (relationships.find((r) => r.type === "corrected_by")?.show_correction === true) {
+    console.warn("[human_eye] show_correction:true is not implemented yet. Rendering the uncorrected eye.");
+  }
+
+  const axisY = H / 2;
+  const ry = H * 0.3;
+  const rx = Math.min(W * 0.19, ry * 1.6);
+  const ex = W * 0.62;
+  const retinaX = ex + rx;
+  const lensX = ex - rx * 0.55;
+  const lensHalf = ry * 0.42;
+  const surfaceX = (y) => ex + rx * Math.sqrt(Math.max(0, 1 - ((y - axisY) / ry) ** 2));
+
+  // Defect: the image sits in front of the retina (myopia) or behind it (hypermetropia).
+  const xI = isMyopia ? retinaX - rx * 0.28 : retinaX + rx * 0.28;
+
+  const objX = W * (isMyopia ? 0.10 : 0.22);
+  const hPx = ry * (isMyopia ? 0.3 : 0.42);
+  const objectTip = { x: objX, y: axisY - hPx };
+  // object tip → lens centre → image tip is one straight line (the undeviated central ray)
+  const imageTip = isMyopia
+    ? { x: xI, y: axisY }
+    : { x: xI, y: axisY + (hPx * (xI - lensX)) / (lensX - objX) };
+
+  const rays = [-0.8, 0.8].map((f) => {
+    const lensPt = { x: lensX, y: axisY + f * lensHalf };
+    const start = isMyopia ? { x: 6, y: lensPt.y } : objectTip; // bundle starts at the left edge
+    const hit = intersectWithSurface(lensPt, imageTip, surfaceX, retinaX);
+    return { start, lensPt, hit };
+  });
+
+  return {
+    axisY, ex, rx, ry, retinaX, lensX, lensHalf, isMyopia, objX, objectTip, imageTip, rays,
+    showImage: getShowImage(relationships),
+    labels: { eye: eyeEl?.label, retina: retinaEl?.label, object: objectEl?.label },
+  };
+} 

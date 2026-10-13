@@ -627,3 +627,59 @@ export function renderSimpleMicroscopeSystem(plane, elements, isMobile = false) 
     </g>
   );
 }
+
+
+export function renderEyeDefectSystem(plane, elements, isMobile = false) {
+  if (!plane) return null;
+  const { strokeWidth, fontSize, width } = getSvgDimensions(isMobile);
+  const { axisY, ex, rx, ry, lensX, lensHalf, isMyopia, objX, objectTip, imageTip, rays, showImage, labels } = plane;
+
+  const RETINA_COLOR = "#B5455C";
+  const retinaPath = Array.from({ length: 21 }, (_, i) => {
+    const t = ((-55 + (110 * i) / 20) * Math.PI) / 180;
+    return `${i === 0 ? "M" : "L"} ${ex + rx * Math.cos(t)} ${axisY + ry * Math.sin(t)}`;
+  }).join(" ");
+  const objLabelHalf = ((labels.object?.length || 0) * fontSize * 0.85) / 2 + 4; // keeps the label inside the canvas
+  const tA = (-38 * Math.PI) / 180;
+  const retAnchor = { x: ex + rx * Math.cos(tA), y: axisY + ry * Math.sin(tA) };
+  const retLabel = { x: retAnchor.x + 56, y: retAnchor.y - 18 };
+  return (
+    <g>
+      <line x1={0} y1={axisY} x2={width} y2={axisY} stroke={OPTICS_COLORS.axis} strokeDasharray="4,3" strokeWidth={strokeWidth * 0.7} />
+
+      <ellipse cx={ex} cy={axisY} rx={rx} ry={ry} fill="#FFF4EC" fillOpacity={0.8} stroke={OPTICS_COLORS.marker} strokeWidth={strokeWidth * 1.4} />
+      {renderLensSymbol(lensX, axisY - lensHalf, axisY + lensHalf, strokeWidth)}
+      <path d={retinaPath} fill="none" stroke={RETINA_COLOR} strokeWidth={strokeWidth * 3} strokeLinecap="round" />
+
+      {labels.eye && renderMathLabel(ex, axisY - ry - 12, labels.eye, fontSize, OPTICS_COLORS.marker)}
+      {labels.retina && (
+        <>
+          <line x1={retAnchor.x} y1={retAnchor.y} x2={retLabel.x - 22} y2={retLabel.y + 8} stroke={RETINA_COLOR} strokeWidth={1} />
+          {renderMathLabel(retLabel.x, retLabel.y, labels.retina, fontSize, RETINA_COLOR)}
+        </>
+      )}
+
+      {isMyopia ? (
+        labels.object && renderMathLabel(objLabelHalf, axisY - 0.8 * lensHalf - 18, labels.object, fontSize, OPTICS_COLORS.object)
+      ) : (
+        <>
+          {renderVectorToPoint({ x: objX, y: axisY, toX: objX, toY: objectTip.y, color: OPTICS_COLORS.object })}
+          {labels.object && renderMathLabel(Math.max(objX, objLabelHalf), axisY + 20, labels.object, fontSize, OPTICS_COLORS.object)}
+        </>
+      )}
+
+      {rays.map(({ start, lensPt, hit }, i) => (
+        <g key={i}>
+          <line x1={start.x} y1={start.y} x2={lensPt.x} y2={lensPt.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+          {renderMidRayArrow(start, lensPt, OPTICS_COLORS.ray, strokeWidth)}
+          <line x1={lensPt.x} y1={lensPt.y} x2={hit.x} y2={hit.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} />
+          {renderMidRayArrow(lensPt, hit, OPTICS_COLORS.ray, strokeWidth)}
+          {/* Hypermetropia: real light stops at the retina; the dashed part is only the construction to the image behind it */}
+          {!isMyopia && <line x1={hit.x} y1={hit.y} x2={imageTip.x} y2={imageTip.y} stroke={OPTICS_COLORS.ray} strokeWidth={strokeWidth} strokeDasharray="5,4" />}
+        </g>
+      ))}
+
+      {showImage && !isMyopia && renderVectorToPoint({ x: imageTip.x, y: axisY, toX: imageTip.x, toY: imageTip.y, color: OPTICS_COLORS.image, dashed: true })}
+    </g>
+  );
+}

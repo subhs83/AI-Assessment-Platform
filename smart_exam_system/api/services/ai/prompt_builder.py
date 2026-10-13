@@ -125,6 +125,7 @@ BLOOM'S TAXONOMY: {blooms_level}
 4. ZERO INTERNAL INFORMATION: Do NOT include internal calculations, scratchpad work, planning steps, thought processes, step-by-step mathematical derivations, or self-dialogue inside ANY JSON field or anywhere in the response.
 5. Each question must be generated independently. Do not copy visual structures, numerical values, or set labels across questions.
 6. Do not invent unsupported facts or extra concepts outside the source content.
+7. Never expose JSON field names, internal IDs, renderer terms, or position tokens in question_text, options, or explanation (e.g. upper_right, lower_left, point_a, segment_ab, transversal_id).
 
 
 # VISUAL OUTPUT RULES & TAXONOMY
@@ -151,7 +152,8 @@ VISUAL ELEMENT VALUE FIELDS:
 Visual value fields are machine-parsed data. Keep them separate from
 display labels.
 
-- Angle "value": a bare number or numeric string in DEGREES,such as 60 or "60". Never include LaTeX, degree symbols, or units.
+- Angle labels may contain a given numeric angle in math notation (e.g. "$45^\\circ$") or an unknown symbol (e.g. "$x$", "$\\theta$").
+  Never include the solved value of an unknown, verdicts, or commentary such as "(Incorrect)", "(wrong)", or "(should be X)".
 - If the question uses radians, store the equivalent degree value. Put the radian notation in question_text or the display label.
 - Segment "value": a bare number or numeric string, such as 10 or "10". For compatibility, a number followed by a short unit is also allowed, such as "10 cm". Never include LaTeX or symbolic expressions.
 - Coordinates, bounds, and vector components must be JSON numbers, never strings.
@@ -174,6 +176,28 @@ For "type": "coordinate_geometry", every point element MUST include explicit num
 The "figure" object MUST include a "bounds" field stating the intended visible axis range, chosen so every point element fits comfortably inside it with margin:
 {{ "type": "coordinate_geometry", "subtype": "...", "feature": "...", "bounds": {{ "x_min": -6, "x_max": 6, "y_min": -6, "y_max": 6 }} }}
 
+SOLID GEOMETRY RULES:
+- Use right circular cylinders/cones, right triangular prisms, and regular square pyramids.
+- Include one solid element and dimension elements linked by "dimension_of". Each dimension has a "role", display "label", and numeric "value" only when given. Put units in "unit".
+- Supported dimension roles:
+  cube: side
+  cuboid: length, width, height
+  cylinder: radius OR diameter, height
+  cone: radius OR diameter, height, slant_height
+  sphere/hemisphere: radius OR diameter
+  triangular_prism: base_side_a, base_side_b, base_side_c, base_altitude, prism_length
+  square_pyramid: base_side, height, slant_height
+- For triangular_prism, base_altitude is perpendicular to base_side_a.
+  Volume needs base_side_a, base_altitude, and prism_length. Surface area also needs all three base-side lengths.
+- Cone slant_height is apex-to-rim; pyramid slant_height is apex-to-midpoint of a base edge, not a lateral edge.
+- Give enough data for the requested quantity. Keep dimensions geometrically consistent; omit solution-only dimensions.
+- Unknown dimensions use a symbol label and omit value.
+- curved_surface_area applies to cylinder, cone, sphere, hemisphere;
+  lateral_surface_area applies to cube, cuboid, prism, pyramid. Total area includes all boundary surfaces, including a hemisphere's  circular base.
+- Closed solids are the default. Only cylinder/cuboid support open containers in this phase: figure.open_faces may contain "top", "bottom", or both. State omitted faces explicitly in question_text. For cuboids, these are the length × width faces.
+- Renderer controls projection, hidden edges, and label placement. Do not generate pixel coordinates or reveal calculated answers.
+
+
 For "transformation_reflection" and "transformation_translation" questions, include BOTH the original point(s) and the transformed (image) point(s) as separate elements (e.g. point_a and point_a_prime), each with its own "x"/"y". State the transformation itself as a relationship:
 - Reflection: {{ "type": "reflects_over", "elements": ["point_a"], "target": "point_a_prime", "axis": "x-axis" }}  (axis is one of "x-axis", "y-axis", or a line id like "line_y_eq_x")
 - Translation: {{ "type": "translated_by", "elements": ["point_a"], "target": "point_a_prime", "vector": [3, -2] }}  (vector is a plain [dx, dy] numeric array, never LaTeX)
@@ -183,6 +207,7 @@ All numeric fields (x, y, vector components, bounds) follow the same plain-numer
 RANGE NOTATION IN TABLES: Write numeric ranges as "45 - 50" (plain, no symbols). Only use "$150 \\le h < 155$" style inequality notation when consecutive class intervals share a boundary number and you must clarify which class that boundary belongs to. Never combine a hyphen with "<" (e.g. "150 - <155" is invalid).
 
 PHYSICS VISUAL ELEMENT SCOPING (applies to all physics figure types):
+
 Only include a visual element (vector, force, current, ray, wire, component, angle, weight, etc.) if it is explicitly named or directly relevant to the SPECIFIC QUESTION BEING ASKED — not every element needed to derive the answer through intermediate steps in the explanation. A diagram should show what the question asks the student to observe or reason about, not the full solution path.
 
 For example:
@@ -190,16 +215,25 @@ For example:
 - A circuit question asking for "the current through R2" should show the circuit's actual components (resistors, battery), but should not add extra annotation elements (like intermediate voltage-drop labels) that only appear in the step-by-step derivation, unless the question explicitly references them.
 - An optics question asking "where does the image form" should show the lens/mirror, the object, and the relevant principal rays — not every auxiliary construction line used only to justify the answer in prose.
 
-PHYSICS VECTOR ANGLE CORRECTNESS (inclined-plane figures specifically):
+PHYSICS VECTOR ANGLE CORRECTNESS — INCLINED PLANE:
 
-For "type": "physics", "subtype": "inclined_plane" figures, every force vector's "angle" field must be geometrically consistent with the SAME angle convention already used for force_normal in these figures: normal force = 90 + incline_angle (perpendicular to the slope surface, pointing away from it). Given that convention, forces acting ALONG the slope surface (friction, and any applied force directed along the incline) must be exactly perpendicular to the normal — i.e. (normal_angle - 90) or (normal_angle + 90), never (normal_angle + 180) or any other offset.
+The renderer draws the incline descending from left to right.
+Vector angles are measured counterclockwise from the positive
+horizontal direction: right = 0, up = 90, left = 180, down = 270.
 
-To pick the correct one of the two perpendicular directions for a given force:
-- Friction always opposes the direction the object is moving or tends to move. If the object slides/tends to slide DOWN the incline, friction points UP-slope. If pulled/pushed UP the incline, kinetic friction points DOWN-slope.
-- An applied force stated as moving the object "up the incline" must point up-slope; "down the incline" must point down-slope.
-- Gravity (force_gravity) is always straight down: angle = 270, regardless of incline_angle — never adjust gravity's own angle to the slope.
+For incline_angle = θ:
+- Normal force: angle = 90 - θ.
+- Down-slope force: angle = 360 - θ.
+- Up-slope force: angle = 180 - θ.
+- Gravity: angle = 270.
 
-Before finalizing a force's "angle" value, verify it is exactly 90 degrees away from force_normal's angle, in the direction consistent with the physical scenario described in question_text. Do not derive a friction or applied-force angle by simply adding or subtracting 180 from another force's angle — this produces a direction perpendicular to the slope instead of along it, which is physically wrong.
+Friction opposes motion or impending motion:s
+- Moving/tending down-slope: friction points up-slope.
+- Moving/tending up-slope: friction points down-slope.
+
+Applied forces stated as along the incline must use the corresponding up-slope or down-slope angle. Do not apply these directions to forces stated as horizontal or otherwise inclined.
+
+Normalize angles to [0, 360). Every along-slope force must be perpendicular to the normal force.
 
 INCLINE ANGLE ELEMENT — WHEN TO INCLUDE IT:
 
@@ -254,32 +288,28 @@ by looking at the completed image, such as:
 - comparing setups where the image does not reveal the answer
 
 IMPORTANT:
-Do not decide only from the wording of the options.
-If displaying the formed image would allow the student to visually
-identify the correct answer without doing the intended reasoning,
-use `show_image: false`.
+Do not decide only from the wording of the options. If displaying the formed image would allow the student to visually
+identify the correct answer without doing the intended reasoning, use `show_image: false`.
 
-Rule of thumb: if a correct answer option is itself a location on the
-principal axis relative to the lens/mirror, mark show_image: false.
+For human_eye identification questions, the question text must not state where the light focuses (in front of / behind the retina) and must not name
+the defect. Describe only the setup ("the eye shown in the figure") and let the figure carry the focus position.
+
+Rule of thumb: if a correct answer option is itself a location on the principal axis relative to the lens/mirror, mark show_image: false.
 Otherwise, default to show_image: true.
 
-Angle labels (the "label" field on any "angle" element) must contain ONLY the
-numeric value in math notation (e.g. "$45^\\circ$"), never a verdict or
-commentary ("(Incorrect)", "(wrong)", "(should be X)"). The figure must show
-the drawn angle without revealing whether it's right or wrong — that judgment
+Angle labels (the "label" field on any "angle" element) must contain ONLY the numeric value in math notation (e.g. "$45^\\circ$"), never a verdict or
+commentary ("(Incorrect)", "(wrong)", "(should be X)"). The figure must show the drawn angle without revealing whether it's right or wrong — that judgment
 is what the question is testing.
 
-If the question asks for the object's distance, or any answer option states
-the object distance, set "show_distance_label": false on the object_arrow.
-The object is still drawn at that distance, but the figure must not print
-the number.
+If the question asks for the object's distance, or any answer option states the object distance, set "show_distance_label": false on the object_arrow.
+The object is still drawn at that distance, but the figure must not print the number.
 
 LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substituent above and TWO below (e.g. formate HCO2-, where H sits above C and two O's sit below), use "x_position": "top" for the upper atom, and "side": "bottom_left" | "bottom_right" for the two lower atoms. Do not reuse "top_left"/"top_right" for this arrangement — those are reserved for the opposite case (2 above, 1 below).
 --------------------------------------------------
 1. MATHEMATICS & COORDINATE GEOMETRY TAXONOMY
 --------------------------------------------------
 - "type": "triangle"            -> "subtype": "equilateral" | "isosceles" | "scalene" | "right" | "general"
-                                   "feature": "none" | "parallel_segment" | "altitude" | "median" | "angle_bisector" | "incircle" | "excircle" | "exterior_angle" | "circumcenter | cevian_concurrency | transversal"
+                                   "feature": "none" | "parallel_segment" | "altitude" | "median" | "angle_bisector" | "incircle" | "excircle" | "exterior_angle" | "circumcenter" | "cevian_concurrency" | "transversal"
 - "type": "trapezoid"           -> "subtype": "isosceles" | "scalene" | "right"
                                    "feature": "none" | "median" | "diagonals" | "diagonal_proportionality" | "incircle"
 - "type": "parallelogram"       -> "subtype": "general" | "rectangle" | "rhombus" | "square"
@@ -294,6 +324,9 @@ LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substitue
 - "type": "coordinate_geometry" -> "subtype": "cartesian_plane" | "distance_formula_segment" | "midpoint_segment" | "slope_line" | "transformation_reflection" | "transformation_translation"
                                    "feature": "none" | "grid_lines" | "vector_arrow" | "angle_indicator"
 
+
+- "type": "solid_geometry"    -> "subtype": "cube" | "cuboid" | "cylinder" | "cone" | "sphere" | "hemisphere" | "triangular_prism" | "square_pyramid" |
+                                  "feature": "volume" | "total_surface_area" | "lateral_surface_area" | "curved_surface_area"                                  
 --------------------------------------------------
 2. SET THEORY & DATA TAXONOMY
 --------------------------------------------------
@@ -385,23 +418,307 @@ LEWIS STRUCTURE POSITION ROLES (addition): For a central atom with ONE substitue
   -> "subtype": "ph_scale"
      "feature": "none" | "acid_base_strength" | "buffer_region"
 
---------------------------------------------------
-4. PHASE 2: COMPOSITE / IMO / ISO TAXONOMY
---------------------------------------------------
-- "type": "composite"       -> "subtype": "multi_layer" (Include a "subfigures": [...] array listing each child subfigure with its own explicit "type", "subtype", and optional "feature")
 
+--------------------------------------------------
+FRACTION MODELS — EQUAL-AREA SHADING
+--------------------------------------------------
+
+- "type": "fraction_model"
+- "subtype": "rectangle" | "square" | "bar" | "circle" |
+             "oval" | "triangle" | "regular_polygon" |
+             "heart" | "star"
+- "feature": "shaded_parts"
+
+SUPPORTED PARTITION PATTERNS:
+
+- rectangle / square: "grid"
+  Required: "rows", "columns".
+  Each must be an integer from 1 to 6.
+  Total parts = rows * columns, between 2 and 24.
+
+- bar: "equal_strips"
+  Required: "parts", an integer from 2 to 12.
+
+- circle / oval: "equal_sectors"
+  Required: "parts", an integer from 2 to 12.
+  Oval sectors must be an affine transformation of equal circle sectors, preserving equal area.
+
+- triangle: "equal_base_triangles"
+  Required: "parts", an integer from 2 to 12.
+  Divide one base into equal-length intervals and connect each division to the opposite vertex. All parts have equal area.
+
+- regular_polygon: "center_triangles"
+  Required: figure.sides, an integer from 5 to 8.
+  Partition.parts must equal figure.sides.
+  Connect the centre to every vertex to create equal-area triangles.
+
+- heart / star: "mirror_halves"
+  Required: "parts": 2 and "axis": "vertical".
+  Use a vertically symmetric shape divided into two equal-area halves.
+  For star, figure.star_points must be 5.
+  Do not generate other heart/star partitions in this phase.
+
+  FRACTION MODEL RULES:
+
+1. Use a fraction model only when the question requires the student
+   to inspect the shading or partition.
+
+2. Every partition must have equal area. Equal widths or equal angles
+   alone do not guarantee equal area for arbitrary shapes.
+
+3. Use only the supported subtype/pattern combinations above.
+   Do not invent shapes, patterns, coordinates, or partition methods.
+
+4. Return a top-level "partition" object inside "visual".
+   Return "shaded_parts" as an array of unique zero-based integers.
+
+5. Every shaded index must be between 0 and total_parts - 1.
+   For grids, total_parts = rows * columns.
+   For other supported patterns, total_parts = partition.parts.
+
+6. Index parts using these conventions:
+   - grid: row-major, starting at the top-left.
+   - equal_strips: left to right.
+   - equal_sectors: clockwise, starting from the upward radius.
+   - equal_base_triangles: left to right along the horizontal base,
+     with the opposite vertex above the base.
+   - center_triangles: clockwise; part 0 is between the top vertex
+     and the next clockwise vertex.
+   - mirror_halves: 0 = left half, 1 = right half.
+
+7. Use 1 to total_parts - 1 shaded parts for ordinary proper-fraction
+   questions. Use zero or all shaded parts only when the source
+   explicitly covers zero or one whole.
+
+8. The mathematical fraction shown is:
+   number_of_shaded_parts / total_parts.
+   If asking for simplest form, ensure only one answer option matches.
+   Never include multiple equivalent fractions as separate options
+   unless the question explicitly distinguishes their form.
+
+9. Do not put the fraction answer, percentage, shaded-part count,
+   or a solved expression in a visual label.
+   Shading and partition boundaries provide the information students
+   are intended to count.
+
+10. The renderer chooses colours, dimensions, and label positions.
+    Do not generate SVG, HTML, CSS, or pixel coordinates.
+
+11. Fraction models use their dedicated payload below.
+    They do not require "elements" or "relationships".
+    Do not add empty arrays for those fields.
+
+
+--------------------------------------------------
+COMPOSITE PERIMETER AND AREA
+--------------------------------------------------
+
+- "type": "composite_geometry"
+  -> "subtype": "joined_rectangles" | "rectangular_cutouts" |
+                "partitioned_rectangle" | "unit_square_region" |
+                "crossing_paths" | "boundary_path"
+     "feature": "area" | "perimeter" | "remaining_area" |
+                "missing_length" | "missing_area"
+
+
+The following element fields, relationships, and rules apply ONLY when figure.type is "composite_geometry".
+All other figure types retain their existing payload contracts.
+ELEMENTS:
+- rectangle: id, type, label, length, width. 
+  length/width are positive numeric construction dimensions.
+- dimension: id, type, role, label, optional numeric value, unit.
+  role: "length" | "width" | "area".
+  Link dimensions to their rectangle using dimension_of. Only given dimensions have value; unknown labels use symbols.
+- unit_cell: id, type, row, column.
+  row/column are nonnegative integer grid indices, not pixel positions.
+
+RELATIONSHIPS:
+- joins_edge: elements [rectangle_to_place], target rectangle,
+  side "top" | "bottom" | "left" | "right",
+  alignment "start" | "center" | "end", optional offset (default 0).
+  Top/bottom alignment is left-to-right; left/right is top-to-bottom.
+  Offset is measured from the selected aligned position, positive
+  rightward/downward, in the common unit.
+- inside: elements [inner_rectangle], target outer_rectangle,
+  placement "center" | "top_left" | "top_right" | "bottom_left" | "bottom_right".
+- subtracts_from: elements [cutout_rectangle], target outer_rectangle.
+- partitions: elements [all_partition_rectangles], target outer_rectangle.
+- dimension_of: elements [dimension_ids], target rectangle.
+- crosses_inside: elements [horizontal_path, vertical_path],
+  target park_rectangle, placement "center".
+- surrounds: elements [path_rectangle], target park_rectangle,
+  placement "inside" | "outside", numeric path_width.
+
+RULES:
+- Use one common unit. All construction dimensions must be consistent.
+- Renderer uses rectangle dimensions and relationships to construct the layout. It displays only dimension labels linked by dimension_of;
+  never automatically print construction dimensions or solved answers.
+- joined_rectangles: first rectangle anchors the layout; every other rectangle joins an already placed rectangle. Shared edge must have
+  positive length; interiors must not overlap. Covers L/T/U/C, stepped, and offset shapes without separate letter-specific subtypes.
+- rectangular_cutouts: position every cutout with inside and remove it with subtracts_from. Cutouts must fit and must not overlap.
+- partitioned_rectangle: first rectangle is the outer boundary; remaining rectangles must tile it without gaps or overlaps.
+  Use inside to anchor one partition, joins_edge to place the others, and partitions to identify the complete subdivision.
+- unit_square_region: cells must be unique and edge-connected. figure.cell_size is positive; figure.unit gives the length unit.
+- crossing_paths: one horizontal strip spans the park's length; one vertical strip spans its width. Both are centred inside the park.
+  Count their overlapping intersection only once.
+- boundary_path: one uniform rectangular path inside or outside the park. For an inside path, twice path_width must be less than both park sides.
+- Area of joined regions counts each occupied region once. Shared internal edges are excluded from perimeter.
+- For cutouts, perimeter includes the remaining region's boundaries, including hole boundaries, unless question_text asks only for the outer boundary.
+- Partition lines do not contribute to the outer perimeter.
+- Path questions must identify whether the requested area/perimeter belongs to the path, park, remaining lawn, or outer boundary.
+- Construction data may contain values needed for layout even when those dimensions are unknown to students. Unknown display dimensions
+  omit value. Do not ask students to measure the schematic drawing.
 
 # VISUAL JSON PAYLOAD CONTRACTS
 
 When "visual_required": true, return the corresponding semantic "visual" payload structure:
 
+--- FRACTION: SQUARE GRID ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "square", "feature": "shaded_parts" }},
+  "partition": {{ "pattern": "grid", "rows": 2, "columns": 2 }},
+  "shaded_parts": [0, 2, 3]
+}}
+
+--- FRACTION: RECTANGLE GRID ---
+"visual": {{
+  "figure": {{"type": "fraction_model", "subtype": "rectangle", "feature": "shaded_parts" }},
+  "partition": {{ "pattern": "grid", "rows": 2, "columns": 3 }},
+  "shaded_parts": [0, 1, 3, 4]
+}}
+
+--- FRACTION: BAR ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "bar", "feature": "shaded_parts" }},
+  "partition": {{ "pattern": "equal_strips", "parts": 5 }},
+  "shaded_parts": [0, 1]
+}}
+
+--- FRACTION: CIRCLE ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "circle", "feature": "shaded_parts" }},
+  "partition": {{"pattern": "equal_sectors", "parts": 8}},
+  "shaded_parts": [0, 1, 2]
+}}
+
+--- FRACTION: OVAL ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "oval", "feature": "shaded_parts" }},
+  "partition": {{ "pattern": "equal_sectors", "parts": 4}},
+  "shaded_parts": [1, 2]
+}}
+
+--- FRACTION: TRIANGLE ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "triangle", "feature": "shaded_parts"}},
+  "partition": {{"pattern": "equal_base_triangles", "parts": 3}},
+  "shaded_parts": [0, 2]
+}}
+
+--- FRACTION: REGULAR HEXAGON ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "regular_polygon", "feature": "shaded_parts", "sides": 6 }},
+  "partition": {{"pattern": "center_triangles", "parts": 6 }},
+  "shaded_parts": [0, 2, 4]
+}}
+
+--- FRACTION: HEART ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "heart", "feature": "shaded_parts" }},
+  "partition": {{ "pattern": "mirror_halves", "parts": 2, "axis": "vertical" }},
+  "shaded_parts": [0]
+}}
+
+--- FRACTION: FIVE-POINT STAR ---
+"visual": {{
+  "figure": {{ "type": "fraction_model", "subtype": "star", "feature": "shaded_parts", "star_points": 5
+  }},
+  "partition": {{ "pattern": "mirror_halves", "parts": 2, "axis": "vertical" }},
+  "shaded_parts": [1]
+}}
+
+
+
+# PARALLEL LINES AND TRANSVERSALS
+
+- type: "parallel_lines"
+- subtype: "single_transversal" | "double_transversal"
+- feature: "find_angle"
+- orientation_deg: optional number from 0 to 179, default 0.
+
+  Rotate the complete construction counterclockwise:
+  0 = horizontal parallel lines, 90 = vertical, others = slanted.
+  Vary orientation across questions; display labels remain upright.
+
+Payload:
+- parallel_lines: 2–3 objects with unique id and label.
+- transversals: 1 for single_transversal, 2 for double_transversal.
+  Each has unique id, label, direction ("rising_right" |
+  "falling_right"), and numeric inclination_deg from 30 to 75.
+- angle_marks: each has unique id, parallel_line_id, transversal_id,
+  position ("upper_left" | "upper_right" | "lower_left" |
+  "lower_right"), label, and boolean is_unknown.
+  Known angles include numeric value in degrees; unknowns omit value.
+
+Rules:
+- Build in a horizontal reference frame, then rotate by orientation_deg.
+  parallel_lines order is top to bottom; transversals order is left
+  to right. Angle positions refer to this frame BEFORE rotation.
+- inclination_deg is the acute angle to the reference parallel lines.
+- rising_right: upper_right/lower_left = inclination_deg;
+  upper_left/lower_right = 180 - inclination_deg.
+- falling_right: upper_left/lower_right = inclination_deg;
+  upper_right/lower_left = 180 - inclination_deg.
+- Two transversals must share direction and inclination.
+  question_text must explicitly state both transversals are parallel.
+- question_text must state the main lines are parallel and clearly
+  identify the given and queried angles.
+- Include at least one known angle and exactly one unknown.
+- Use declared IDs; do not duplicate angle positions at an intersection.
+- Do not label solved answers or automatically display inclination_deg.
+- No coordinates, elements, or relationships; renderer controls layout.
+- visual_required: true; visual_type: "geometry".
+
+
+--- SINGLE TRANSVERSAL EXAMPLE ---
+"visual": {{
+  "figure": {{ "type": "parallel_lines", "subtype": "single_transversal", "feature": "find_angle", "orientation_deg": 25 }},
+  "parallel_lines": [
+    {{ "id": "l1", "label": "l" }},
+    {{ "id": "l2", "label": "m" }}
+  ],
+  "transversals": [
+    {{ "id": "t1", "label": "t", "direction": "rising_right", "inclination_deg": 60 }}
+  ],
+  "angle_marks": [
+    {{ "id": "a1", "parallel_line_id": "l1", "transversal_id": "t1", "position": "lower_right", "label": "", "is_unknown": false, "value": 120 }},
+    {{ "id": "a2", "parallel_line_id": "l2", "transversal_id": "t1", "position": "upper_right", "label": "x", "is_unknown": true }}
+  ]
+}}
+
+--- DOUBLE TRANSVERSAL EXAMPLE ---
+"visual": {{
+  "figure": {{ "type": "parallel_lines", "subtype": "double_transversal", "feature": "find_angle",  "orientation_deg": 90 }},
+  "parallel_lines": [
+    {{ "id": "l1", "label": "l" }},
+    {{ "id": "l2", "label": "m" }},
+    {{ "id": "l3", "label": "n" }}
+  ],
+  "transversals": [
+    {{ "id": "t1", "label": "p", "direction": "falling_right", "inclination_deg": 50 }},
+    {{ "id": "t2", "label": "q", "direction": "falling_right",  "inclination_deg": 50 }}
+  ],
+  "angle_marks": [
+    {{ "id": "a1", "parallel_line_id": "l1", "transversal_id": "t1", "position": "upper_right", "label": "", "is_unknown": false, "value": 130 }},
+    {{ "id": "a2", "parallel_line_id": "l3", "transversal_id": "t2",  "position": "lower_right","label": "x", "is_unknown": true }}
+  ]
+}}
+
+
+
 --- TRIANGLE GEOMETRY PAYLOAD ---
 "visual": {{
-  "figure": {{ 
-    "type": "triangle", 
-    "subtype": "scalene", 
-    "feature": "parallel_segment" 
-  }},
+  "figure": {{ "type": "triangle", "subtype": "scalene", "feature": "parallel_segment" }},
   "elements": [
     {{ "id": "point_a", "type": "point", "label": "A" }},
     {{ "id": "point_b", "type": "point", "label": "B" }},
@@ -895,6 +1212,114 @@ When "visual_required": true, return the corresponding semantic "visual" payload
   ]
 }}
 
+
+--- SOLID: CUBE ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "cube", "feature": "total_surface_area" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_side", "type": "dimension", "role": "side", "label": "$a = 5$ cm", "value": 5, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_side"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: CUBOID ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "cuboid", "feature": "volume" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_l", "type": "dimension", "role": "length", "label": "$l = 8$ cm", "value": 8, "unit": "cm" }},
+    {{ "id": "dim_w", "type": "dimension", "role": "width", "label": "$w = 4$ cm", "value": 4, "unit": "cm" }},
+    {{ "id": "dim_h", "type": "dimension", "role": "height", "label": "$h = 3$ cm", "value": 3, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_l", "dim_w", "dim_h"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: CYLINDER ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "cylinder", "feature": "curved_surface_area" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_r", "type": "dimension", "role": "radius", "label": "$r = 3$ cm", "value": 3, "unit": "cm" }},
+    {{ "id": "dim_h", "type": "dimension", "role": "height", "label": "$h = 7$ cm", "value": 7, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_r", "dim_h"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: CONE ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "cone", "feature": "total_surface_area" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_r", "type": "dimension", "role": "radius", "label": "$r = 3$ cm", "value": 3, "unit": "cm" }},
+    {{ "id": "dim_s", "type": "dimension", "role": "slant_height", "label": "$s = 5$ cm", "value": 5, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_r", "dim_s"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: SPHERE ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "sphere", "feature": "total_surface_area" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_r", "type": "dimension", "role": "radius", "label": "$r = 6$ cm", "value": 6, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_r"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: HEMISPHERE ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "hemisphere", "feature": "curved_surface_area" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_d", "type": "dimension", "role": "diameter", "label": "$d = 10$ cm", "value": 10, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_d"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: RIGHT TRIANGULAR PRISM ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "triangular_prism", "feature": "total_surface_area" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_a", "type": "dimension", "role": "base_side_a", "label": "$a = 6$ cm", "value": 6, "unit": "cm" }},
+    {{ "id": "dim_b", "type": "dimension", "role": "base_side_b", "label": "$b = 5$ cm", "value": 5, "unit": "cm" }},
+    {{ "id": "dim_c", "type": "dimension", "role": "base_side_c", "label": "$c = 5$ cm", "value": 5, "unit": "cm" }},
+    {{ "id": "dim_alt", "type": "dimension", "role": "base_altitude", "label": "$h_b = 4$ cm", "value": 4, "unit": "cm" }},
+    {{ "id": "dim_len", "type": "dimension", "role": "prism_length", "label": "$L = 10$ cm", "value": 10, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_a", "dim_b", "dim_c", "dim_alt", "dim_len"], "target": "solid_1" }}
+  ]
+}}
+
+--- SOLID: REGULAR SQUARE PYRAMID ---
+"visual": {{
+  "figure": {{ "type": "solid_geometry", "subtype": "square_pyramid", "feature": "volume" }},
+  "elements": [
+    {{ "id": "solid_1", "type": "solid", "label": "" }},
+    {{ "id": "dim_a", "type": "dimension", "role": "base_side", "label": "$a = 6$ cm", "value": 6, "unit": "cm" }},
+    {{ "id": "dim_h", "type": "dimension", "role": "height", "label": "$h = 4$ cm", "value": 4, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "dimension_of", "elements": ["dim_a", "dim_h"], "target": "solid_1" }}
+  ]
+}}
+
+
+
 --- VENN DIAGRAM PAYLOAD (2-SET) ---
 "visual": {{
   "figure": {{ "type": "venn_diagram", "subtype": "2_set" }},
@@ -1079,6 +1504,121 @@ When "visual_required": true, return the corresponding semantic "visual" payload
         {{ "label": "Fri", "value": 27 }}
       ]
     }}
+  ]
+}}
+
+
+--- COMPOSITE: JOINED RECTANGLES (L-SHAPE) ---
+"visual": {{
+  "figure": {{ "type": "composite_geometry", "subtype": "joined_rectangles", "feature": "area" }},
+  "elements": [
+    {{ "id": "rect_a", "type": "rectangle", "label": "A", "length": 8, "width": 3 }},
+    {{ "id": "rect_b", "type": "rectangle", "label": "B", "length": 3, "width": 4 }},
+    {{ "id": "dim_al", "type": "dimension", "role": "length", "label": "8 m", "value": 8, "unit": "m" }},
+    {{ "id": "dim_aw", "type": "dimension", "role": "width", "label": "3 m", "value": 3, "unit": "m" }},
+    {{ "id": "dim_bl", "type": "dimension", "role": "length", "label": "3 m", "value": 3, "unit": "m" }},
+    {{ "id": "dim_bw", "type": "dimension", "role": "width", "label": "4 m", "value": 4, "unit": "m" }}
+  ],
+  "relationships": [
+    {{ "type": "joins_edge", "elements": ["rect_b"], "target": "rect_a", "side": "top", "alignment": "start" }},
+    {{ "type": "dimension_of", "elements": ["dim_al", "dim_aw"], "target": "rect_a" }},
+    {{ "type": "dimension_of", "elements": ["dim_bl", "dim_bw"], "target": "rect_b" }}
+  ]
+}}
+
+--- COMPOSITE: RECTANGULAR CORNER CUTOUT ---
+"visual": {{
+  "figure": {{ "type": "composite_geometry", "subtype": "rectangular_cutouts", "feature": "remaining_area" }},
+  "elements": [
+    {{ "id": "outer", "type": "rectangle", "label": "", "length": 10, "width": 8 }},
+    {{ "id": "cutout", "type": "rectangle", "label": "", "length": 4, "width": 3 }},
+    {{ "id": "dim_l", "type": "dimension", "role": "length", "label": "10 cm", "value": 10, "unit": "cm" }},
+    {{ "id": "dim_w", "type": "dimension", "role": "width", "label": "8 cm", "value": 8, "unit": "cm" }},
+    {{ "id": "dim_cl", "type": "dimension", "role": "length", "label": "4 cm", "value": 4, "unit": "cm" }},
+    {{ "id": "dim_cw", "type": "dimension", "role": "width", "label": "3 cm", "value": 3, "unit": "cm" }}
+  ],
+  "relationships": [
+    {{ "type": "inside", "elements": ["cutout"], "target": "outer", "placement": "top_right" }},
+    {{ "type": "subtracts_from", "elements": ["cutout"], "target": "outer" }},
+    {{ "type": "dimension_of", "elements": ["dim_l", "dim_w"], "target": "outer" }},
+    {{ "type": "dimension_of", "elements": ["dim_cl", "dim_cw"], "target": "cutout" }}
+  ]
+}}
+
+--- COMPOSITE: PARTITIONED RECTANGLE / AREA MAZE ---
+"visual": {{
+  "figure": {{ "type": "composite_geometry", "subtype": "partitioned_rectangle", "feature": "missing_area" }},
+  "elements": [
+    {{ "id": "outer", "type": "rectangle", "label": "", "length": 9, "width": 7 }},
+    {{ "id": "rect_a", "type": "rectangle", "label": "A", "length": 3, "width": 4 }},
+    {{ "id": "rect_b", "type": "rectangle", "label": "B", "length": 6, "width": 4 }},
+    {{ "id": "rect_c", "type": "rectangle", "label": "C", "length": 3, "width": 3 }},
+    {{ "id": "rect_d", "type": "rectangle", "label": "D", "length": 6, "width": 3 }},
+    {{ "id": "area_a", "type": "dimension", "role": "area", "label": "$12$ square units", "value": 12, "unit": "square units" }},
+    {{ "id": "area_b", "type": "dimension", "role": "area", "label": "$24$ square units", "value": 24, "unit": "square units" }},
+    {{ "id": "area_c", "type": "dimension", "role": "area", "label": "$9$ square units", "value": 9, "unit": "square units" }},
+    {{ "id": "area_d", "type": "dimension", "role": "area", "label": "$x$ square units", "unit": "square units" }}
+  ],
+  "relationships": [
+    {{ "type": "inside", "elements": ["rect_a"], "target": "outer", "placement": "top_left" }},
+    {{ "type": "joins_edge", "elements": ["rect_b"], "target": "rect_a", "side": "right", "alignment": "start" }},
+    {{ "type": "joins_edge", "elements": ["rect_c"], "target": "rect_a", "side": "bottom", "alignment": "start" }},
+    {{ "type": "joins_edge", "elements": ["rect_d"], "target": "rect_c", "side": "right", "alignment": "start" }},
+    {{ "type": "partitions", "elements": ["rect_a", "rect_b", "rect_c", "rect_d"], "target": "outer" }},
+    {{ "type": "dimension_of", "elements": ["area_a"], "target": "rect_a" }},
+    {{ "type": "dimension_of", "elements": ["area_b"], "target": "rect_b" }},
+    {{ "type": "dimension_of", "elements": ["area_c"], "target": "rect_c" }},
+    {{ "type": "dimension_of", "elements": ["area_d"], "target": "rect_d" }}
+  ]
+}}
+
+--- COMPOSITE: CONNECTED UNIT SQUARES ---
+"visual": {{
+  "figure": {{ "type": "composite_geometry", "subtype": "unit_square_region", "feature": "perimeter", "cell_size": 1, "unit": "cm" }},
+  "elements": [
+    {{ "id": "cell_1", "type": "unit_cell", "row": 0, "column": 0 }},
+    {{ "id": "cell_2", "type": "unit_cell", "row": 1, "column": 0 }},
+    {{ "id": "cell_3", "type": "unit_cell", "row": 2, "column": 0 }},
+    {{ "id": "cell_4", "type": "unit_cell", "row": 2, "column": 1 }},
+    {{ "id": "cell_5", "type": "unit_cell", "row": 2, "column": 2 }}
+  ],
+  "relationships": []
+}}
+
+--- COMPOSITE: CROSSING PATHS IN A PARK ---
+"visual": {{
+  "figure": {{ "type": "composite_geometry", "subtype": "crossing_paths", "feature": "area" }},
+  "elements": [
+    {{ "id": "park", "type": "rectangle", "label": "Park", "length": 20, "width": 12 }},
+    {{ "id": "path_h", "type": "rectangle", "label": "", "length": 20, "width": 2 }},
+    {{ "id": "path_v", "type": "rectangle", "label": "", "length": 3, "width": 12 }},
+    {{ "id": "dim_l", "type": "dimension", "role": "length", "label": "20 m", "value": 20, "unit": "m" }},
+    {{ "id": "dim_w", "type": "dimension", "role": "width", "label": "12 m", "value": 12, "unit": "m" }},
+    {{ "id": "dim_hpath", "type": "dimension", "role": "width", "label": "2 m", "value": 2, "unit": "m" }},
+    {{ "id": "dim_vpath", "type": "dimension", "role": "length", "label": "3 m", "value": 3, "unit": "m" }}
+  ],
+  "relationships": [
+    {{ "type": "crosses_inside", "elements": ["path_h", "path_v"], "target": "park", "placement": "center" }},
+    {{ "type": "dimension_of", "elements": ["dim_l", "dim_w"], "target": "park" }},
+    {{ "type": "dimension_of", "elements": ["dim_hpath"], "target": "path_h" }},
+    {{ "type": "dimension_of", "elements": ["dim_vpath"], "target": "path_v" }}
+  ]
+}}
+
+--- COMPOSITE: OUTSIDE BOUNDARY FOOTPATH ---
+"visual": {{
+  "figure": {{ "type": "composite_geometry", "subtype": "boundary_path", "feature": "area" }},
+  "elements": [
+    {{ "id": "park", "type": "rectangle", "label": "Park", "length": 20, "width": 12 }},
+    {{ "id": "path", "type": "rectangle", "label": "Footpath", "length": 24, "width": 16 }},
+    {{ "id": "dim_l", "type": "dimension", "role": "length", "label": "20 m", "value": 20, "unit": "m" }},
+    {{ "id": "dim_w", "type": "dimension", "role": "width", "label": "12 m", "value": 12, "unit": "m" }},
+    {{ "id": "dim_outer_l", "type": "dimension", "role": "length", "label": "24 m", "value": 24, "unit": "m" }}
+  ],
+  "relationships": [
+    {{ "type": "surrounds", "elements": ["path"], "target": "park", "placement": "outside", "path_width": 2 }},
+    {{ "type": "dimension_of", "elements": ["dim_l", "dim_w"], "target": "park" }},
+    {{ "type": "dimension_of", "elements": ["dim_outer_l"], "target": "path" }}
   ]
 }}
 
@@ -2343,7 +2883,8 @@ The response must start with {{and end with}} — nothing else on any line befor
 REQUIRED TOP-LEVEL JSON STRUCTURE:
 
 "visual_type" must match the visual's category based on "figure.type":
-  - "geometry" for triangle, trapezoid, parallelogram, quadrilateral, circle, polygon, coordinate_geometry
+  - "geometry" for triangle, trapezoid, parallelogram, quadrilateral, circle, polygon, coordinate_geometry, 
+    fraction_model, parallel_lines, solid_geometry
   - "data_table" for table
   - "chart" for chart
   - "graph" for graph

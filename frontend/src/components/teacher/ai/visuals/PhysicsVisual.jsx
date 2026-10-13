@@ -35,21 +35,21 @@ import {
   calculateConvexLensPositions,calculateConcaveMirrorPositions,calculateRefractionPositions,
   calculateTIRPositions, calculateConcaveLensPositions, calculateConvexMirrorPositions,
   calculateLawOfReflectionPositions, calculatePlaneMirrorPositions, calculatePrismDeviationPositions,
-  calculatePrismDispersionPositions, calculateSimpleMicroscopePositions
+  calculatePrismDispersionPositions, calculateSimpleMicroscopePositions, calculateEyeDefectPositions
 
 } from "./physics/rayOptics/rayOpticsPositions"
 import {
   renderConvexLensSystem, renderConcaveMirrorSystem,renderRefractionSystem,
   renderTIRSystem, renderConcaveLensSystem, renderConvexMirrorSystem,
   renderLawOfReflectionSystem, renderPlaneMirrorSystem, renderPrismDeviationSystem,
-  renderPrismDispersionSystem, renderSimpleMicroscopeSystem
+  renderPrismDispersionSystem, renderSimpleMicroscopeSystem, renderEyeDefectSystem
 } from "./physics/rayOptics/rayOpticsRender"
 
 import {
   calculatePointChargePositions, calculateTwoChargePositions, calculatePlatePositions,
   calculateFieldAtPointPositions,calculateAxisPositionsChargeLayout, calculateBarMagnetPositions,
   calculateCurrentWirePositions, calculateCurrentLoopPositions,calculateSolenoidPositions, 
-  calculateMovingChargePositions, calculateWireForcePositions
+  calculateMovingChargePositions, calculateWireForcePositions, 
 
 } from "./physics/emf/emfPositions"
 import {
@@ -263,6 +263,12 @@ else if (figure.subtype === "optical_instrument" && figure.feature === "simple_m
   plane = calculateSimpleMicroscopePositions({ elements, relationships, isMobile });
   content = renderSimpleMicroscopeSystem(plane, elements, isMobile);
 }
+
+else if (figure.subtype === "human_eye" && (figure.feature === "myopia" || figure.feature === "hypermetropia")) {
+  plane = calculateEyeDefectPositions({ elements, relationships, feature: figure.feature, isMobile });
+  content = renderEyeDefectSystem(plane, elements, isMobile);
+}
+
 
 else if (figure.subtype === "electric_field" && figure.feature === "point_charge") {
   const variant = detectPointChargeVariant(elements);
