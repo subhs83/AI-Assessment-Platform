@@ -1,7 +1,8 @@
-import { calculateNumberLinePositions, calculateBarGraphPositions, calculateLineGraphPositions } from "./graph/graphPositions";
-import { renderNumberLine, renderBarGraph, renderLineGraph } from "./graph/graphRerenders";
+import { calculateNumberLinePositions, calculateBarGraphPositions, calculateLineGraphPositions, calculateFunctionGraphPositions, } from "./graph/graphPositions";
+import { renderNumberLine, renderBarGraph, renderLineGraph, renderFunctionGraph, } from "./graph/graphRerenders";
 import { getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile";
+import { parseFunctionGraph } from "./graph/functionGraphParser";
 
 export default function GraphVisual({ visual }) {
   const isMobile = useIsMobile();
@@ -46,6 +47,27 @@ export default function GraphVisual({ visual }) {
       isMobile
     );
   }
+
+    else if (figure.subtype === "function_graph") {
+    const parsed = parseFunctionGraph(visual);
+
+    plane = parsed.valid
+      ? calculateFunctionGraphPositions({ parsed, isMobile })
+      : null;
+
+    content = plane
+      ? renderFunctionGraph(plane, isMobile)
+      : null;
+
+    if (!parsed.valid) {
+      console.warn("[FUNCTION GRAPH]", parsed.error);
+    } else if (!plane) {
+      console.warn(
+        "[FUNCTION GRAPH]",
+        "The curve could not be plotted within the supplied bounds."
+      );
+    }
+  }
   // ⬆️ END NEW BRANCH ⬆️
 
   const DEBUG_GRAPH = false;
@@ -59,7 +81,19 @@ export default function GraphVisual({ visual }) {
     console.log("==================================");
   }
 
-  if (!content) {
+   if (!content) {
+    if (figure.subtype === "function_graph") {
+      return (
+        <div
+          role="status"
+          className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600"
+        >
+          This function graph could not be displayed. Please review
+          its bounds, function parameters and axis relationships.
+        </div>
+      );
+    }
+
     return null;
   }
 

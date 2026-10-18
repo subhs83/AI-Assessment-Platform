@@ -27,6 +27,7 @@ export function calculateCoordinateGeometryPositions({
   points,
   segments,
   angles,
+  circles = [], // ADDED
   relationships,
   figure,
   isMobile = false,
@@ -75,17 +76,32 @@ const planePaddingY = Math.max(paddingY, fontSize * 2.5);
   // only one point, like Q3), falling back to inferring from the data
   // points themselves when bounds aren't provided.
   // --------------------------------------------------
-   const plane = computeCoordinatePlane(
-        figure?.bounds,
-        dataPoints,
-        SVG_WIDTH,
-        SVG_HEIGHT,
-        planePaddingX,
-        planePaddingY,
-        {
-          tickStep: figure?.tick_step,
-        }
-      );
+     const isUnitCircle =
+    figure?.type === "coordinate_geometry" &&
+    figure?.subtype === "unit_circle";
+
+  // Include the full unit circle and space around its boundary.
+  // Other coordinate-geometry figures retain their existing bounds.
+  const planeBounds = isUnitCircle
+    ? {
+        x_min: -1.35,
+        x_max: 1.35,
+        y_min: -1.35,
+        y_max: 1.35,
+      }
+    : figure?.bounds;
+
+  const plane = computeCoordinatePlane(
+    planeBounds,
+    dataPoints,
+    SVG_WIDTH,
+    SVG_HEIGHT,
+    planePaddingX,
+    planePaddingY,
+    {
+      tickStep: isUnitCircle ? 1 : figure?.tick_step,
+    }
+  );
   // --------------------------------------------------
   // 3. Convert every real coordinate into a pixel position.
   // --------------------------------------------------
@@ -183,6 +199,166 @@ const planePaddingY = Math.max(paddingY, fontSize * 2.5);
     if (!points[extStartId]) points[extStartId] = { id: extStartId, type: "point", label: "", __synthetic: true };
     if (!points[extEndId]) points[extEndId] = { id: extEndId, type: "point", label: "", __synthetic: true };
     });
+
+      if (isUnitCircle) {
+    const failUnitCircle = (message) => {
+      console.warn("[UNIT CIRCLE]", message);
+      return {
+        positions: {},
+        plane: null,
+        error: message,
+      };
+    };
+
+    const angleDeg = figure.angle_deg;
+
+    if (
+      !Number.isFinite(angleDeg) ||
+      angleDeg <= -360 ||
+      angleDeg >= 360 ||
+      angleDeg === 0
+    ) {
+      return failUnitCircle("Invalid signed construction angle.");
+    }
+
+    if (circles.length !== 1) {
+      return failUnitCircle("Exactly one unit circle is required.");
+    }
+
+    const circle = circles[0];
+
+    if (circle.radius !== 1) {
+      return failUnitCircle("The unit-circle radius must be 1.");
+    }
+
+    const centerLinks = relationships.filter(
+      (r) =>
+        r.type === "is_center_of" &&
+        r.target === circle.id
+    );
+
+    if (
+      centerLinks.length !== 1 ||
+      centerLinks[0].elements?.length !== 1
+    ) {
+      return failUnitCircle("Missing or ambiguous circle centre.");
+    }
+
+    const centerId = centerLinks[0].elements[0];
+    const center = realCoords[centerId];
+
+    if (
+      !center ||
+      Math.hypot(center.x, center.y) > 1e-6
+    ) {
+      return failUnitCircle("The unit circle must be centred at the origin.");
+    }
+
+    const rotationLinks = relationships.filter(
+      (r) => r.type === "marks_rotation"
+    );
+
+    if (
+      rotationLinks.length !== 1 ||
+      rotationLinks[0].elements?.length !== 1
+    ) {
+      return failUnitCircle("Exactly one marks_rotation link is required.");
+    }
+
+    const rotationLink = rotationLinks[0];
+    const angle = angles.find(
+      (item) => item.id === rotationLink.elements[0]
+    );
+
+    const radius = segments.find(
+      (item) => item.id === rotationLink.target
+    );
+
+    if (
+      !angle ||
+      !radius ||
+      radius.start !== centerId ||
+      !realCoords[radius.end]
+    ) {
+      return failUnitCircle(
+        "The rotation must reference an angle and a radius from the centre."
+      );
+    }
+
+    const linkedAsRadius = relationships.some(
+      (r) =>
+        r.type === "is_radius_of" &&
+        r.target === circle.id &&
+        r.elements?.includes(radius.id)
+    );
+
+    if (!linkedAsRadius) {
+      return failUnitCircle("The terminal segment must be linked as a radius.");
+    }
+
+    const terminalId = radius.end;
+    const terminal = realCoords[terminalId];
+    const radians = (angleDeg * Math.PI) / 180;
+
+    // Allow rounding of generated coordinates to six decimal places.
+    if (
+      Math.hypot(
+        terminal.x - Math.cos(radians),
+        terminal.y - Math.sin(radians)
+      ) > 2e-6
+    ) {
+      return failUnitCircle(
+        "The terminal point disagrees with the construction angle."
+      );
+    }
+
+      const hasGivenAngle =
+      angle.value !== undefined && angle.value !== null;
+
+    if (
+      hasGivenAngle &&
+      (
+        !Number.isFinite(angle.value) ||
+        Math.abs(angle.value - angleDeg) > 1e-6
+      )
+    ) {
+      return failUnitCircle(
+        "The given angle value must match the signed construction angle."
+      );
+    }
+
+    if (typeof angle.label !== "string" || !angle.label.trim()) {
+      return failUnitCircle("The angle needs a given or symbolic label.");
+    }
+
+    const centerPx = plane.toPixel(0, 0);
+    const unitPx = plane.toPixel(1, 0);
+    const radiusPx = Math.hypot(
+      unitPx.x - centerPx.x,
+      unitPx.y - centerPx.y
+    );
+
+    // Reuse the existing circle renderer's explicit pixel geometry.
+    circle.center = centerId;
+    circle.__renderCenter = centerPx;
+    circle.__renderRadius = radiusPx;
+
+    // Dedicated metadata for the upcoming signed rotation renderer.
+    plane.unitCircle = {
+      centerId,
+      terminalId,
+      center: centerPx,
+      terminal: positions[terminalId],
+      radius: radiusPx,
+      angleDeg,
+      angleId: angle.id,
+
+      // Use the supplied label only; never expose a hidden angle value.
+      angleLabel: angle.label,
+    };
+  }
+
+  return { positions, plane };
 
   return { positions, plane };
 }

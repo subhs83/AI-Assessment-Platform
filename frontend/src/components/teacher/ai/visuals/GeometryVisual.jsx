@@ -4,6 +4,11 @@ import { calculateCoordinateGeometryPositions } from "./geometry/coordinateGeome
 import FractionVisual from "./FractionVisual";
 import ParallelLinesVisual from "./ParallelLinesVisual";
 import SolidGeometryVisual from "./SolidGeometryVisual";
+import CompositeGeometryVisual from "./CompositeGeometryVisual";
+import SemicircleVisual from "./SemicircleVisual";
+import SymmetryVisual from "./SymmetryVisual";
+import ReflectionVisual from "./ReflectionVisual";
+import MappingDiagramVisual from "./MappingDiagramVisual";
 
 import { getSegmentEndpoints, getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile"
@@ -17,11 +22,24 @@ import {
   renderArcs,
   renderSegmentAnnotations,
   renderCoordinateGrid,   // ⬅️ new import
+  renderUnitCircleAnnotations,
 } from "./geometry/geometryRenderers";
 
 export default function GeometryVisual({ visual }) {
   const isMobile = useIsMobile();
   if (!visual) return null;
+
+  if (visual?.figure?.type === "mapping_diagram") {
+    return <MappingDiagramVisual visual={visual} />;
+  }
+
+  // NEW: reflection must be checked before the general symmetry branch.
+  if (
+    visual?.figure?.type === "symmetry" &&
+    visual?.figure?.subtype === "reflection"
+  ) {
+    return <ReflectionVisual visual={visual} />;
+  }
 
   if (visual.figure?.type === "fraction_model") {
     return <FractionVisual visual={visual} />;
@@ -35,6 +53,19 @@ export default function GeometryVisual({ visual }) {
     return <SolidGeometryVisual visual={visual} />;
   }
 
+  if (visual.figure?.type === "composite_geometry") {
+    return <CompositeGeometryVisual visual={visual} />;
+  }
+  // ADDED: semicircles bypass the full-circle rendering pipeline.
+  if (
+    visual?.figure?.type === "circle" &&
+    visual?.figure?.subtype === "semicircle"
+  ) {
+    return <SemicircleVisual visual={visual} isMobile={isMobile} />;
+  }
+  if (visual?.figure?.type === "symmetry") {
+    return <SymmetryVisual visual={visual} />;
+  }
 
   /*
    * --------------------------------------------------
@@ -73,6 +104,7 @@ export default function GeometryVisual({ visual }) {
    * --------------------------------------------------
    */
   const isCoordinateGeometry = figure?.type === "coordinate_geometry";
+  const isUnitCircle = isCoordinateGeometry && figure?.subtype === "unit_circle";
 
   let positions;
   let plane = null;
@@ -114,6 +146,19 @@ if (hasUnresolvedPoints) {
     </div>
   );
 }
+
+if (isUnitCircle && !plane?.unitCircle) {
+  return (
+    <div
+      role="status"
+      className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600"
+    >
+      This unit-circle figure could not be displayed. Please review
+      its angle, terminal point and radius relationships.
+    </div>
+  );
+}
+
   const { width, height } = getSvgDimensions(isMobile);
 
 
@@ -139,6 +184,7 @@ if (hasUnresolvedPoints) {
     console.log("====================================");
   }
 
+
   /*
    * --------------------------------------------------
    * RENDER
@@ -162,7 +208,9 @@ if (hasUnresolvedPoints) {
           {/* ------------------------------------------
               COORDINATE GRID (only for coordinate_geometry figures)
              ------------------------------------------ */}
-          {plane && renderCoordinateGrid(plane, isMobile)}
+          {plane && renderCoordinateGrid(plane, isMobile, {
+            showGridLines: !isUnitCircle,
+          })}
 
           {/* ------------------------------------------
               CIRCLES
@@ -207,12 +255,29 @@ if (hasUnresolvedPoints) {
           {/* ------------------------------------------
               ANGLES
              ------------------------------------------ */}
-          {renderAngles(angles, points, positions, relationships, isMobile)}
+          {isUnitCircle ? (
+            renderUnitCircleAnnotations(plane, points, isMobile)
+          ) : (
+            <>
+              {renderAngles(
+                angles,
+                points,
+                positions,
+                relationships,
+                isMobile
+              )}
 
-          {/* ------------------------------------------
-              POINTS
-             ------------------------------------------ */}
-          {renderPoints(points, positions, relationships, segments, circles, angles, isMobile)}
+              {renderPoints(
+                points,
+                positions,
+                relationships,
+                segments,
+                circles,
+                angles,
+                isMobile
+              )}
+            </>
+          )}
         </svg>
       </div>
     </div>

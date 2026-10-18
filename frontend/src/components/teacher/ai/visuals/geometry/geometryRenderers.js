@@ -1,7 +1,5 @@
-import {
-  getSegmentEndpoints,
-  getSvgDimensions
-} from "./geometryHelpers";
+import { getSegmentEndpoints, getSvgDimensions } from "./geometryHelpers";
+import MathText from "../../../../common/MathText";
 /*
  * geometryRenderers.js
  *
@@ -1204,9 +1202,9 @@ export function renderArcs(
 }
 
 
-export function renderCoordinateGrid(plane, isMobile = false) {
+export function renderCoordinateGrid(plane, isMobile = false, { showGridLines = true } = {}) {
   if (!plane) return null;
-
+  const drawGridLines = !plane.unitCircle;
   const { minX, maxX, minY, maxY, tickX, tickY, toPixel } = plane;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
 
@@ -1230,7 +1228,7 @@ export function renderCoordinateGrid(plane, isMobile = false) {
   return (
     <g className="coordinate-grid">
       {/* Light gridlines */}
-      {xTicks.map((x) => {
+      {drawGridLines && xTicks.map((x) => {
         const top = toPixel(x, maxY);
         const bottom = toPixel(x, minY);
         return (
@@ -1244,7 +1242,7 @@ export function renderCoordinateGrid(plane, isMobile = false) {
           />
         );
       })}
-      {yTicks.map((y) => {
+      {drawGridLines && yTicks.map((y) => {
         const left = toPixel(minX, y);
         const right = toPixel(maxX, y);
         return (
@@ -1272,7 +1270,7 @@ export function renderCoordinateGrid(plane, isMobile = false) {
       />
 
       {/* Tick marks + number labels on x-axis */}
-      {xTicks.map((x) => {
+      {drawGridLines && xTicks.map((x) => {
         if (x === 0) return null; // skip origin label, drawn separately
         const p = toPixel(x, 0);
         return (
@@ -1294,7 +1292,7 @@ export function renderCoordinateGrid(plane, isMobile = false) {
       })}
 
       {/* Tick marks + number labels on y-axis */}
-      {yTicks.map((y) => {
+      {drawGridLines && yTicks.map((y) => {
         if (y === 0) return null;
         const p = toPixel(0, y);
         return (
@@ -1385,4 +1383,191 @@ export function renderCollinear(
 
       return null;
     });
+}
+
+export function renderUnitCircleAnnotations(
+  plane,
+  points,
+  isMobile = false
+) {
+  const unit = plane?.unitCircle;
+  if (!unit) return null;
+
+  const { fontSize, strokeWidth } = getSvgDimensions(isMobile);
+
+  const {
+    center,
+    terminal,
+    terminalId,
+    radius,
+    angleDeg,
+    angleLabel,
+  } = unit;
+
+  const radians = (angleDeg * Math.PI) / 180;
+  const direction = Math.sign(radians);
+
+  // Relative to the actual plotted circle, not a fixed SVG size.
+  const arcRadius = radius * 0.36;
+
+  const start = {
+    x: center.x + arcRadius,
+    y: center.y,
+  };
+
+  const end = {
+    x: center.x + arcRadius * Math.cos(radians),
+    y: center.y - arcRadius * Math.sin(radians),
+  };
+
+  const largeArc = Math.abs(angleDeg) > 180 ? 1 : 0;
+
+  // SVG y increases downward: positive mathematical rotation
+  // therefore uses sweep=0.
+  const sweep = angleDeg > 0 ? 0 : 1;
+
+  const arcPath = [
+    `M ${start.x} ${start.y}`,
+    `A ${arcRadius} ${arcRadius}`,
+    `0 ${largeArc} ${sweep} ${end.x} ${end.y}`,
+  ].join(" ");
+
+  // Tangent to the arc at its endpoint.
+  const tangent = {
+    x: -Math.sin(radians) * direction,
+    y: -Math.cos(radians) * direction,
+  };
+
+  // Keep the arrowhead proportionate, including for small angles.
+  const arcLength = arcRadius * Math.abs(radians);
+  const arrowLength = Math.min(fontSize * 0.5, arcLength * 0.3);
+  const arrowHalfWidth = arrowLength * 0.45;
+
+  const arrowBase = {
+    x: end.x - tangent.x * arrowLength,
+    y: end.y - tangent.y * arrowLength,
+  };
+
+  const arrowPoints = [
+    end,
+    {
+      x: arrowBase.x - tangent.y * arrowHalfWidth,
+      y: arrowBase.y + tangent.x * arrowHalfWidth,
+    },
+    {
+      x: arrowBase.x + tangent.y * arrowHalfWidth,
+      y: arrowBase.y - tangent.x * arrowHalfWidth,
+    },
+  ]
+    .map((point) => `${point.x},${point.y}`)
+    .join(" ");
+
+  const middleAngle = radians / 2;
+  const labelRadius = radius * 0.61;
+
+  const angleLabelX =
+    center.x + labelRadius * Math.cos(middleAngle);
+  const angleLabelY =
+    center.y - labelRadius * Math.sin(middleAngle);
+
+  const labelWidth = Math.min(radius * 1.3, fontSize * 6);
+  const labelHeight = fontSize * 2.2;
+
+  // Place the terminal label outward from the circle.
+  const ux = Math.cos(radians);
+  const uy = -Math.sin(radians);
+  const pointGap = fontSize * 0.85;
+
+  const terminalLabel = points[terminalId]?.label || "";
+
+  let pointLabelX = terminal.x + ux * pointGap;
+  let pointLabelY = terminal.y + uy * pointGap;
+
+  let textAnchor =
+    ux > 0.25 ? "start" : ux < -0.25 ? "end" : "middle";
+
+  let baseline =
+    uy > 0.25 ? "hanging" : uy < -0.25 ? "auto" : "middle";
+
+  // Avoid the existing ±1 tick labels at axis intersections.
+  if (Math.abs(uy) < 1e-6) {
+    pointLabelX = terminal.x + ux * fontSize * 0.55;
+    pointLabelY = terminal.y - fontSize;
+    baseline = "auto";
+  } else if (Math.abs(ux) < 1e-6) {
+    pointLabelX = terminal.x + fontSize;
+    pointLabelY = terminal.y + uy * fontSize * 0.35;
+    textAnchor = "start";
+    baseline = "middle";
+  }
+
+  return (
+    <g>
+      {/* Directed rotation, starting at the positive x-axis. */}
+      <path
+        d={arcPath}
+        fill="none"
+        stroke="#7c3aed"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+
+      <polygon points={arrowPoints} fill="#7c3aed" />
+
+      {/* Show only the supplied given/symbolic label. */}
+      <foreignObject
+        x={angleLabelX - labelWidth / 2}
+        y={angleLabelY - labelHeight / 2}
+        width={labelWidth}
+        height={labelHeight}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            fontSize,
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+          }}
+          className="text-violet-700"
+        >
+          <span className="rounded bg-slate-50 px-1">
+            <MathText text={angleLabel} />
+          </span>
+        </div>
+      </foreignObject>
+
+      {/* The coordinate grid already labels the origin O. */}
+      <circle
+        cx={center.x}
+        cy={center.y}
+        r={Math.max(2, strokeWidth)}
+        fill="currentColor"
+      />
+
+      <circle
+        cx={terminal.x}
+        cy={terminal.y}
+        r={Math.max(2.5, strokeWidth * 1.2)}
+        fill="currentColor"
+      />
+
+      {terminalLabel && (
+        <text
+          x={pointLabelX}
+          y={pointLabelY}
+          textAnchor={textAnchor}
+          dominantBaseline={baseline}
+          fontSize={fontSize}
+          fontWeight="600"
+          fill="currentColor"
+        >
+          {terminalLabel}
+        </text>
+      )}
+    </g>
+  );
 }

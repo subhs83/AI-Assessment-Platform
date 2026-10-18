@@ -1,5 +1,5 @@
 import { getSvgDimensions } from "../geometry/geometryHelpers"; // reuse only the pure dimension utility
-
+import MathText from "../../../../common/MathText";
 export function renderNumberLine(elements, positions, plane, isMobile = false) {
   if (!plane) return null;
 
@@ -356,3 +356,501 @@ export function renderLineGraph(plane, xAxisLabel, yAxisLabel, isMobile = false)
     </g>
   );
 }
+
+function FunctionGraphLabel({
+  x,
+  y,
+  width,
+  height,
+  text,
+  fontSize,
+  align = "center",
+  color = "#334155",
+}) {
+  return (
+    <foreignObject
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent:
+            align === "right"
+              ? "flex-end"
+              : align === "left"
+                ? "flex-start"
+                : "center",
+          width: "100%",
+          height: "100%",
+          fontSize,
+          color,
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span className="rounded bg-slate-50 px-0.5">
+          <MathText text={text} />
+        </span>
+      </div>
+    </foreignObject>
+  );
+}
+
+export function renderFunctionGraph(plane, isMobile = false) {
+  if (!plane) return null;
+
+  const {
+    width,
+    height,
+    fontSize,
+    strokeWidth,
+    chartLeft,
+    chartRight,
+    chartTop,
+    chartBottom,
+    chartWidth,
+    origin,
+    xTicks,
+    yTicks,
+    plottedCurves,
+    asymptotes,
+    axes,
+    showLegend,
+    horizontalAsymptotes = [],
+    endpointMarkers = [],
+    continuationArrows = [],
+    isInverse = false,
+  } = plane;
+
+  const tickLength = fontSize * 0.3;
+  const labelHeight = fontSize * 2.3;
+  const xLabelWidth = fontSize * 3.2;
+  const yLabelWidth = fontSize * (isInverse ? 3.4 : 2.8);
+
+  // Retain every tick mark, but thin crowded number labels.
+  // Use the same mathematical tick spacing on desktop and mobile.
+  const xSpacing = plane.scaleX * (
+    xTicks.length > 1
+      ? xTicks[1].value - xTicks[0].value
+      : plane.maxX - plane.minX
+  );
+
+  const ySpacing = plane.scaleY * (
+    yTicks.length > 1
+      ? yTicks[1].value - yTicks[0].value
+      : plane.maxY - plane.minY
+  );
+
+  const xLabelStride = Math.max(
+    1,
+    Math.ceil((xLabelWidth + fontSize * 0.2) / xSpacing)
+  );
+
+    const yLabelStride = Math.max(
+    1,
+    Math.ceil(
+      (
+        isInverse
+          ? labelHeight + fontSize * 0.2
+          : fontSize * 1.8
+      ) / ySpacing
+    )
+  );
+
+  // Prefer labels below the x-axis and left of the y-axis.
+  // Flip sides when an axis sits at a plot boundary.
+  const xLabelsBelow =
+    origin.y + tickLength + labelHeight <= height - fontSize * 1.5;
+
+  const yLabelsLeft =
+    origin.x - tickLength - yLabelWidth >= 2;
+
+      const xLabelY = xLabelsBelow
+    ? origin.y + tickLength + fontSize * 0.15
+    : origin.y - tickLength - labelHeight - fontSize * 0.15;
+
+  const yLabelX = yLabelsLeft
+    ? origin.x - tickLength - yLabelWidth - fontSize * 0.15
+    : origin.x + tickLength + fontSize * 0.15;
+
+      const inverseFunction = plottedCurves[0]?.function;
+
+  const getXTickLabelY = (tick) => {
+    if (!isInverse) return xLabelY;
+
+    // asin/atan lie below the x-axis for negative x.
+    // Put those labels above the axis; other labels go below.
+    const placeAbove =
+      tick.value < 0 &&
+      ["asin", "atan"].includes(inverseFunction);
+
+    return placeAbove
+      ? origin.y - tickLength - labelHeight - fontSize * 0.15
+      : xLabelY;
+  };
+
+  const getYTickLabelY = (value, pixelY) => {
+    const centered = pixelY - labelHeight / 2;
+
+    if (!isInverse) return centered;
+
+    // Only offset a label near the curve's y-intercept.
+    const intercept =
+      inverseFunction === "acos" ? Math.PI / 2 : 0;
+
+    const distanceFromIntercept =
+      Math.abs(value - intercept) * plane.scaleY;
+
+    if (distanceFromIntercept > labelHeight) return centered;
+
+    // Beside the left of the y-axis:
+    // acos slopes upward to the left; asin/atan slope downward.
+    const offset =
+      inverseFunction === "acos"
+        ? fontSize * 0.85
+        : -fontSize * 0.85;
+
+    return centered + offset;
+  };
+
+  const clampLabelX = (x, boxWidth) =>
+    Math.max(2, Math.min(width - boxWidth - 2, x));
+
+  // Several curves can share an asymptote.
+  const uniqueAsymptotes = asymptotes.filter(
+    (item, index, all) =>
+      all.findIndex(
+        (other) => Math.abs(other.x - item.x) < 0.01
+      ) === index
+  );
+
+  const legendCurves = plottedCurves.filter(
+    (curve) => curve.label
+  );
+
+    // These y-values explain included endpoints and limiting values.
+  // Keep them labelled even when intermediate ticks are thinned.
+  const importantYValues = isInverse
+    ? [
+        ...horizontalAsymptotes.map((item) => item.value),
+        ...endpointMarkers.map(
+          (point) => plane.minY + (chartBottom - point.y) / plane.scaleY
+        ),
+      ]
+    : [];
+
+  const isImportantYTick = (tick) =>
+    importantYValues.some(
+      (value) => Math.abs(value - tick.value) < 1e-7
+    );
+
+  const showYTickLabel = (tick) => {
+    if (tick.value === 0) return false;
+
+    if (isImportantYTick(tick)) return true;
+
+    if (tick.index % yLabelStride !== 0) return false;
+
+    // Reserve room around the important fraction labels.
+    return !importantYValues.some((value) => {
+      const importantY = plane.toPixel(0, value).y;
+
+      return (
+        Math.abs(importantY - tick.y) <
+        labelHeight + fontSize * 0.15
+      );
+    });
+  };
+
+  const hasYTick = (value) =>
+    yTicks.some((tick) => Math.abs(tick.value - value) < 1e-7);
+
+  return (
+    <g>
+      {/* Optional background grid. */}
+      {plane.figure.show_grid && (
+        <g stroke="#e2e8f0" strokeWidth={strokeWidth * 0.45}>
+          {xTicks
+            .filter((tick) => tick.value !== 0)
+            .map((tick) => (
+              <line
+                key={`grid-x-${tick.index}`}
+                x1={tick.x}
+                y1={chartTop}
+                x2={tick.x}
+                y2={chartBottom}
+              />
+            ))}
+
+          {yTicks
+            .filter((tick) => tick.value !== 0)
+            .map((tick) => (
+              <line
+                key={`grid-y-${tick.index}`}
+                x1={chartLeft}
+                y1={tick.y}
+                x2={chartRight}
+                y2={tick.y}
+              />
+            ))}
+        </g>
+      )}
+
+      {/* Asymptotes are guides, never connected curve segments. */}
+      {uniqueAsymptotes.map((item) => (
+        <line
+          key={item.id}
+          x1={item.x}
+          y1={chartTop}
+          x2={item.x}
+          y2={chartBottom}
+          stroke="#94a3b8"
+          strokeWidth={strokeWidth * 0.65}
+          strokeDasharray={`${fontSize * 0.35} ${fontSize * 0.3}`}
+        />
+      ))}
+
+      {/* Inverse tangent approaches these lines but never reaches them. */}
+      {horizontalAsymptotes.map((item) => (
+        <line
+          key={item.id}
+          x1={chartLeft}
+          y1={item.y}
+          x2={chartRight}
+          y2={item.y}
+          stroke="#94a3b8"
+          strokeWidth={strokeWidth * 0.65}
+          strokeDasharray={`${fontSize * 0.35} ${fontSize * 0.3}`}
+        />
+      ))}
+      {/* Cartesian axes through zero. */}
+      <g stroke="#334155" strokeWidth={strokeWidth}>
+        <line
+          x1={chartLeft}
+          y1={origin.y}
+          x2={chartRight}
+          y2={origin.y}
+        />
+        <line
+          x1={origin.x}
+          y1={chartTop}
+          x2={origin.x}
+          y2={chartBottom}
+        />
+      </g>
+
+      {/* Curve paths are already clipped by the positions function. */}
+      {plottedCurves.map((curve) => (
+        <g key={curve.id}>
+          {curve.paths.map((path, index) => (
+            <path
+              key={`${curve.id}-${index}`}
+              d={path}
+              fill="none"
+              stroke={curve.color}
+              strokeWidth={strokeWidth * 1.3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
+        </g>
+      ))}
+
+      
+
+      {/* These arrows mark continuation, not finite endpoints. */}
+      {continuationArrows.map((arrow) => {
+        const arrowLength = fontSize * 0.65;
+        const halfWidth = fontSize * 0.25;
+        const { tip, direction, color } = arrow;
+
+        const base = {
+          x: tip.x - direction.x * arrowLength,
+          y: tip.y - direction.y * arrowLength,
+        };
+
+        const points = [
+          tip,
+          {
+            x: base.x - direction.y * halfWidth,
+            y: base.y + direction.x * halfWidth,
+          },
+          {
+            x: base.x + direction.y * halfWidth,
+            y: base.y - direction.x * halfWidth,
+          },
+        ]
+          .map((point) => `${point.x},${point.y}`)
+          .join(" ");
+
+        return (
+          <polygon
+            key={arrow.id}
+            points={points}
+            fill={color}
+          />
+        );
+      })}
+      {/* X ticks and radian labels. */}
+      {xTicks.map((tick) => (
+        <g key={`x-tick-${tick.index}`}>
+          <line
+            x1={tick.x}
+            y1={origin.y - tickLength}
+            x2={tick.x}
+            y2={origin.y + tickLength}
+            stroke="#334155"
+            strokeWidth={strokeWidth * 0.8}
+          />
+
+          {tick.value !== 0 &&
+            tick.index % xLabelStride === 0 && (
+              <FunctionGraphLabel
+                x={clampLabelX(
+                  tick.x - xLabelWidth / 2,
+                  xLabelWidth
+                )}
+                y={getXTickLabelY(tick)}
+                width={xLabelWidth}
+                height={labelHeight}
+                text={tick.label}
+                fontSize={fontSize}
+              />
+            )}
+        </g>
+      ))}
+
+      {/* Y ticks and number labels. */}
+      {yTicks.map((tick) => (
+        <g key={`y-tick-${tick.index}`}>
+          <line
+            x1={origin.x - tickLength}
+            y1={tick.y}
+            x2={origin.x + tickLength}
+            y2={tick.y}
+            stroke="#334155"
+            strokeWidth={strokeWidth * 0.8}
+          />
+
+          {showYTickLabel(tick) && (
+              <FunctionGraphLabel
+                x={clampLabelX(yLabelX, yLabelWidth)}
+                y={getYTickLabelY(tick.value, tick.y)}
+                width={yLabelWidth}
+                height={labelHeight}
+                text={tick.label}
+                fontSize={fontSize}
+                align={isInverse || yLabelsLeft ? "right" : "left"}
+              />
+            )}
+            
+        </g>
+      ))}
+
+      {/* Avoid duplicate labels when an asymptote is already a y tick. */}
+      {horizontalAsymptotes
+        .filter((item) => !hasYTick(item.value))
+        .map((item) => (
+          <FunctionGraphLabel
+            key={`label-${item.id}`}
+            x={clampLabelX(yLabelX, yLabelWidth)}
+            y={item.y - labelHeight / 2}
+            width={yLabelWidth}
+            height={labelHeight}
+            text={item.label}
+            fontSize={fontSize}
+            align={isInverse || yLabelsLeft ? "right" : "left"}
+          />
+        ))}
+
+      {/* Keep zero beside the origin, away from the inverse curve. */}
+      <FunctionGraphLabel
+        x={clampLabelX(
+          isInverse || yLabelsLeft
+            ? origin.x - fontSize * 1.6
+            : origin.x + fontSize * 0.4,
+          fontSize * 1.2
+        )}
+        y={
+          isInverse && ["asin", "atan"].includes(inverseFunction)
+            ? origin.y - fontSize * 1.8
+            : xLabelY
+        }
+        width={fontSize * 1.2}
+        height={isInverse ? fontSize * 1.4 : labelHeight}
+        text="$0$"
+        fontSize={fontSize}
+      />
+
+      {/* Axis titles outside the plotting area. */}
+      <FunctionGraphLabel
+        x={chartLeft}
+        y={height - fontSize * 1.8}
+        width={chartWidth}
+        height={fontSize * 1.6}
+        text={axes.x.label}
+        fontSize={fontSize}
+      />
+
+      <FunctionGraphLabel
+        x={clampLabelX(
+          origin.x - fontSize * (isInverse ? 3.5 : 1),
+          fontSize * (isInverse ? 7 : 2)
+        )}
+        y={chartTop - fontSize * 1.8}
+        width={fontSize * (isInverse ? 7 : 2)}
+        height={fontSize * 1.6}
+        text={axes.y.label}
+        fontSize={fontSize}
+      />
+
+      {/* Only supplied neutral curve labels are shown. */}
+      {showLegend && legendCurves.map((curve, index) => {
+        const slotWidth = chartWidth / legendCurves.length;
+        const x = chartLeft + index * slotWidth;
+        const y = fontSize * 0.3;
+
+        return (
+          <g key={`legend-${curve.id}`}>
+            <line
+              x1={x}
+              y1={y + fontSize * 0.8}
+              x2={x + fontSize * 1.5}
+              y2={y + fontSize * 0.8}
+              stroke={curve.color}
+              strokeWidth={strokeWidth * 1.3}
+            />
+
+            <FunctionGraphLabel
+              x={x + fontSize * 1.8}
+              y={y}
+              width={Math.max(fontSize, slotWidth - fontSize * 2)}
+              height={fontSize * 1.6}
+              text={curve.label}
+              fontSize={fontSize}
+              align="left"
+              color={curve.color}
+            />
+          </g>
+        );
+      })}
+
+      {/* Filled dots mark included mathematical endpoints. */}
+      {endpointMarkers.map((point) => (
+        <circle
+          key={point.id}
+          cx={point.x}
+          cy={point.y}
+          r={Math.max(3, strokeWidth * 1.6)}
+          fill={point.color}
+          stroke={point.color}
+          strokeWidth={strokeWidth * 0.5}
+        />
+      ))}
+    </g>
+  );
+}
+
