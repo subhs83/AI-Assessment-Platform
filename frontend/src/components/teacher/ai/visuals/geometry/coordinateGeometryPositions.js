@@ -359,7 +359,5 @@ const planePaddingY = Math.max(paddingY, fontSize * 2.5);
   }
 
   return { positions, plane };
-
-  return { positions, plane };
 }
 
