@@ -19,7 +19,8 @@ _VISUAL_TYPES = {
     **dict.fromkeys((
         "triangle", "trapezoid", "parallelogram", "quadrilateral", "circle",
         "polygon", "coordinate_geometry", "fraction_model", "parallel_lines",
-        "solid_geometry", "composite_geometry", "symmetry","mapping_diagram",
+        "solid_geometry", "composite_geometry", "symmetry","mapping_diagram", 
+        "conic_section",
     ), "geometry"),
     "table": "data_table", "chart": "chart", "graph": "graph",
     "venn_diagram": "venn_diagram", "physics": "physics", "chemistry": "chemistry",

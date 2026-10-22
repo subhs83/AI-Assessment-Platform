@@ -9,6 +9,7 @@ import SemicircleVisual from "./SemicircleVisual";
 import SymmetryVisual from "./SymmetryVisual";
 import ReflectionVisual from "./ReflectionVisual";
 import MappingDiagramVisual from "./MappingDiagramVisual";
+import ConicSectionVisual from "./ConicSectionVisual";
 
 import { getSegmentEndpoints, getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile"
@@ -28,6 +29,11 @@ import {
 export default function GeometryVisual({ visual }) {
   const isMobile = useIsMobile();
   if (!visual) return null;
+
+  // ADDED: conics use their own parser and renderer.
+  if (visual.figure?.type === "conic_section") {
+    return <ConicSectionVisual visual={visual} />;
+  }
 
   if (visual?.figure?.type === "mapping_diagram") {
     return <MappingDiagramVisual visual={visual} />;

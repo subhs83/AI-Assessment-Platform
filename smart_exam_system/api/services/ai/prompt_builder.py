@@ -176,10 +176,17 @@ VISUAL_TAXONOMY = r'''
 - "type": "mapping_diagram"     -> "subtype": "two_sets"
                                     "feature": "identify_function" | "find_domain" | "find_range" | "find_codomain" |
                                                 "classify_function" | "identify_ordered_pairs"                                         
-For "type": "graph",            -> "subtype": "function_graph":
+- "type": "graph",              -> "subtype": "function_graph":
                                     "feature": "identify_function" | "read_value" | "amplitude" |
                                               "period" | "phase_shift" | "vertical_shift" |
                                               "domain" | "range"
+- "type": "conic_section"       -> "subtype": "circle" | "parabola" | "ellipse" | "hyperbola"
+                                    "feature": "identify_conic" | "identify_equation" |
+                                                "find_center" | "find_vertex" | "find_focus" |
+                                                "find_directrix" | "find_eccentricity" |
+                                                "find_axis_length" | "find_asymptote"
+- "type": "graph"               -> "subtype": "integral_region"
+                                   "feature": "find_area" | "identify_integral" | "find_limits"
 COMPOSITE PERIMETER AND AREA
 - "type": "composite_geometry"  -> "subtype": "joined_rectangles" | "rectangular_cutouts" | "partitioned_rectangle" | "unit_square_region" |
                                                 "crossing_paths" | "boundary_path" |  "rectangle_semicircle"
@@ -832,6 +839,164 @@ RULES:
   not cosecant. Use unambiguous mathematical notation in options.
 - Use four mathematically distinct options with one correct answer.
 """.strip()
+
+# Conic sections: independent contract for axis-aligned Cartesian curves.
+CONIC_RULES = r"""
+CONIC SECTIONS
+Apply only to figure.type "conic_section", subtype
+"circle" | "parabola" | "ellipse" | "hyperbola".
+Use visual_type "geometry". Other contracts remain unchanged.
+
+FIGURE:
+- bounds: finite x_min < x_max, y_min < y_max; include origin.
+- tick_step: positive spacing for both axes; show_grid: false by default.
+- Use equal x/y scales.
+
+ELEMENTS:
+- conic: id, type, optional label, numeric h, k, parameters below.
+- point: id, type, optional label, numeric x, y.
+- line: id, type, optional label.
+
+PARAMETERS:
+- circle: r > 0; (x-h)^2+(y-k)^2=r^2.
+- parabola: nonzero signed p; horizontal (y-k)^2=4p(x-h),
+  vertical (x-h)^2=4p(y-k).
+- ellipse: a > b > 0; horizontal
+  (x-h)^2/a^2+(y-k)^2/b^2=1; swap denominators for vertical.
+- hyperbola: a,b > 0; horizontal
+  (x-h)^2/a^2-(y-k)^2/b^2=1; vertical
+  (y-k)^2/a^2-(x-h)^2/b^2=1.
+- Noncircles require orientation "horizontal" or "vertical".
+  (h,k) is the parabola vertex; otherwise the centre.
+
+RELATIONSHIPS:
+- marks_point: elements [point_ids], target conic_id,
+  role "center" | "vertex" | "focus" | "co_vertex" | "on_curve".
+- forms_line: elements [two distinct point_ids], target line_id.
+- marks_line: elements [line_ids], target conic_id,
+  role "directrix" | "asymptote" | "axis_of_symmetry".
+
+RULES:
+- Exactly one nondegenerate, axis-aligned conic. Vary its parameters.
+- Link all annotations; every line needs forms_line and marks_line.
+  Line-definition points remain hidden unless also marked.
+- Annotations must match the mathematics. co_vertex marks ellipse
+  minor-axis endpoints or hyperbola conjugate-axis endpoints
+  (not on the hyperbola). asymptote is hyperbola-only.
+  Circles have no directrix; parabolas have no centre.
+  Use only applicable features and roles.
+- Construction parameters are not displayed givens. Supply enough
+  exact information through question_text, coordinate labels and ticks.
+  Leave at least one necessary given in the graph; do not repeat
+  every plotted coordinate in question_text.
+  For hyperbola calculations requiring b, state the conjugate-axis
+  length in question_text. Do not create co_vertex annotations;
+  that role is ellipse-only. Never infer b from curve appearance. 
+  Explanations must use student-visible givens.
+- Specify which axis when asking its length. Do not label solved
+  quantities or show the requested focus, directrix or asymptotes.
+  Candidate diagrams are unsupported.
+- Bounds show complete circles/ellipses with margin, parabola vertices
+  and both arms, or both hyperbola branches and vertices, plus annotations.
+  Unbounded curves have continuation arrows; branches remain separate.
+- Use short neutral labels; do not name the curve for identify_conic.
+  Provide four mathematically distinct options with one correct answer.
+""".strip()
+
+# Applications of integrals: shaded regions on Cartesian axes.
+INTEGRAL_RULES = r"""
+INTEGRAL REGIONS
+Apply only to figure.type "graph", subtype "integral_region".
+Use visual_type "graph". Other graph contracts remain unchanged.
+
+FIGURE:
+- feature: "find_area" | "identify_integral" | "find_limits".
+- bounds: finite x_min < x_max, y_min < y_max; include origin.
+- integration_variable: "x" | "y".
+- Each axis uses exactly one positive spacing:
+  x_tick_step or x_tick_pi; y_tick_step or y_tick_pi.
+  *_tick_pi specifies a multiple of pi, e.g. 0.5 means pi/2.
+  Use pi-based ticks on the trigonometric input axis.
+- show_grid: false by default.
+
+ELEMENTS:
+- axis: id, type, label, orientation "horizontal" | "vertical".
+- curve: id, type, label, function "polynomial",
+  coefficients [c0,c1,...,cn], with finite numbers; degree at most 4.
+  For integration_variable "x": y=c0+c1*x+...+cn*x^n.
+  For "y": x=c0+c1*y+...+cn*y^n.
+  Constants and straight lines use the same contract.
+- curve with function "ellipse_branch": id, type, label,
+  numeric h, k, positive rx, ry, branch "positive" | "negative".
+  Equation: (x-h)^2/rx^2 + (y-k)^2/ry^2 = 1.
+  A circle uses rx = ry.
+  With x integration:
+    y = k ± ry*sqrt(1-((x-h)/rx)^2), domain [h-rx,h+rx].
+  With y integration:
+    x = h ± rx*sqrt(1-((y-k)/ry)^2), domain [k-ry,k+ry].
+  "positive" selects +; "negative" selects -.  
+- curve with function "sin" | "cos": id, type, label,
+  finite a, b, h, k; a and b must be nonzero.
+  With x integration: y = a*f(b*(x-h))+k.
+  With y integration: x = a*f(b*(y-h))+k.
+  All trigonometric arguments are in radians.
+- curve with function "piecewise_polynomial": id, type, label, pieces.
+  Each piece has lower, upper, coefficients [c0,...,cn], degree at most 4.
+  Limits are finite, lower < upper, in the integration variable.
+  Pieces are ordered and adjacent: each upper equals the next lower.
+  Their polynomial values must agree at shared endpoints.
+  With x integration, pieces define y; with y integration, they define x.
+  The curve is drawn only over its supplied piece intervals.  
+- region: id, type, optional label, lower, upper.
+  lower < upper are finite limits in the integration variable.
+
+RELATIONSHIPS:
+- bounded_by: elements [curve_id_1, curve_id_2], target region_id.
+  Each region has exactly two boundary curves and one bounded_by link.
+  Represent an axis boundary using a zero polynomial curve.
+- plotted_on: elements [curve_ids], target axis_id.
+  Link every curve to both axes.
+
+RULES:
+- Shade only the requested region; include its complete extent in bounds.
+- Ellipse branches are defined only within their real domains.
+  Every region interval must fit both boundary-curve domains.
+  Use equal x/y scales whenever an ellipse_branch is present.
+- Use both branches for a whole circle/ellipse. For halves or quadrants,
+  select the appropriate branch, axis boundary and region limits.
+  Label a shared circle/ellipse equation once; its other branch
+  may have an empty label.
+- For trigonometric curves, use numeric radian bounds and limits
+  in JSON; use exact pi notation in displayed mathematics.
+- Keep trigonometric plots readable: show at most eight cycles
+  within the graph bounds.
+- Split regions wherever boundary curves exchange order.
+  Areas below an axis count positively, not as cancellation.  
+- Boundary curves must not cross inside a region's interval.
+- Split at crossings into separate regions. Their integration intervals
+  must have disjoint interiors; adjacent intervals may share endpoints.
+- With x integration, shade between lower/upper y values.
+  With y integration, shade between left/right x values.
+- Area is nonnegative; add component areas without double-counting.
+- Show each non-axis curve's equation in its label or question_text.
+  Label the zero polynomial only through the corresponding axis.
+- A function defined by different formulas on different intervals,
+  including modulus functions, MUST use one piecewise_polynomial curve.
+  Do not represent its pieces as separate unrestricted polynomial curves
+  or put domain restrictions only in labels.
+- Split shaded regions at every piece boundary within the requested
+  interval and wherever boundary curves cross. Each region must fit
+  within one piece of each piecewise boundary.
+  Label the complete function once; do not label individual pieces.
+- Limits are construction data. For find_area/identify_integral,
+  make necessary limits readable from ticks, boundaries or question_text.
+  For find_limits, provide equations and a clearly selected region
+  from which limits can be derived; do not label the solved limits.
+- The shading must identify information needed for the question.
+  Never display a solved area or the requested integral as a label.
+- Use four mathematically distinct options and one correct answer.
+""".strip()
+
 
 # 6. EXAMPLES: add valid JSON payload patterns here. Raw strings use SINGLE braces and JSON-escaped LaTeX.
 VISUAL_EXAMPLES = r'''
@@ -1562,6 +1727,415 @@ These are reusable payload patterns, not extra questions to generate. Select onl
   ],
   "relationships": [
     {"type": "dimension_of", "elements": ["dim_a", "dim_h"], "target": "solid_1"}
+  ]
+}
+
+--- conic_section / circle / find_center ---
+"visual": {
+  "figure": {
+    "type": "conic_section",
+    "subtype": "circle",
+    "feature": "find_center",
+    "bounds": {"x_min": -2, "x_max": 6, "y_min": -5, "y_max": 3},
+    "tick_step": 1,
+    "show_grid": false
+  },
+  "elements": [
+    {"id": "conic_1", "type": "conic", "label": "", "h": 2, "k": -1, "r": 3}
+  ],
+  "relationships": []
+}
+
+--- conic_section / parabola / find_focus ---
+"visual": {
+  "figure": {
+    "type": "conic_section",
+    "subtype": "parabola",
+    "feature": "find_focus",
+    "bounds": {"x_min": -5, "x_max": 5, "y_min": -2, "y_max": 6},
+    "tick_step": 1,
+    "show_grid": false
+  },
+  "elements": [
+    {"id": "conic_1", "type": "conic", "label": "", "orientation": "vertical", "h": 0, "k": 0, "p": 1},
+    {"id": "vertex", "type": "point", "label": "V", "x": 0, "y": 0},
+    {"id": "point_p", "type": "point", "label": "$P(2,1)$", "x": 2, "y": 1}
+  ],
+  "relationships": [
+    {"type": "marks_point", "elements": ["vertex"], "target": "conic_1", "role": "vertex"},
+    {"type": "marks_point", "elements": ["point_p"], "target": "conic_1", "role": "on_curve"}
+  ]
+}
+
+--- conic_section / ellipse / find_eccentricity ---
+"visual": {
+  "figure": {
+    "type": "conic_section",
+    "subtype": "ellipse",
+    "feature": "find_eccentricity",
+    "bounds": {"x_min": -6, "x_max": 6, "y_min": -4, "y_max": 4},
+    "tick_step": 1,
+    "show_grid": false
+  },
+  "elements": [
+    {"id": "conic_1", "type": "conic", "label": "", "orientation": "horizontal", "h": 0, "k": 0, "a": 5, "b": 3},
+    {"id": "vertex", "type": "point", "label": "$A(5,0)$", "x": 5, "y": 0},
+    {"id": "co_vertex", "type": "point", "label": "$B(0,3)$", "x": 0, "y": 3}
+  ],
+  "relationships": [
+    {"type": "marks_point", "elements": ["vertex"], "target": "conic_1", "role": "vertex"},
+    {"type": "marks_point", "elements": ["co_vertex"], "target": "conic_1", "role": "co_vertex"}
+  ]
+}
+
+--- conic_section / hyperbola / find_asymptote ---
+"visual": {
+  "figure": {
+    "type": "conic_section",
+    "subtype": "hyperbola",
+    "feature": "find_asymptote",
+    "bounds": {"x_min": -7, "x_max": 7, "y_min": -5, "y_max": 5},
+    "tick_step": 1,
+    "show_grid": false
+  },
+  "elements": [
+    {"id": "conic_1", "type": "conic", "label": "", "orientation": "horizontal", "h": 0, "k": 0, "a": 3, "b": 2},
+    {"id": "vertex", "type": "point", "label": "$V(3,0)$", "x": 3, "y": 0},
+    {"id": "focus", "type": "point", "label": "$F(\\sqrt{13},0)$", "x": 3.605551275464, "y": 0}
+  ],
+  "relationships": [
+    {"type": "marks_point", "elements": ["vertex"], "target": "conic_1", "role": "vertex"},
+    {"type": "marks_point", "elements": ["focus"], "target": "conic_1", "role": "focus"}
+  ]
+}
+
+--- graph / integral_region / find_area ---
+"visual": {
+  "figure": {
+    "type": "graph",
+    "subtype": "integral_region",
+    "feature": "find_area",
+    "integration_variable": "x",
+    "bounds": {
+      "x_min": -0.5,
+      "x_max": 1.5,
+      "y_min": -0.5,
+      "y_max": 1.5
+    },
+    "x_tick_step": 0.5,
+    "y_tick_step": 0.5,
+    "show_grid": false
+  },
+  "elements": [
+    {
+      "id": "axis_x",
+      "type": "axis",
+      "label": "$x$",
+      "orientation": "horizontal"
+    },
+    {
+      "id": "axis_y",
+      "type": "axis",
+      "label": "$y$",
+      "orientation": "vertical"
+    },
+    {
+      "id": "curve_line",
+      "type": "curve",
+      "function": "polynomial",
+      "coefficients": [0, 1],
+      "label": "$y=x$"
+    },
+    {
+      "id": "curve_parabola",
+      "type": "curve",
+      "function": "polynomial",
+      "coefficients": [0, 0, 1],
+      "label": "$y=x^2$"
+    },
+    {
+      "id": "region_1",
+      "type": "region",
+      "label": "",
+      "lower": 0,
+      "upper": 1
+    }
+  ],
+  "relationships": [
+    {
+      "type": "bounded_by",
+      "elements": ["curve_line", "curve_parabola"],
+      "target": "region_1"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_line", "curve_parabola"],
+      "target": "axis_x"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_line", "curve_parabola"],
+      "target": "axis_y"
+    }
+  ]
+}
+
+--- graph / integral_region / find_area — ellipse ---
+"visual": {
+  "figure": {
+    "type": "graph",
+    "subtype": "integral_region",
+    "feature": "find_area",
+    "integration_variable": "x",
+    "bounds": {
+      "x_min": -4,
+      "x_max": 4,
+      "y_min": -3,
+      "y_max": 3
+    },
+    "x_tick_step": 1,
+    "y_tick_step": 1,
+    "show_grid": false
+  },
+  "elements": [
+    {
+      "id": "axis_x",
+      "type": "axis",
+      "label": "$x$",
+      "orientation": "horizontal"
+    },
+    {
+      "id": "axis_y",
+      "type": "axis",
+      "label": "$y$",
+      "orientation": "vertical"
+    },
+    {
+      "id": "curve_upper",
+      "type": "curve",
+      "function": "ellipse_branch",
+      "h": 0,
+      "k": 0,
+      "rx": 3,
+      "ry": 2,
+      "branch": "positive",
+      "label": "$\\frac{x^2}{9}+\\frac{y^2}{4}=1$"
+    },
+    {
+      "id": "curve_lower",
+      "type": "curve",
+      "function": "ellipse_branch",
+      "h": 0,
+      "k": 0,
+      "rx": 3,
+      "ry": 2,
+      "branch": "negative",
+      "label": ""
+    },
+    {
+      "id": "region_1",
+      "type": "region",
+      "label": "",
+      "lower": -3,
+      "upper": 3
+    }
+  ],
+  "relationships": [
+    {
+      "type": "bounded_by",
+      "elements": ["curve_upper", "curve_lower"],
+      "target": "region_1"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_upper", "curve_lower"],
+      "target": "axis_x"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_upper", "curve_lower"],
+      "target": "axis_y"
+    }
+  ]
+}
+
+--- graph / integral_region / find_area — sine ---
+"visual": {
+  "figure": {
+    "type": "graph",
+    "subtype": "integral_region",
+    "feature": "find_area",
+    "integration_variable": "x",
+    "bounds": {
+      "x_min": -0.5,
+      "x_max": 6.8,
+      "y_min": -1.5,
+      "y_max": 1.5
+    },
+    "x_tick_pi": 0.5,
+    "y_tick_step": 0.5,
+    "show_grid": false
+  },
+  "elements": [
+    {
+      "id": "axis_x",
+      "type": "axis",
+      "label": "$x$ (radians)",
+      "orientation": "horizontal"
+    },
+    {
+      "id": "axis_y",
+      "type": "axis",
+      "label": "$y$",
+      "orientation": "vertical"
+    },
+    {
+      "id": "curve_sine",
+      "type": "curve",
+      "function": "sin",
+      "a": 1,
+      "b": 1,
+      "h": 0,
+      "k": 0,
+      "label": "$y=\\sin x$"
+    },
+    {
+      "id": "curve_axis",
+      "type": "curve",
+      "function": "polynomial",
+      "coefficients": [0],
+      "label": ""
+    },
+    {
+      "id": "region_above",
+      "type": "region",
+      "label": "",
+      "lower": 0,
+      "upper": 3.141592653589793
+    },
+    {
+      "id": "region_below",
+      "type": "region",
+      "label": "",
+      "lower": 3.141592653589793,
+      "upper": 6.283185307179586
+    }
+  ],
+  "relationships": [
+    {
+      "type": "bounded_by",
+      "elements": ["curve_sine", "curve_axis"],
+      "target": "region_above"
+    },
+    {
+      "type": "bounded_by",
+      "elements": ["curve_sine", "curve_axis"],
+      "target": "region_below"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_sine", "curve_axis"],
+      "target": "axis_x"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_sine", "curve_axis"],
+      "target": "axis_y"
+    }
+  ]
+}
+
+--- graph / integral_region / find_area — piecewise polynomial ---
+"visual": {
+  "figure": {
+    "type": "graph",
+    "subtype": "integral_region",
+    "feature": "find_area",
+    "integration_variable": "x",
+    "bounds": {
+      "x_min": -1.5,
+      "x_max": 1.5,
+      "y_min": -1.5,
+      "y_max": 1.5
+    },
+    "x_tick_step": 0.5,
+    "y_tick_step": 0.5,
+    "show_grid": false
+  },
+  "elements": [
+    {
+      "id": "axis_x",
+      "type": "axis",
+      "label": "$x$",
+      "orientation": "horizontal"
+    },
+    {
+      "id": "axis_y",
+      "type": "axis",
+      "label": "$y$",
+      "orientation": "vertical"
+    },
+    {
+      "id": "curve_piecewise",
+      "type": "curve",
+      "function": "piecewise_polynomial",
+      "label": "$y=x|x|$",
+      "pieces": [
+        {
+          "lower": -1.5,
+          "upper": 0,
+          "coefficients": [0, 0, -1]
+        },
+        {
+          "lower": 0,
+          "upper": 1.5,
+          "coefficients": [0, 0, 1]
+        }
+      ]
+    },
+    {
+      "id": "curve_axis",
+      "type": "curve",
+      "function": "polynomial",
+      "coefficients": [0],
+      "label": ""
+    },
+    {
+      "id": "region_left",
+      "type": "region",
+      "label": "",
+      "lower": -1,
+      "upper": 0
+    },
+    {
+      "id": "region_right",
+      "type": "region",
+      "label": "",
+      "lower": 0,
+      "upper": 1
+    }
+  ],
+  "relationships": [
+    {
+      "type": "bounded_by",
+      "elements": ["curve_piecewise", "curve_axis"],
+      "target": "region_left"
+    },
+    {
+      "type": "bounded_by",
+      "elements": ["curve_piecewise", "curve_axis"],
+      "target": "region_right"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_piecewise", "curve_axis"],
+      "target": "axis_x"
+    },
+    {
+      "type": "plotted_on",
+      "elements": ["curve_piecewise", "curve_axis"],
+      "target": "axis_y"
+    }
   ]
 }
 
@@ -3467,7 +4041,7 @@ OUTPUT_CONTRACT = r'''
 Return one valid JSON object with a data array containing exactly the requested number of questions. No Markdown fences, comments, trailing text or extra questions.
 Each question has question_text, option_a, option_b, option_c, option_d, correct_answer, explanation, visual_required and visual_type. Add visual only when visual_required is true.
 visual_type mapping by figure.type:
-- geometry: triangle, trapezoid, parallelogram, quadrilateral, circle, polygon, coordinate_geometry, fraction_model, parallel_lines, solid_geometry, composite_geometry, symmetry, mapping_diagram
+- geometry: triangle, trapezoid, parallelogram, quadrilateral, circle, polygon, coordinate_geometry, fraction_model, parallel_lines, solid_geometry, composite_geometry, symmetry, mapping_diagram, conic_section
 - data_table: table
 - chart: chart
 - graph: graph
@@ -3517,6 +4091,7 @@ def build_question_prompt(
         GEOMETRY_RULES,
         SOLID_RULES,
         DATA_RULES,
+        INTEGRAL_RULES,
         PHYSICS_RULES,
         CHEMISTRY_RULES,
         FRACTION_RULES,
@@ -3524,6 +4099,7 @@ def build_question_prompt(
         SYMMETRY_RULES,
         MAPPING_RULES,
         TRIGONOMETRY_RULES,
+        CONIC_RULES,
         PARALLEL_LINES_RULES,
         VISUAL_EXAMPLES,
         OUTPUT_CONTRACT,

@@ -3,6 +3,9 @@ import { renderNumberLine, renderBarGraph, renderLineGraph, renderFunctionGraph,
 import { getSvgDimensions } from "./geometry/geometryHelpers";
 import { useIsMobile } from "../../../../hooks/useIsMobile";
 import { parseFunctionGraph } from "./graph/functionGraphParser";
+import { parseIntegralRegion } from "./graph/integralRegionParser";
+import { calculateIntegralRegionPositions } from "./graph/integralRegionPositions";
+import { renderIntegralRegion } from "./graph/integralRegionRenderers";
 
 export default function GraphVisual({ visual }) {
   const isMobile = useIsMobile();
@@ -68,6 +71,21 @@ export default function GraphVisual({ visual }) {
       );
     }
   }
+
+    else if (figure.subtype === "integral_region") {
+    const parsed = parseIntegralRegion(visual);
+
+    if (parsed.valid) {
+      plane = calculateIntegralRegionPositions({
+        parsed,
+        isMobile,
+      });
+
+      content = renderIntegralRegion(plane);
+    } else {
+      console.warn("[INTEGRAL REGION]", parsed.error);
+    }
+  }
   // ⬆️ END NEW BRANCH ⬆️
 
   const DEBUG_GRAPH = false;
@@ -81,15 +99,15 @@ export default function GraphVisual({ visual }) {
     console.log("==================================");
   }
 
-   if (!content) {
-    if (figure.subtype === "function_graph") {
+  if (!content) {
+    if (figure.subtype === "integral_region") {
       return (
         <div
           role="status"
           className="my-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600"
         >
-          This function graph could not be displayed. Please review
-          its bounds, function parameters and axis relationships.
+          This integral region could not be displayed. Please review
+          its curves, limits and relationships.
         </div>
       );
     }
