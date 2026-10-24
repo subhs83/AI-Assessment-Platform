@@ -4,6 +4,41 @@ import { useNavigate } from "react-router-dom";
 import { examApi } from "../api/examApi";
 import { useExamStore } from "../store/examStore";
 
+// Share an ongoing request if navigation reaches a question
+// while its prefetch is still running.
+const pendingRequests = new Map();
+
+function requestQuestion(schoolSlug, attemptId, index) {
+  const key = JSON.stringify([schoolSlug, attemptId, index]);
+
+  if (pendingRequests.has(key)) {
+    return pendingRequests.get(key);
+  }
+
+  const promise = examApi
+    .getQuestion(schoolSlug, attemptId, index)
+    .then((res) => {
+      const data = res.data?.data;
+
+      if (
+        !data ||
+        data.question_id == null ||
+        String(data.attempt_id) !== String(attemptId) ||
+        Number(data.q_index) !== index
+      ) {
+        throw new Error("Invalid question response.");
+      }
+
+      return data;
+    })
+    .finally(() => {
+      pendingRequests.delete(key);
+    });
+
+  pendingRequests.set(key, promise);
+  return promise;
+}
+
 export function useExamQuestion({
   schoolSlug,
   attemptId,
@@ -41,7 +76,6 @@ export function useExamQuestion({
       return;
     }
 
-    // Ignore responses after navigation or unmount.
     let active = true;
 
     const cacheShown = useExamStore
@@ -54,21 +88,80 @@ export function useExamQuestion({
       error: "",
     });
 
+    const redirectIfFinished = (err) => {
+      const apiError = err.response?.data?.error;
+
+      if (
+        apiError === "time_expired" ||
+        apiError === "already_submitted"
+      ) {
+        navigate(
+          `/school/${schoolSlug}/result/${attemptId}`,
+          { replace: true }
+        );
+        return true;
+      }
+
+      return false;
+    };
+
+    const prefetchNext = async (totalQuestions) => {
+      const nextIndex = index + 1;
+      const state = useExamStore.getState();
+
+      if (
+        !active ||
+        nextIndex >= totalQuestions ||
+        state.isOffline ||
+        state.isSubmittingExam
+      ) {
+        return;
+      }
+
+      const cached = state.questionCache[nextIndex];
+
+      if (
+        state.schoolSlug === schoolSlug &&
+        String(state.attemptId) === String(attemptId) &&
+        String(cached?.attempt_id) === String(attemptId) &&
+        Number(cached?.q_index) === nextIndex
+      ) {
+        return;
+      }
+
+      try {
+        const data = await requestQuestion(
+          schoolSlug,
+          attemptId,
+          nextIndex
+        );
+
+        if (!active) return;
+
+        useExamStore.getState().cacheQuestion(
+          schoolSlug,
+          attemptId,
+          nextIndex,
+          data
+        );
+      } catch (err) {
+        if (!active) return;
+
+        // Expiry still matters during a background fetch.
+        // Other prefetch failures leave the current question usable.
+        redirectIfFinished(err);
+      }
+    };
+
     const fetchQuestion = async () => {
       try {
-        const res = await examApi.getQuestion(
+        const data = await requestQuestion(
           schoolSlug,
           attemptId,
           index
         );
 
         if (!active) return;
-
-        const data = res.data?.data;
-
-        if (!data || data.question_id == null) {
-          throw new Error("Invalid question response.");
-        }
 
         setQuestion(index, data);
 
@@ -77,21 +170,12 @@ export function useExamQuestion({
           status: "ready",
           error: "",
         });
+
+        // Fetch only one question ahead.
+        void prefetchNext(data.total_questions);
       } catch (err) {
         if (!active) return;
-
-        const apiError = err.response?.data?.error;
-
-        if (
-          apiError === "time_expired" ||
-          apiError === "already_submitted"
-        ) {
-          navigate(
-            `/school/${schoolSlug}/result/${attemptId}`,
-            { replace: true }
-          );
-          return;
-        }
+        if (redirectIfFinished(err)) return;
 
         console.error(
           "QUESTION ERROR:",
@@ -106,7 +190,7 @@ export function useExamQuestion({
       }
     };
 
-    fetchQuestion();
+    void fetchQuestion();
 
     return () => {
       active = false;

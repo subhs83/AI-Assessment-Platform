@@ -29,8 +29,6 @@ export default function QuestionOptions({
             px-4
             py-3
             text-left
-            transition-all
-            duration-150
             flex
             items-center
             gap-3
@@ -54,9 +52,11 @@ export default function QuestionOptions({
             }
 
             ${
-              saving || isOffline
+              isOffline
                 ? "cursor-not-allowed opacity-60"
-                : "cursor-pointer active:scale-[0.99]"
+                : saving
+                  ? "cursor-not-allowed"
+                  : "cursor-pointer"
             }
           `}
         >
@@ -69,7 +69,6 @@ export default function QuestionOptions({
             items-center justify-center
             rounded-full border-2
             text-sm font-bold
-            transition-all
 
             ${
               isSelected

@@ -96,6 +96,27 @@ initSession: (payload) => {
 
     return true;
   },
+
+  // Store a prefetched question without changing the active screen.
+  cacheQuestion: (schoolSlug, attemptId, index, data) => {
+    set((state) => {
+      if (
+        state.schoolSlug !== schoolSlug ||
+        String(state.attemptId) !== String(attemptId) ||
+        String(data?.attempt_id) !== String(attemptId) ||
+        Number(data?.q_index) !== index
+      ) {
+        return state;
+      }
+
+      return {
+        questionCache: {
+          ...state.questionCache,
+          [index]: data,
+        },
+      };
+    });
+  },
   setQuestion: (index, data) => {
     set((state) => ({
       currentQuestion: data,
