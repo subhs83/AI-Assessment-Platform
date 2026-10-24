@@ -11,6 +11,8 @@ QuestionModel,
 AttemptModel,
 UserModel, 
 ExamTargetModel,
+ SchoolClassModel,
+SchoolSectionModel,
 )
 from smart_exam_system.api.services.exam_target_service import (
     create_exam_targets,
@@ -22,6 +24,126 @@ from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
+
+def validate_exam_targets(targets):
+    if not isinstance(targets, list) or not targets:
+        raise ValueError(
+            "Please select a class and at least one section "
+            "or All Sections."
+        )
+
+    def positive_id(value):
+        # Accept integer IDs and numeric strings from form controls.
+        if isinstance(value, bool):
+            return None
+
+        if isinstance(value, str):
+            value = value.strip()
+            if not value.isascii() or not value.isdecimal():
+                return None
+            value = int(value)
+
+        if type(value) is not int or value <= 0:
+            return None
+
+        return value
+
+    normalized = []
+    seen = set()
+    class_ids = set()
+
+    for target in targets:
+        if not isinstance(target, dict):
+            raise ValueError("Invalid academic target.")
+
+        class_id = positive_id(target.get("school_class_id"))
+
+        if class_id is None:
+            raise ValueError("Please select a valid class.")
+
+        # Missing section is invalid; explicit null means All Sections.
+        if "school_section_id" not in target:
+            raise ValueError(
+                "Please select a section or All Sections."
+            )
+
+        raw_section_id = target["school_section_id"]
+        section_id = (
+            None
+            if raw_section_id is None
+            else positive_id(raw_section_id)
+        )
+
+        if raw_section_id is not None and section_id is None:
+            raise ValueError("Please select a valid section.")
+
+        key = (class_id, section_id)
+
+        if key in seen:
+            raise ValueError("Duplicate academic target.")
+
+        seen.add(key)
+        class_ids.add(class_id)
+
+        normalized.append({
+            "school_class_id": class_id,
+            "school_section_id": section_id,
+        })
+
+    # Matches the current form's single-class selection.
+    if len(class_ids) != 1:
+        raise ValueError("Please select one class per exam.")
+
+    if (
+        any(t["school_section_id"] is None for t in normalized)
+        and len(normalized) != 1
+    ):
+        raise ValueError(
+            "Select either All Sections or individual sections."
+        )
+
+    return normalized
+
+
+def validate_exam_target_access(targets, school_id):
+    targets = validate_exam_targets(targets)
+    class_id = targets[0]["school_class_id"]
+
+    school_class = SchoolClassModel.query.filter_by(
+        id=class_id,
+        school_id=school_id,
+        is_active=True,
+    ).first()
+
+    if school_class is None:
+        raise ValueError(
+            "Please select an active class belonging to your school."
+        )
+
+    # Explicit null means All Sections for the validated class.
+    if targets[0]["school_section_id"] is None:
+        return targets
+
+    section_ids = {
+        target["school_section_id"]
+        for target in targets
+    }
+
+    sections = SchoolSectionModel.query.filter(
+        SchoolSectionModel.id.in_(section_ids),
+        SchoolSectionModel.school_id == school_id,
+        SchoolSectionModel.school_class_id == class_id,
+        SchoolSectionModel.is_active.is_(True),
+    ).all()
+
+    valid_section_ids = {section.id for section in sections}
+
+    if valid_section_ids != section_ids:
+        raise ValueError(
+            "Please select active sections belonging to the selected class."
+        )
+
+    return targets
 
 
 def get_school_analytics(school_id):
@@ -424,8 +546,16 @@ def create_exam(
     review_mode=ReviewMode.QUESTIONS_ONLY.value,
     ):
     try:
+        # Validate before adding or flushing an exam.
+        targets = validate_exam_target_access(
+            targets=targets,
+            school_id=school_id,
+        )
+
         if duration_minutes <= 0:
             return False, "Duration must be greater than 0."
+
+        # Keep the remaining checks and creation code unchanged.
         
         if marks <= 0:
             return False, "Marks per question must be greater than 0."
@@ -465,6 +595,10 @@ def create_exam(
 
         return True, "Exam created successfully (Draft mode)"
 
+    except ValueError as exc:
+        db.session.rollback()
+        return False, str(exc)
+
     except Exception:
         db.session.rollback()
         logger.exception("Failed to create exam")
@@ -501,11 +635,20 @@ def extract_exam_form_data(form_data):
             "Exam title is required."
         )
 
-    review_mode  = str(
-        form_data.get("review_mode",
+    review_mode = form_data.get(
+        "review_mode",
         ReviewMode.QUESTIONS_ONLY.value,
-        )
     )
+
+    if (
+        not isinstance(review_mode, str)
+        or review_mode not in {
+            ReviewMode.NO_REVIEW.value,
+            ReviewMode.QUESTIONS_ONLY.value,
+            ReviewMode.FULL_REVIEW.value,
+        }
+    ):
+        raise ValueError("Please select a valid review mode.")
 
     start_date = parse_exam_datetime(
         form_data.get("start_date")
@@ -534,12 +677,7 @@ def extract_exam_form_data(form_data):
             "End date must be after start date."
         )
     
-    targets = form_data.get("targets") or []
-
-    if not isinstance(targets, list):
-        raise ValueError(
-            "Invalid academic target."
-        )
+    targets = validate_exam_targets(form_data.get("targets"))
     
 
     return {
@@ -849,6 +987,12 @@ def update_exam(
         if not exam:
             return False, "Exam not found."
 
+        # Validate before changing the exam or deleting existing targets.
+        targets = validate_exam_target_access(
+            targets=targets,
+            school_id=school_id,
+        )
+
         if duration_minutes <= 0:
             return False, "Duration must be greater than 0."
 
@@ -889,6 +1033,10 @@ def update_exam(
 
         return True, "Exam updated successfully."
 
+    except ValueError as exc:
+        db.session.rollback()
+        return False, str(exc)
+    
     except Exception:
         db.session.rollback()
 

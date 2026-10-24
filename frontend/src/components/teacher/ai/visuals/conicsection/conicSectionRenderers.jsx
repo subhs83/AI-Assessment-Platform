@@ -1,5 +1,5 @@
 // conicsection/conicSectionRenderers.jsx
-
+import { useLayoutEffect, useRef } from "react";
 import MathText from "../../../../common/MathText";
 
 const COLORS = {
@@ -9,7 +9,61 @@ const COLORS = {
   hyperbola: "#ea580c",
 };
 
-function ConicLabel({ label, plane, color = "#334155" }) {
+function ConicLabel({
+  label,
+  plane,
+  color = "#334155",
+  onMeasure,
+}) {
+  const textRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const element = textRef.current;
+
+    // Axis names do not need to report annotation measurements.
+    if (!element || !label.id || !onMeasure) return;
+
+    let active = true;
+
+    const measure = () => {
+      if (!active) return;
+
+      // Layout dimensions remain in SVG user units.
+      // Include the label's padding and a small rounding allowance.
+      const width = Math.ceil(
+        Math.max(element.offsetWidth, element.scrollWidth)
+      ) + 2;
+
+      const height = Math.ceil(
+        Math.max(element.offsetHeight, element.scrollHeight)
+      ) + 2;
+
+      if (width <= 2 || height <= 2) return;
+
+      onMeasure(label.id, {
+        text: label.text,
+        fontSize: plane.fontSize,
+        width,
+        height,
+      });
+    };
+
+    measure();
+
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(measure)
+        : null;
+
+    observer?.observe(element);
+    document.fonts?.ready.then(measure);
+
+    return () => {
+      active = false;
+      observer?.disconnect();
+    };
+  }, [label.id, label.text, plane.fontSize, onMeasure]);
+
   const x = Math.max(
     2,
     Math.min(
@@ -38,11 +92,11 @@ function ConicLabel({ label, plane, color = "#334155" }) {
           display: "flex",
           alignItems: "center",
           justifyContent:
-          label.align === "start"
-            ? "flex-start"
-            : label.align === "end"
-              ? "flex-end"
-              : "center",
+            label.align === "start"
+              ? "flex-start"
+              : label.align === "end"
+                ? "flex-end"
+                : "center",
           width: "100%",
           height: "100%",
           color,
@@ -51,15 +105,19 @@ function ConicLabel({ label, plane, color = "#334155" }) {
           whiteSpace: "nowrap",
         }}
       >
-        <span
+        <div
+          ref={textRef}
           style={{
+            display: "inline-flex",
+            flexShrink: 0,
+            width: "max-content",
             background: "#f8fafc",
             borderRadius: 4,
             padding: "0 2px",
           }}
         >
           <MathText text={label.text} />
-        </span>
+        </div>
       </div>
     </foreignObject>
   );
@@ -81,7 +139,7 @@ function ArrowHead({ tip, ux, uy, length, halfWidth, color }) {
   );
 }
 
-export function renderConicSection(plane) {
+export function renderConicSection(plane, onLabelMeasure) {
   if (!plane) return null;
 
   const {
@@ -95,6 +153,7 @@ export function renderConicSection(plane) {
     paths,
     points,
     lines,
+    segments = [], // ADDED
     labels,
     continuationArrows,
     xTicks,
@@ -161,8 +220,48 @@ export function renderConicSection(plane) {
       );
     });
 
-  // Preserve important circle/ellipse extrema when they match ticks.
-    // Number every second tick, counting outward from zero.
+  // ADDED: suppress a tick number if a finite segment crosses its box.
+  const overlapsSegment = (box) =>
+    (plane.segments || []).some(({ start, end }) => {
+      let low = 0;
+      let high = 1;
+      const clearance = strokeWidth;
+
+      for (const [position, direction, min, max] of [
+        [
+          start.x,
+          end.x - start.x,
+          box.x - clearance,
+          box.x + box.width + clearance,
+        ],
+        [
+          start.y,
+          end.y - start.y,
+          box.y - clearance,
+          box.y + box.height + clearance,
+        ],
+      ]) {
+        if (direction === 0) {
+          if (position < min || position > max) return false;
+          continue;
+        }
+
+        const t1 = (min - position) / direction;
+        const t2 = (max - position) / direction;
+
+        low = Math.max(low, Math.min(t1, t2));
+        high = Math.min(high, Math.max(t1, t2));
+
+        if (low > high) return false;
+      }
+
+      return true;
+    });
+
+  const numberBoxIsClear = (box) =>
+    !overlapsAnnotation(box) && !overlapsSegment(box);
+
+
   // All intermediate tick marks remain visible.
   const showXNumber = (tick, index) => {
     if (tick.value === 0) return false;
@@ -173,7 +272,7 @@ export function renderConicSection(plane) {
 
     const width = numberWidth(tick.label);
 
-    return !overlapsAnnotation({
+    return numberBoxIsClear({
       x: tick.x - width / 2,
       y: xLabelY - fontSize / 2,
       width,
@@ -190,7 +289,7 @@ export function renderConicSection(plane) {
 
     const width = numberWidth(tick.label);
 
-    return !overlapsAnnotation({
+    return numberBoxIsClear({
       x: yLabelX - width,
       y: tick.y - fontSize / 2,
       width,
@@ -306,6 +405,21 @@ export function renderConicSection(plane) {
           stroke="#94a3b8"
           strokeWidth={strokeWidth * 0.75}
           strokeDasharray={`${fontSize * 0.45} ${fontSize * 0.3}`}
+        />
+      ))}
+
+      {/* ADDED: finite segments explicitly linked through marks_segment.
+          Stop at their endpoints; no extension lines or arrowheads. */}
+      {segments.map((segment) => (
+        <line
+          key={`segment-${segment.id}`}
+          x1={segment.start.x}
+          y1={segment.start.y}
+          x2={segment.end.x}
+          y2={segment.end.y}
+          stroke="#475569"
+          strokeWidth={strokeWidth * 0.9}
+          strokeLinecap="butt"
         />
       ))}
 
@@ -430,6 +544,7 @@ export function renderConicSection(plane) {
           key={label.id}
           label={label}
           plane={plane}
+          onMeasure={onLabelMeasure}
         />
       ))}
 

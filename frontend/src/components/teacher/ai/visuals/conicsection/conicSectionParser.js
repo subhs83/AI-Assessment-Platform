@@ -13,6 +13,9 @@ const FEATURES_BY_SUBTYPE = {
     "find_focus",
     "find_directrix",
     "find_eccentricity",
+    "find_latus_rectum", // ADDED
+    "find_height",
+    "find_width",
   ],
   ellipse: [
     "identify_conic",
@@ -23,6 +26,9 @@ const FEATURES_BY_SUBTYPE = {
     "find_directrix",
     "find_eccentricity",
     "find_axis_length",
+    "find_latus_rectum", // ADDED
+    "find_height",
+    "find_width",
   ],
   hyperbola: [
     "identify_conic",
@@ -34,6 +40,7 @@ const FEATURES_BY_SUBTYPE = {
     "find_eccentricity",
     "find_axis_length",
     "find_asymptote",
+    "find_latus_rectum", // ADDED
   ],
 };
 
@@ -51,6 +58,17 @@ const LINE_ROLES = new Set([
   "axis_of_symmetry",
 ]);
 
+// ADDED: finite-segment annotation roles.
+const SEGMENT_ROLES = new Set([
+  "latus_rectum",
+  "radius",
+  "major_axis",
+  "minor_axis",
+  "transverse_axis",
+  "conjugate_axis",
+  "construction",
+]);
+
 function invalid(error) {
   return {
     valid: false,
@@ -59,6 +77,7 @@ function invalid(error) {
     conic: null,
     points: [],
     lines: [],
+    segments: [], // ADDED
   };
 }
 
@@ -150,7 +169,7 @@ export function parseConicSection(visual) {
       typeof element.id !== "string" ||
       !element.id.trim() ||
       byId.has(element.id) ||
-      !["conic", "point", "line"].includes(element.type) ||
+      !["conic", "point", "line", "segment"].includes(element.type) ||
       (element.label !== undefined && typeof element.label !== "string")
     ) {
       return invalid("Invalid or duplicate conic element.");
@@ -260,10 +279,151 @@ export function parseConicSection(visual) {
       ? { x: conic.h + u, y: conic.k + v }
       : { x: conic.h + v, y: conic.k + u };
 
+  // Optional finite portion of a conic.
+  // Existing payloads without curve_interval keep their current behaviour.
+  let restrictedPoints = null;
+
+  if (conic.curve_interval !== undefined) {
+    const interval = conic.curve_interval;
+
+    if (
+      !interval ||
+      typeof interval !== "object" ||
+      Array.isArray(interval) ||
+      !["x", "y"].includes(interval.axis) ||
+      !Number.isFinite(interval.lower) ||
+      !Number.isFinite(interval.upper) ||
+      interval.lower >= interval.upper ||
+      !Number.isFinite(interval.upper - interval.lower)
+    ) {
+      return invalid("Invalid conic curve_interval.");
+    }
+
+    if (subtype === "hyperbola") {
+      return invalid("Hyperbola curve restrictions are unsupported.");
+    }
+
+    const { axis } = interval;
+    let { lower, upper } = interval;
+    let pointAt;
+    let turningCoordinate;
+
+    if (subtype === "parabola") {
+      const expectedAxis = horizontal ? "y" : "x";
+
+      if (
+        axis !== expectedAxis ||
+        interval.branch !== undefined
+      ) {
+        return invalid(
+          "Parabola interval must use its input axis without branch."
+        );
+      }
+
+      turningCoordinate = horizontal ? conic.k : conic.h;
+
+      pointAt = (value) => {
+        const v = value - turningCoordinate;
+        const u = (v / conic.p) * (v / 4);
+        return fromLocal(u, v);
+      };
+
+      conic.curve_interval = { axis, lower, upper };
+    } else {
+      // World-axis radii: branch names do not depend on orientation.
+      const rx =
+        subtype === "circle"
+          ? conic.r
+          : horizontal ? conic.a : conic.b;
+
+      const ry =
+        subtype === "circle"
+          ? conic.r
+          : horizontal ? conic.b : conic.a;
+
+      const allowedBranches =
+        axis === "x" ? ["upper", "lower"] : ["left", "right"];
+
+      if (!allowedBranches.includes(interval.branch)) {
+        return invalid("Curve branch does not match the interval axis.");
+      }
+
+      const center = axis === "x" ? conic.h : conic.k;
+      const radius = axis === "x" ? rx : ry;
+      const minimum = center - radius;
+      const maximum = center + radius;
+
+      if (
+        !Number.isFinite(minimum) ||
+        !Number.isFinite(maximum) ||
+        lower < minimum - tolerance ||
+        upper > maximum + tolerance
+      ) {
+        return invalid("Curve interval exceeds the circle or ellipse.");
+      }
+
+      // Accommodate rounded endpoints without taking sqrt of a negative.
+      lower = Math.max(minimum, lower);
+      upper = Math.min(maximum, upper);
+
+      if (lower >= upper) {
+        return invalid("Curve interval must have positive length.");
+      }
+
+      const sign =
+        ["upper", "right"].includes(interval.branch) ? 1 : -1;
+
+      turningCoordinate = center;
+
+      pointAt = (value) => {
+        const ratio = (value - center) / radius;
+        const factor = Math.sqrt(Math.max(0, 1 - ratio * ratio));
+
+        return axis === "x"
+          ? { x: value, y: conic.k + sign * ry * factor }
+          : { x: conic.h + sign * rx * factor, y: value };
+      };
+
+      conic.curve_interval = {
+        axis,
+        lower,
+        upper,
+        branch: interval.branch,
+      };
+    }
+
+    // Endpoints plus any interior turning point cover all extrema
+    // of these supported finite branches.
+    const coordinates = [lower, upper];
+
+    if (
+      turningCoordinate > lower &&
+      turningCoordinate < upper
+    ) {
+      coordinates.push(turningCoordinate);
+    }
+
+    restrictedPoints = coordinates.map(pointAt);
+
+    if (
+      restrictedPoints.some(
+        (point) =>
+          !Number.isFinite(point.x) ||
+          !Number.isFinite(point.y) ||
+          !insideBounds(point)
+      )
+    ) {
+      return invalid("Bounds exclude part of the restricted curve.");
+    }
+  }
+
   // Ensure the essential curve is visible.
+  // Restricted curves need only their selected portion inside bounds.
   let requiredPoints;
 
-  if (subtype === "circle") {
+  if (restrictedPoints) {
+    requiredPoints = restrictedPoints;
+  } else if (subtype === "circle") {
     requiredPoints = [
       { x: conic.h - conic.r, y: conic.k },
       { x: conic.h + conic.r, y: conic.k },
@@ -304,7 +464,13 @@ export function parseConicSection(visual) {
   for (const relationship of relationships) {
     if (
       !relationship ||
-      !["marks_point", "forms_line", "marks_line"].includes(relationship.type) ||
+      ![
+        "marks_point",
+        "forms_line",
+        "marks_line",
+        "forms_segment",
+        "marks_segment",
+      ].includes(relationship.type) ||
       !Array.isArray(relationship.elements) ||
       relationship.elements.length === 0 ||
       new Set(relationship.elements).size !== relationship.elements.length ||
@@ -535,17 +701,204 @@ export function parseConicSection(visual) {
     return invalid("Every line needs forms_line and marks_line relationships.");
   }
 
-  // Endpoint-only construction points remain hidden.
-  const unlinkedPoint = [...byId.values()].some(
-    (element) =>
-      element.type === "point" &&
-      !markedPointIds.has(element.id) &&
-      !linePointIds.has(element.id)
+    // -------------------------------------------------------
+  // ADDED: finite segments and their mathematical roles
+  // -------------------------------------------------------
+
+  const definedSegments = new Map();
+  const segmentPointIds = new Set();
+
+  for (const link of relationships.filter(
+    (r) => r.type === "forms_segment"
+  )) {
+    const segment = byId.get(link.target);
+
+    if (
+      segment.type !== "segment" ||
+      definedSegments.has(segment.id) ||
+      link.elements.length !== 2 ||
+      link.elements.some((id) => byId.get(id).type !== "point")
+    ) {
+      return invalid("A conic segment needs two point references.");
+    }
+
+    const [a, b] = link.elements.map((id) => byId.get(id));
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+
+    if (!Number.isFinite(length) || length <= tolerance) {
+      return invalid("Segment endpoints must have distinct positions.");
+    }
+
+    // A finite segment must be fully visible.
+    if (!insideBounds(a) || !insideBounds(b)) {
+      return invalid("Bounds exclude a segment endpoint.");
+    }
+
+    definedSegments.set(segment.id, {
+      ...segment,
+      a: { ...a },
+      b: { ...b },
+    });
+
+    link.elements.forEach((id) => segmentPointIds.add(id));
+  }
+
+  // Endpoint order does not affect a segment's meaning.
+  const samePoint = (a, b) =>
+    near(a.x, b.x) && near(a.y, b.y);
+
+  const matchesEndpoints = (segment, first, second) =>
+    [first, second].every(
+      (point) => Number.isFinite(point.x) && Number.isFinite(point.y)
+    ) &&
+    (
+      (samePoint(segment.a, first) && samePoint(segment.b, second)) ||
+      (samePoint(segment.a, second) && samePoint(segment.b, first))
+    );
+
+  const matchesSegmentRole = (segment, role) => {
+    // General construction segments need valid, visible endpoints,
+    // but their endpoints need not both lie on the curve.
+    if (role === "construction") return true;
+
+    if (role === "radius") {
+      if (subtype !== "circle") return false;
+
+      return (
+        (
+          matchesPointRole(segment.a, "center") &&
+          matchesPointRole(segment.b, "on_curve")
+        ) ||
+        (
+          matchesPointRole(segment.b, "center") &&
+          matchesPointRole(segment.a, "on_curve")
+        )
+      );
+    }
+
+    if (role === "major_axis" || role === "minor_axis") {
+      if (subtype !== "ellipse") return false;
+
+      return role === "major_axis"
+        ? matchesEndpoints(
+            segment,
+            fromLocal(-conic.a, 0),
+            fromLocal(conic.a, 0)
+          )
+        : matchesEndpoints(
+            segment,
+            fromLocal(0, -conic.b),
+            fromLocal(0, conic.b)
+          );
+    }
+
+    if (
+      role === "transverse_axis" ||
+      role === "conjugate_axis"
+    ) {
+      if (subtype !== "hyperbola") return false;
+
+      return role === "transverse_axis"
+        ? matchesEndpoints(
+            segment,
+            fromLocal(-conic.a, 0),
+            fromLocal(conic.a, 0)
+          )
+        : matchesEndpoints(
+            segment,
+            fromLocal(0, -conic.b),
+            fromLocal(0, conic.b)
+          );
+    }
+
+    if (role === "latus_rectum") {
+      if (subtype === "circle") return false;
+
+      if (subtype === "parabola") {
+        const halfLength = 2 * Math.abs(conic.p);
+
+        return matchesEndpoints(
+          segment,
+          fromLocal(conic.p, -halfLength),
+          fromLocal(conic.p, halfLength)
+        );
+      }
+
+      // Ellipse or hyperbola: either focus may be selected.
+      const halfLength = conic.b * (conic.b / conic.a);
+
+      if (!Number.isFinite(halfLength) || halfLength <= 0) {
+        return false;
+      }
+
+      return [-1, 1].some((sign) =>
+        matchesEndpoints(
+          segment,
+          fromLocal(sign * c, -halfLength),
+          fromLocal(sign * c, halfLength)
+        )
+      );
+    }
+
+    return false;
+  };
+
+  const segments = [];
+  const markedSegmentIds = new Set();
+
+  for (const link of relationships.filter(
+    (r) => r.type === "marks_segment"
+  )) {
+    if (
+      link.target !== conic.id ||
+      !SEGMENT_ROLES.has(link.role)
+    ) {
+      return invalid("Invalid conic segment annotation.");
+    }
+
+    for (const id of link.elements) {
+      const segment = definedSegments.get(id);
+
+      if (
+        !segment ||
+        markedSegmentIds.has(id) ||
+        !matchesSegmentRole(segment, link.role)
+      ) {
+        return invalid("Segment annotation disagrees with the conic.");
+      }
+
+      markedSegmentIds.add(id);
+      segments.push({ ...segment, role: link.role });
+    }
+  }
+
+  const segmentElements = [...byId.values()].filter(
+    (element) => element.type === "segment"
   );
 
-  if (unlinkedPoint) {
-    return invalid("Every point must annotate the conic or define a line.");
+  if (
+    definedSegments.size !== segmentElements.length ||
+    markedSegmentIds.size !== segmentElements.length
+  ) {
+    return invalid(
+      "Every segment needs forms_segment and marks_segment relationships."
+    );
   }
+
+    // Definition-only points remain hidden unless explicitly marked.
+    const unlinkedPoint = [...byId.values()].some(
+      (element) =>
+        element.type === "point" &&
+        !markedPointIds.has(element.id) &&
+        !linePointIds.has(element.id) &&
+        !segmentPointIds.has(element.id)
+    );
+
+    if (unlinkedPoint) {
+      return invalid(
+        "Every point must annotate the conic or define a line or segment."
+      );
+    }
 
   return {
     valid: true,
@@ -558,5 +911,6 @@ export function parseConicSection(visual) {
     conic,
     points,
     lines,
+    segments, // ADDED
   };
 }

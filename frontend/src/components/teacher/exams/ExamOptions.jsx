@@ -11,6 +11,7 @@ export default function ExamOptions({
         name="review_mode"
         value={form.review_mode}
         onChange={handleChange}
+        showPlaceholder={false}
         options={[
           {
             value: "no_review",
@@ -18,7 +19,7 @@ export default function ExamOptions({
           },
           {
             value: "questions_only",
-            label: "Questions Only",
+            label: "Question Only",
           },
           {
             value: "full_review",
@@ -26,12 +27,15 @@ export default function ExamOptions({
           },
         ]}
         helperText={
-          form.review_mode === "no_review"
-            ? "Students can only view their score and summary."
-            : form.review_mode === "questions_only"
-            ? "Students can review questions and their submitted answers. Correct answers and explanations remain hidden."
-            : "Students can review questions, correct answers, and explanations after submission."
-        }
+        {
+          no_review:
+            "Students can only view their score and summary.",
+          questions_only:
+            "Students can review questions and their submitted answers. Correct answers and explanations remain hidden.",
+          full_review:
+            "Students can review questions, correct answers, and explanations after submission.",
+        }[form.review_mode] ?? "Please choose a valid review mode."
+      }
       />
     </div>
   );

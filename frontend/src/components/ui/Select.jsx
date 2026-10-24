@@ -7,6 +7,7 @@ export default function Select({
   onChange,
   options = [],
   placeholder = "Select an option",
+  showPlaceholder = true,
   helperText,
   error,
   required = false,
@@ -39,9 +40,11 @@ export default function Select({
               : ""
           }`}
         >
-          <option value="">
-            {placeholder}
-          </option>
+          {showPlaceholder && (
+            <option value="">
+              {placeholder}
+            </option>
+          )}
 
           {options.map((option) => (
             <option

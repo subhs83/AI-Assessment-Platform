@@ -193,6 +193,21 @@ def create_exam_api(school_slug):
             status=201
         )
 
+    except ValueError as exc:
+        return api_response(
+            success=False,
+            message=str(exc),
+            status=400
+        )
+
+    except Exception:
+        logger.exception("Failed to process request")
+        return api_response(
+            success=False,
+            message="Server error while creating exam",
+            data=None,
+            status=500
+        )
     except Exception:
         logger.exception("Failed to process request")
         return api_response(

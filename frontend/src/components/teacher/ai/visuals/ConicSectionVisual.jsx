@@ -1,5 +1,6 @@
 // ConicSectionVisual.jsx
 
+import { useCallback, useState } from "react";
 import { useIsMobile } from "../../../../hooks/useIsMobile";
 import { parseConicSection } from "./conicsection/conicSectionParser";
 import { calculateConicSectionPositions } from "./conicsection/conicSectionPositions";
@@ -8,25 +9,40 @@ import { renderConicSection } from "./conicsection/conicSectionRenderers";
 export default function ConicSectionVisual({ visual }) {
   const isMobile = useIsMobile();
 
+  // ADDED: actual dimensions of the rendered annotation labels.
+  const [labelMeasurements, setLabelMeasurements] = useState({});
+
+  const handleLabelMeasure = useCallback((id, measurement) => {
+    setLabelMeasurements((previous) => {
+      const existing = previous[id];
+
+      if (
+        existing?.text === measurement.text &&
+        existing?.fontSize === measurement.fontSize &&
+        existing?.width === measurement.width &&
+        existing?.height === measurement.height
+      ) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [id]: measurement,
+      };
+    });
+  }, []);
+
   if (!visual) return null;
 
   const parsed = parseConicSection(visual);
 
   const plane = parsed.valid
-    ? calculateConicSectionPositions({ parsed, isMobile })
+    ? calculateConicSectionPositions({
+        parsed,
+        isMobile,
+        labelMeasurements, // ADDED
+      })
     : null;
-
-  const DEBUG_CONIC = false;
-
-  if (DEBUG_CONIC) {
-    console.log("[CONIC DEBUG]", {
-      figure: visual.figure,
-      valid: parsed.valid,
-      error: parsed.error,
-      conic: parsed.conic,
-      plane,
-    });
-  }
 
   if (!plane) {
     return (
@@ -50,7 +66,7 @@ export default function ConicSectionVisual({ visual }) {
         role="img"
         aria-label="Conic curve on Cartesian axes"
       >
-        {renderConicSection(plane)}
+        {renderConicSection(plane, handleLabelMeasure)}
       </svg>
     </div>
   );

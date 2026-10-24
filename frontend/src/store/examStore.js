@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export const useExamStore = create((set) => ({
+export const useExamStore = create((set, get) => ({
   // ======================
   // SESSION INFO
   // ======================
@@ -73,6 +73,29 @@ initSession: (payload) => {
   // ======================
   // QUESTION DATA
   // ======================
+  // Display a cached question without restoring old timer,
+  // violation counts, or saved-answer state.
+  showCachedQuestion: (schoolSlug, attemptId, index) => {
+    const state = get();
+    const cached = state.questionCache[index];
+
+    if (
+      state.schoolSlug !== schoolSlug ||
+      String(state.attemptId) !== String(attemptId) ||
+      !cached ||
+      String(cached.attempt_id) !== String(attemptId) ||
+      Number(cached.q_index) !== index
+    ) {
+      return false;
+    }
+
+    set({
+      currentQuestion: cached,
+      currentIndex: index,
+    });
+
+    return true;
+  },
   setQuestion: (index, data) => {
     set((state) => ({
       currentQuestion: data,

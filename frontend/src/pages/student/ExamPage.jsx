@@ -35,7 +35,15 @@ export default function ExamPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const safeIndex = Number(index ?? 0);
 
-  useExamQuestion({ schoolSlug, attemptId, index: safeIndex });
+  const {
+  questionReady,
+  questionError,
+  retryQuestion,
+} = useExamQuestion({
+  schoolSlug,
+  attemptId,
+  index: safeIndex,
+});
 
   const navigate = useNavigate();
 
@@ -100,9 +108,27 @@ export default function ExamPage() {
   // =====================
   // LOADING
   // =====================
-  if (!currentQuestion) {
-    return <LoadingOverlay message="Loading your exam..." />;
-  }
+  if (questionError) {
+  return (
+    <div role="alert" className="p-6 text-center">
+      <p className="text-sm text-red-600">
+        {questionError}
+      </p>
+
+      <button
+        type="button"
+        onClick={retryQuestion}
+        className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white"
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+if (!questionReady || !currentQuestion) {
+  return <LoadingOverlay message="Loading question..." />;
+}
 
   // =====================
   // TIMER

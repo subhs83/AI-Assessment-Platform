@@ -19,6 +19,7 @@ import { REVIEW_MODE } from "../../constants/examConstants";
 
 const INITIAL_FORM = {
     title: "",
+    school_class_id: "",
     targets: [],
     duration_minutes: 30,
     marks: 1,
@@ -78,7 +79,19 @@ export default function ExamFormPage() {
         return;
       }
 
-      setForm(exam);
+      const targets = Array.isArray(exam.targets)
+      ? exam.targets
+      : [];
+
+    setForm({
+      ...INITIAL_FORM,
+      ...exam,
+      school_class_id:
+        exam.school_class_id ??
+        targets[0]?.school_class_id ??
+        "",
+      targets,
+    });
 
     } catch (err) {
 
@@ -135,6 +148,51 @@ export default function ExamFormPage() {
 
     e.preventDefault();
 
+    if (loading) return;
+
+    const classId = Number(form.school_class_id);
+
+    if (!Number.isSafeInteger(classId) || classId <= 0) {
+      showToast("Please select a class.", "error");
+      return;
+    }
+
+    if (!Array.isArray(form.targets) || form.targets.length === 0) {
+      showToast(
+        "Please select at least one section or All Sections.",
+        "error"
+      );
+      return;
+    }
+
+    const invalidTarget = form.targets.some((target) => {
+      if (!target || Number(target.school_class_id) !== classId) {
+        return true;
+      }
+
+      // null explicitly means All Sections.
+      if (target.school_section_id === null) return false;
+
+      const sectionId = Number(target.school_section_id);
+
+      return !Number.isSafeInteger(sectionId) || sectionId <= 0;
+    });
+
+    const hasAllSections = form.targets.some(
+      (target) => target?.school_section_id === null
+    );
+
+    if (
+      invalidTarget ||
+      (hasAllSections && form.targets.length !== 1)
+    ) {
+      showToast(
+        "Please select the sections again for the chosen class.",
+        "error"
+      );
+      return;
+    }
+
     try {
 
       setLoading(true);
@@ -171,9 +229,10 @@ export default function ExamFormPage() {
 
       showToast(
         err.response?.data?.message ||
-        isEdit
-    ? "Failed to update exam"
-    : "Failed to create exam"
+          (isEdit
+            ? "Failed to update exam."
+            : "Failed to create exam."),
+        "error"
       );
 
     } finally {

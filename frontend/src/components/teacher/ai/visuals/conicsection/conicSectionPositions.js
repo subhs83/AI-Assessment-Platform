@@ -88,6 +88,7 @@ function overlaps(a, b) {
 export function calculateConicSectionPositions({
   parsed,
   isMobile = false,
+  labelMeasurements = {}, // ADDED
 }) {
   if (!parsed?.valid) return null;
 
@@ -162,12 +163,115 @@ export function calculateConicSectionPositions({
 
   const branches = [];
   let ellipse = null;
+  const interval = conic.curve_interval;
 
   // -------------------------------------------------------
-  // Circle / ellipse: exact SVG ellipse geometry
+  // Finite curves: arches and selected conic portions.
+  // Use the existing path renderer without closing the curve.
   // -------------------------------------------------------
 
-  if (conic.subtype === "circle" || conic.subtype === "ellipse") {
+  if (interval) {
+    const { axis, lower, upper, branch } = interval;
+
+    let start;
+    let end;
+    let evaluate;
+
+    if (conic.subtype === "parabola") {
+      const inputCenter = horizontal ? conic.k : conic.h;
+
+      start = lower - inputCenter;
+      end = upper - inputCenter;
+
+      evaluate = (v) =>
+        fromLocal((v / conic.p) * (v / 4), v);
+    } else if (
+      conic.subtype === "circle" ||
+      conic.subtype === "ellipse"
+    ) {
+      const circle = conic.subtype === "circle";
+
+      const rx = circle
+        ? conic.r
+        : horizontal ? conic.a : conic.b;
+
+      const ry = circle
+        ? conic.r
+        : horizontal ? conic.b : conic.a;
+
+      const inputCenter = axis === "x" ? conic.h : conic.k;
+      const inputRadius = axis === "x" ? rx : ry;
+
+      const sign = ["upper", "right"].includes(branch) ? 1 : -1;
+
+      const clampUnit = (value) =>
+        Math.max(-1, Math.min(1, value));
+
+      // Angular sampling keeps rounded endpoints smooth,
+      // including where the curve has a vertical tangent.
+      start = Math.asin(
+        clampUnit((lower - inputCenter) / inputRadius)
+      );
+
+      end = Math.asin(
+        clampUnit((upper - inputCenter) / inputRadius)
+      );
+
+      evaluate = (t) => {
+        const along = Math.sin(t);
+        const across = Math.max(0, Math.cos(t));
+
+        return axis === "x"
+          ? {
+              x: conic.h + rx * along,
+              y: conic.k + sign * ry * across,
+            }
+          : {
+              x: conic.h + sign * rx * across,
+              y: conic.k + ry * along,
+            };
+      };
+    } else {
+      return null;
+    }
+
+    if (
+      !Number.isFinite(start) ||
+      !Number.isFinite(end) ||
+      end <= start
+    ) {
+      return null;
+    }
+
+    // Include the vertex or branch extremum exactly when present.
+    const cuts =
+      start < 0 && end > 0
+        ? [start, 0, end]
+        : [start, end];
+
+    const samples = [];
+
+    for (let i = 0; i < cuts.length - 1; i++) {
+      const sampledPoints = sampleInterval(
+        cuts[i],
+        cuts[i + 1],
+        Math.ceil(sampleCount / (cuts.length - 1)),
+        evaluate
+      );
+
+      samples.push(
+        ...(i === 0 ? sampledPoints : sampledPoints.slice(1))
+      );
+    }
+
+    branches.push(samples);
+  }
+
+  // -------------------------------------------------------
+  // Full circle / ellipse: retain exact SVG ellipse geometry.
+  // -------------------------------------------------------
+
+  else if (conic.subtype === "circle" || conic.subtype === "ellipse") {
     const circle = conic.subtype === "circle";
 
     const rx = circle
@@ -370,7 +474,8 @@ export function calculateConicSectionPositions({
       [run[0], run[1], "start"],
       [run[run.length - 1], run[run.length - 2], "end"],
     ]) {
-      if (!atBoundary(tip)) continue;
+      // Restricted curves end at their supplied limits.
+      if (interval || !atBoundary(tip)) continue;
 
       const dx = tip.x - neighbour.x;
       const dy = tip.y - neighbour.y;
@@ -412,6 +517,14 @@ export function calculateConicSectionPositions({
     });
   }
 
+    // ADDED: finite segments retain their actual endpoints.
+    const segments = (parsed.segments || []).map((segment) => ({
+      id: segment.id,
+      label: segment.label,
+      role: segment.role,
+      start: project(segment.a),
+      end: project(segment.b),
+    }));
   // -------------------------------------------------------
   // Labels: prefer nearby clear space
   // -------------------------------------------------------
@@ -445,12 +558,27 @@ export function calculateConicSectionPositions({
     .replace(/\\[a-zA-Z]+/g, "M")
     .replace(/[$^_{}]/g, "");
 
-  const labelWidth = Math.min(
-    width - 8,
-    Math.max(fontSize * 1.5, plain.length * fontSize * 0.72 + 10)
-  );
+  const measurement = labelMeasurements[id];
 
-  const labelHeight = fontSize * 1.9;
+  // Reuse a measurement only when its text and font still match.
+  const hasMeasurement =
+    measurement?.text === text &&
+    measurement?.fontSize === fontSize &&
+    Number.isFinite(measurement.width) &&
+    Number.isFinite(measurement.height) &&
+    measurement.width > 0 &&
+    measurement.height > 0;
+
+  const labelWidth = hasMeasurement
+    ? measurement.width
+    : Math.min(
+        width - 8,
+        Math.max(fontSize * 1.5, plain.length * fontSize * 0.72 + 10)
+      );
+
+  const labelHeight = hasMeasurement
+    ? measurement.height
+    : fontSize * 1.9;
   const candidates = [];
 
   // Reserve both the axis line and its normal tick-label space.
@@ -481,18 +609,8 @@ export function calculateConicSectionPositions({
         [0, -1], [0, 1],
       ]) {
         const x = anchor.x + sx * (labelWidth / 2 + gap);
-        const isPreferredLowerVertex =
-          preferredDirection?.[0] === 1 &&
-          preferredDirection?.[1] === -1 &&
-          sx === 1 &&
-          sy === -1;
-
-        // Reduce only the vertical gap above the lower vertex.
-        const verticalGap = isPreferredLowerVertex
-          ? fontSize * 0.15
-          : gap;
-
-        const y = anchor.y + sy * (labelHeight / 2 + verticalGap);
+        // Use consistent clearance for every direction.
+        const y = anchor.y + sy * (labelHeight / 2 + gap);
 
         const box = {
           x: x - labelWidth / 2,
@@ -531,18 +649,19 @@ export function calculateConicSectionPositions({
 
         const pointHits = points.filter(contains).length;
         // An annotation attached to the origin should avoid the actual
-        // axis strokes, but need not avoid the entire tick-number band.
-        // The renderer already hides numbers covered by annotations.
-        const isOriginAnchor =
-          Math.abs(anchor.x - origin.x) < 0.5 &&
-          Math.abs(anchor.y - origin.y) < 0.5;
+        // Point labels avoid axis strokes, but may occupy tick-number space.
+        // The renderer hides tick numbers covered by annotations.
+        const isPointAnchor = points.some((point) =>
+          Math.abs(anchor.x - point.x) < 0.5 &&
+          Math.abs(anchor.y - point.y) < 0.5
+        );
 
         const axisClearance = Math.max(
           svg.strokeWidth,
           fontSize * 0.15
         );
 
-        const activeAxisBoxes = isOriginAnchor
+        const activeAxisBoxes = isPointAnchor
           ? [
               {
                 x: origin.x - axisClearance,
@@ -574,6 +693,21 @@ export function calculateConicSectionPositions({
           })
         );
 
+        // ADDED: check only the finite segment, not its extended line.
+        const segmentHit = segments.some((segment) =>
+          clipLine(
+            segment.start,
+            segment.end,
+            {
+              x_min: padded.x,
+              x_max: padded.x + padded.width,
+              y_min: padded.y,
+              y_max: padded.y + padded.height,
+            },
+            false
+          )
+        );
+
         // Distance to the nearest edge of the label, not its centre.
         const distance = Math.hypot(
           Math.max(box.x - anchor.x, 0, anchor.x - box.x - box.width),
@@ -594,6 +728,7 @@ export function calculateConicSectionPositions({
           pointHits,
           geometryHits: axisHits + Number(curveHit) + Number(Boolean(lineHit)),
           distance,
+          segmentHits: Number(segmentHit),
         });
       }
     }
@@ -604,29 +739,15 @@ export function calculateConicSectionPositions({
   }
 
   // Collision-free candidates always beat overlapping candidates.
-  candidates.sort((a, b) => {
-    const annotationDifference =
-      a.labelHits - b.labelHits ||
-      a.pointHits - b.pointHits;
-
-    if (annotationDifference) return annotationDifference;
-
-    if (preferredDirection) {
-      // Keep vertical-hyperbola vertex labels close to their
-      // vertices, on the side facing the space between branches.
-      return (
-        a.directionPenalty - b.directionPenalty ||
-        a.distance - b.distance ||
-        a.geometryHits - b.geometryHits
-      );
-    }
-
-    // Preserve placement for all other annotations.
-    return (
-      a.geometryHits - b.geometryHits ||
-      a.distance - b.distance
-    );
-  });
+  // CHANGED: avoid collisions before applying direction preferences.
+  candidates.sort((a, b) =>
+    a.labelHits - b.labelHits ||
+    a.pointHits - b.pointHits ||
+    a.segmentHits - b.segmentHits ||
+    a.geometryHits - b.geometryHits ||
+    a.directionPenalty - b.directionPenalty ||
+    a.distance - b.distance
+  );
 
   const chosen = candidates[0];
   if (!chosen) return;
@@ -647,11 +768,19 @@ export function calculateConicSectionPositions({
   const conicCenterPixel = toPixel(conic.h, conic.k);
 
     // Place conjugate-endpoint labels first.
-  const labelPoints = [...points].sort(
-    (a, b) =>
-      Number(b.role === "co_vertex") -
-      Number(a.role === "co_vertex")
-  );
+    // CHANGED: place vertex/focus labels before the centre label,
+    // so the centre cannot occupy their nearby space.
+    const pointLabelPriority = (point) => {
+      if (point.role === "co_vertex") return 0;
+      if (point.role === "vertex") return 1;
+      if (point.role === "focus") return 2;
+      if (point.role === "center") return 4;
+      return 3;
+    };
+
+    const labelPoints = [...points].sort(
+      (a, b) => pointLabelPriority(a) - pointLabelPriority(b)
+    );
 
   for (const point of labelPoints) {
     let preferredDirection = null;
@@ -687,6 +816,19 @@ export function calculateConicSectionPositions({
       preferredDirection = [0, -1];
     }
 
+    // ADDED: put vertical-hyperbola focus labels away from the vertex.
+    if (
+      conic.subtype === "hyperbola" &&
+      conic.orientation === "vertical" &&
+      point.role === "focus"
+    ) {
+      const isUpperFocus = point.y < conicCenterPixel.y;
+
+      preferredDirection = isUpperFocus
+        ? [1, -1]  // Upper focus: above-right.
+        : [1, 1];  // Lower focus: below-right.
+    }
+
     const isHyperbolaCenter =
       conic.subtype === "hyperbola" &&
       point.role === "center";
@@ -697,8 +839,8 @@ export function calculateConicSectionPositions({
       [point],
       preferredDirection,
       isHyperbolaCenter
-        ? [0.15, 0.3, 0.5, 0.7]
-        : undefined
+        ? [0.3, 0.45, 0.7]
+        : [0.35, 0.5, 0.7, 1.15]
     );
   }
 
@@ -707,6 +849,23 @@ export function calculateConicSectionPositions({
       line.end,
       line.start,
     ]);
+  }
+    // ADDED: place optional segment labels near the segment's interior.
+  for (const segment of segments) {
+    const anchors = [0.5, 0.25, 0.75].map((fraction) => ({
+      x:
+        segment.start.x +
+        (segment.end.x - segment.start.x) * fraction,
+      y:
+        segment.start.y +
+        (segment.end.y - segment.start.y) * fraction,
+    }));
+
+    addLabel(
+      `label-${segment.id}`,
+      segment.label,
+      anchors
+    );
   }
 
   return {
@@ -722,6 +881,7 @@ export function calculateConicSectionPositions({
     continuationArrows,
     points,
     lines,
+    segments, // ADDED
     labels,
     curveSamples, 
     xTicks: makeTicks(

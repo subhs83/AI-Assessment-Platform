@@ -181,12 +181,10 @@ VISUAL_TAXONOMY = r'''
                                               "period" | "phase_shift" | "vertical_shift" |
                                               "domain" | "range"
 - "type": "conic_section"       -> "subtype": "circle" | "parabola" | "ellipse" | "hyperbola"
-                                    "feature": "identify_conic" | "identify_equation" |
-                                                "find_center" | "find_vertex" | "find_focus" |
-                                                "find_directrix" | "find_eccentricity" |
-                                                "find_axis_length" | "find_asymptote"
-- "type": "graph"               -> "subtype": "integral_region"
-                                   "feature": "find_area" | "identify_integral" | "find_limits"
+                                    "feature": "identify_conic" | "identify_equation" | "find_center" | "find_vertex" | "find_focus" |
+                                                "find_directrix" | "find_eccentricity" | "find_height" | "find_width"
+                                                "find_axis_length" | "find_asymptote" | "find_latus_rectum"
+
 COMPOSITE PERIMETER AND AREA
 - "type": "composite_geometry"  -> "subtype": "joined_rectangles" | "rectangular_cutouts" | "partitioned_rectangle" | "unit_square_region" |
                                                 "crossing_paths" | "boundary_path" |  "rectangle_semicircle"
@@ -198,6 +196,8 @@ COMPOSITE PERIMETER AND AREA
 - "type": "graph",          -> "subtype": "function_graph":
                                "feature": "identify_function" | "read_value" | "amplitude" |
                                 "period" | "phase_shift" | "vertical_shift"
+- "type": "graph"           -> "subtype": "integral_region"
+                                "feature": "find_area" | "identify_integral" | "find_limits"
 - "type": "chart"           -> "subtype": "pie" | "donut"
 - "type": "table"           -> "subtype": "data_matrix" | "frequency_table"
 
@@ -851,11 +851,16 @@ FIGURE:
 - bounds: finite x_min < x_max, y_min < y_max; include origin.
 - tick_step: positive spacing for both axes; show_grid: false by default.
 - Use equal x/y scales.
+- find_latus_rectum asks for the full latus-rectum length;
+  applicable only to parabola, ellipse and hyperbola.
+- find_height/find_width: application questions using a parabola
+  or ellipse; specify the baseline and location of the measurement.
 
 ELEMENTS:
 - conic: id, type, optional label, numeric h, k, parameters below.
 - point: id, type, optional label, numeric x, y.
 - line: id, type, optional label.
+- segment: id, type, optional label.
 
 PARAMETERS:
 - circle: r > 0; (x-h)^2+(y-k)^2=r^2.
@@ -869,36 +874,81 @@ PARAMETERS:
 - Noncircles require orientation "horizontal" or "vertical".
   (h,k) is the parabola vertex; otherwise the centre.
 
+CURVE RESTRICTION:
+- Optional conic.curve_interval: {axis, lower, upper, branch?}.
+  lower < upper are finite coordinates, not pixel positions.
+  Omit it for the full curve.
+- Parabola: axis "x" for vertical orientation, "y" for horizontal.
+  Draw only that input interval; omit branch.
+- Circle/ellipse: axis "x" requires branch "upper" or "lower";
+  axis "y" requires branch "left" or "right".
+  Branches are relative to the centre (h,k).
+  The interval must lie within the conic's extent on that axis.
+- Hyperbola curve restrictions are unsupported.
+- Restricted curves have finite endpoints and no continuation arrows.
+  Do not automatically close the curve or connect its endpoints.
+
 RELATIONSHIPS:
 - marks_point: elements [point_ids], target conic_id,
   role "center" | "vertex" | "focus" | "co_vertex" | "on_curve".
 - forms_line: elements [two distinct point_ids], target line_id.
 - marks_line: elements [line_ids], target conic_id,
   role "directrix" | "asymptote" | "axis_of_symmetry".
+- forms_segment: elements [two distinct point_ids], target segment_id.
+- marks_segment: elements [segment_ids], target conic_id,
+  role "latus_rectum" | "radius" | "major_axis" | "minor_axis" |
+       "transverse_axis" | "conjugate_axis" | "construction".
 
 RULES:
 - Exactly one nondegenerate, axis-aligned conic. Vary its parameters.
-- Link all annotations; every line needs forms_line and marks_line.
-  Line-definition points remain hidden unless also marked.
+- Relationship elements contain existing ID strings only, never inline
+  objects. Declare every endpoint as a point in the main elements array.
+- Every line needs forms_line and marks_line; every segment needs
+  forms_segment and marks_segment. Endpoint positions must differ.
+  Every point must be referenced by marks_point, forms_line or
+  forms_segment. Definition points remain hidden unless also marked.
+- Lines extend across the plot; segments stop at their endpoints.
+  Draw only annotations needed by the question, not solution steps.
 - Annotations must match the mathematics. co_vertex marks ellipse
   minor-axis endpoints or hyperbola conjugate-axis endpoints
   (not on the hyperbola). asymptote is hyperbola-only.
   Circles have no directrix; parabolas have no centre.
   Use only applicable features and roles.
+- A latus rectum joins two curve points through a focus, perpendicular
+  to the parabola axis, ellipse major axis or hyperbola transverse axis.
+  Parabola: length 4|p|; horizontal endpoints (h+p,k±2|p|),
+  vertical endpoints (h±2|p|,k+p).
+  Ellipse/hyperbola: length 2b^2/a; c=sqrt(a^2-b^2) for ellipse,
+  c=sqrt(a^2+b^2) for hyperbola. Choose one focus using s=+1 or -1:
+  horizontal endpoints (h+s*c,k±b^2/a),
+  vertical endpoints (h±b^2/a,k+s*c).
 - Construction parameters are not displayed givens. Supply enough
-  exact information through question_text, coordinate labels and ticks.
+  exact information through question_text, visible labels and ticks.
   Leave at least one necessary given in the graph; do not repeat
-  every plotted coordinate in question_text.
-  For hyperbola calculations requiring b, state the conjugate-axis
-  length in question_text. Do not create co_vertex annotations;
-  that role is ellipse-only. Never infer b from curve appearance. 
+  all graph givens in question_text.
+  When b is needed, provide exact data from which it can be derived.
+  Never infer b from curve appearance.
   Explanations must use student-visible givens.
-- Specify which axis when asking its length. Do not label solved
-  quantities or show the requested focus, directrix or asymptotes.
-  Candidate diagrams are unsupported.
-- Bounds show complete circles/ellipses with margin, parabola vertices
-  and both arms, or both hyperbola branches and vertices, plus annotations.
-  Unbounded curves have continuation arrows; branches remain separate.
+- Use "construction" for application measurements. major_axis and
+  minor_axis represent complete ellipse diameters, not half-axis heights.
+- For find_height/find_width, use a horizontal baseline y=y0.
+  Height endpoints share x: (x,y0) to (x,y_curve).
+  Full-width endpoints share y and lie on opposite sides of the curve.
+  Horizontal-distance endpoints share y; measure from the stated
+  centre or end. General construction segments may be diagonal.
+- Specify which axis when asking its length. A requested latus rectum
+  may be drawn with neutral endpoint labels, but never label its solved
+  length. Do not label other solved quantities or show the requested
+  focus, directrix or asymptotes. Candidate diagrams are unsupported.
+- Without curve_interval, bounds show complete circles/ellipses,
+  parabola vertices and both arms, or both hyperbola branches and
+  vertices. Unbounded curves have continuation arrows.
+- With curve_interval, bounds contain the complete selected portion,
+  including its endpoints and extrema, with margin.
+  Include all displayed annotations; keep separate branches separate.
+- For arches and cables, use curve_interval to show only the physical
+  portion. Use one common length unit; label measurements with givens
+  or unknown symbols, never solved values.
 - Use short neutral labels; do not name the curve for identify_conic.
   Provide four mathematically distinct options with one correct answer.
 """.strip()
@@ -1766,6 +1816,98 @@ These are reusable payload patterns, not extra questions to generate. Select onl
     {"type": "marks_point", "elements": ["point_p"], "target": "conic_1", "role": "on_curve"}
   ]
 }
+--- conic_section / parabola / find_latus_rectum ---
+"visual": {
+  "figure": {
+    "type": "conic_section",
+    "subtype": "parabola",
+    "feature": "find_latus_rectum",
+    "bounds": {
+      "x_min": -3,
+      "x_max": 6,
+      "y_min": -5,
+      "y_max": 5
+    },
+    "tick_step": 1,
+    "show_grid": false
+  },
+  "elements": [
+    {
+      "id": "conic_1",
+      "type": "conic",
+      "label": "",
+      "h": 0,
+      "k": 0,
+      "p": 2,
+      "orientation": "horizontal"
+    },
+    {
+      "id": "vertex",
+      "type": "point",
+      "label": "O",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "focus",
+      "type": "point",
+      "label": "$F(2,0)$",
+      "x": 2,
+      "y": 0
+    },
+    {
+      "id": "point_a",
+      "type": "point",
+      "label": "A",
+      "x": 2,
+      "y": 4
+    },
+    {
+      "id": "point_b",
+      "type": "point",
+      "label": "B",
+      "x": 2,
+      "y": -4
+    },
+    {
+      "id": "segment_ab",
+      "type": "segment",
+      "label": ""
+    }
+  ],
+  "relationships": [
+    {
+      "type": "marks_point",
+      "elements": ["vertex"],
+      "target": "conic_1",
+      "role": "vertex"
+    },
+    {
+      "type": "marks_point",
+      "elements": ["focus"],
+      "target": "conic_1",
+      "role": "focus"
+    },
+    {
+      "type": "marks_point",
+      "elements": ["point_a", "point_b"],
+      "target": "conic_1",
+      "role": "on_curve"
+    },
+    {
+      "type": "forms_segment",
+      "elements": ["point_a", "point_b"],
+      "target": "segment_ab"
+    },
+    {
+      "type": "marks_segment",
+      "elements": ["segment_ab"],
+      "target": "conic_1",
+      "role": "latus_rectum"
+    }
+  ]
+}
+
 
 --- conic_section / ellipse / find_eccentricity ---
 "visual": {
@@ -1806,6 +1948,90 @@ These are reusable payload patterns, not extra questions to generate. Select onl
   "relationships": [
     {"type": "marks_point", "elements": ["vertex"], "target": "conic_1", "role": "vertex"},
     {"type": "marks_point", "elements": ["focus"], "target": "conic_1", "role": "focus"}
+  ]
+}
+
+--- conic_section / ellipse / find_height ---
+"visual": {
+  "figure": {
+    "type": "conic_section",
+    "subtype": "ellipse",
+    "feature": "find_height",
+    "bounds": {
+      "x_min": -12,
+      "x_max": 12,
+      "y_min": -2,
+      "y_max": 10
+    },
+    "tick_step": 2,
+    "show_grid": false
+  },
+  "elements": [
+    {
+      "id": "arch",
+      "type": "conic",
+      "h": 0,
+      "k": 0,
+      "a": 10,
+      "b": 8,
+      "orientation": "horizontal",
+      "curve_interval": {
+        "axis": "x",
+        "lower": -10,
+        "upper": 10,
+        "branch": "upper"
+      }
+    },
+    {"id": "left", "type": "point", "label": "A", "x": -10, "y": 0},
+    {"id": "right", "type": "point", "label": "B", "x": 10, "y": 0},
+    {"id": "top", "type": "point", "label": "T", "x": 0, "y": 8},
+    {"id": "base_center", "type": "point", "x": 0, "y": 0},
+    {"id": "height_base", "type": "point", "x": 6, "y": 0},
+    {"id": "height_top", "type": "point", "x": 6, "y": 6.4},
+
+    {"id": "span", "type": "segment", "label": "20 m"},
+    {"id": "maximum_height", "type": "segment", "label": "8 m"},
+    {"id": "horizontal_distance", "type": "segment", "label": "6 m"},
+    {"id": "unknown_height", "type": "segment", "label": "$h$"}
+  ],
+  "relationships": [
+    {
+      "type": "marks_point",
+      "elements": ["left", "right", "top"],
+      "target": "arch",
+      "role": "on_curve"
+    },
+    {
+      "type": "forms_segment",
+      "elements": ["left", "right"],
+      "target": "span"
+    },
+    {
+      "type": "forms_segment",
+      "elements": ["base_center", "top"],
+      "target": "maximum_height"
+    },
+    {
+      "type": "forms_segment",
+      "elements": ["base_center", "height_base"],
+      "target": "horizontal_distance"
+    },
+    {
+      "type": "forms_segment",
+      "elements": ["height_base", "height_top"],
+      "target": "unknown_height"
+    },
+    {
+      "type": "marks_segment",
+      "elements": [
+        "span",
+        "maximum_height",
+        "horizontal_distance",
+        "unknown_height"
+      ],
+      "target": "arch",
+      "role": "construction"
+    }
   ]
 }
 
