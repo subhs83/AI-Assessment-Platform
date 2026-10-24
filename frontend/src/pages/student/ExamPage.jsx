@@ -106,29 +106,29 @@ export default function ExamPage() {
   const currentSaving =  saveStatusQuestionKey === currentQuestionKey && saving;
 
   // =====================
-  // LOADING
+  // INITIAL LOADING ONLY
   // =====================
-  if (questionError) {
-  return (
-    <div role="alert" className="p-6 text-center">
-      <p className="text-sm text-red-600">
-        {questionError}
-      </p>
+  if (!currentQuestion && !questionError) {
+    return <LoadingOverlay message="Loading your exam..." />;
+  }
 
-      <button
-        type="button"
-        onClick={retryQuestion}
-        className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white"
-      >
-        Retry
-      </button>
-    </div>
-  );
-}
+  if (!currentQuestion && questionError) {
+    return (
+      <div role="alert" className="p-6 text-center">
+        <p className="text-sm text-red-600">
+          {questionError}
+        </p>
 
-if (!questionReady || !currentQuestion) {
-  return <LoadingOverlay message="Loading question..." />;
-}
+        <button
+          type="button"
+          onClick={retryQuestion}
+          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   // =====================
   // TIMER
@@ -219,28 +219,58 @@ if (!questionReady || !currentQuestion) {
               <div className="flex min-w-0 flex-1 flex-col">
                 {/* Scrollable Question */}
                 <div className="relative flex-1 overflow-y-auto pr-1">
-                  <QuestionCard
-                    key={`${attemptId}_${safeIndex}`}
-                    question={currentQuestion}
-                    questionNumber={safeIndex + 1}
-                    selected={selectedOption}
-                    saving={currentSaving}
-                    isOffline={isOffline}
-                    onSelect={(option) => {
-                      saveAnswer(
-                        currentQuestion.question_id,
-                        option,
-                        safeIndex
-                      );
-                    }}
-                  />
+                  {questionError ? (
+                    <div role="alert" className="p-6 text-center">
+                      <p className="text-sm text-red-600">
+                        {questionError}
+                      </p>
 
-                  <div className="absolute top-4 right-4 z-20">
-                    <SaveStatus
-                      key={currentQuestionKey}
-                      status={currentSaveStatus}
-                    />
-                  </div>
+                      <button
+                        type="button"
+                        onClick={retryQuestion}
+                        className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-white"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : !questionReady ? (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="flex min-h-48 items-center justify-center gap-3 text-sm text-slate-500"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-5 w-5 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600"
+                      />
+                      Loading question...
+                    </div>
+                  ) : (
+                    <>
+                      <QuestionCard
+                        key={currentQuestionKey}
+                        question={currentQuestion}
+                        questionNumber={safeIndex + 1}
+                        selected={selectedOption}
+                        saving={currentSaving}
+                        isOffline={isOffline}
+                        onSelect={(option) => {
+                          saveAnswer(
+                            currentQuestion.question_id,
+                            option,
+                            safeIndex
+                          );
+                        }}
+                      />
+
+                      <div className="absolute top-4 right-4 z-20">
+                        <SaveStatus
+                          key={currentQuestionKey}
+                          status={currentSaveStatus}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Sticky Footer */}
