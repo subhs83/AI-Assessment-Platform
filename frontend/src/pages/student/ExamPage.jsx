@@ -36,6 +36,7 @@ export default function ExamPage() {
   const safeIndex = Number(index ?? 0);
 
   const {
+  question: displayedQuestion,
   questionReady,
   questionError,
   retryQuestion,
@@ -249,14 +250,14 @@ export default function ExamPage() {
                     <>
                       <QuestionCard
                         key={currentQuestionKey}
-                        question={currentQuestion}
+                        question={displayedQuestion}
                         questionNumber={safeIndex + 1}
                         selected={selectedOption}
                         saving={currentSaving}
                         isOffline={isOffline}
                         onSelect={(option) => {
                           saveAnswer(
-                            currentQuestion.question_id,
+                            displayedQuestion.question_id,
                             option,
                             safeIndex
                           );

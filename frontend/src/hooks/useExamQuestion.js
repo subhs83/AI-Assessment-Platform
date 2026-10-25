@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { examApi } from "../api/examApi";
 import { useExamStore } from "../store/examStore";
 
-// Share an ongoing request if navigation reaches a question
-// while its prefetch is still running.
+// Reuse an ongoing request when navigation catches up with prefetching.
 const pendingRequests = new Map();
 
 function requestQuestion(schoolSlug, attemptId, index) {
@@ -47,6 +46,35 @@ export function useExamQuestion({
   const navigate = useNavigate();
   const setQuestion = useExamStore((state) => state.setQuestion);
 
+  // Read matching cached content during render, avoiding a loader flash.
+  const question = useExamStore((state) => {
+    if (
+      !schoolSlug ||
+      !attemptId ||
+      !Number.isInteger(index) ||
+      index < 0 ||
+      state.schoolSlug !== schoolSlug ||
+      String(state.attemptId) !== String(attemptId)
+    ) {
+      return null;
+    }
+
+    const matchesRequest = (item) =>
+      item?.question_id != null &&
+      String(item.attempt_id) === String(attemptId) &&
+      Number(item.q_index) === index;
+
+    const cached = state.questionCache[index];
+
+    if (matchesRequest(cached)) return cached;
+
+    if (matchesRequest(state.currentQuestion)) {
+      return state.currentQuestion;
+    }
+
+    return null;
+  });
+
   const requestKey = JSON.stringify([
     schoolSlug,
     attemptId,
@@ -76,8 +104,10 @@ export function useExamQuestion({
       return;
     }
 
+    // Ignore responses after navigation or unmount.
     let active = true;
 
+    // Synchronize the active store question without restoring cached time.
     const cacheShown = useExamStore
       .getState()
       .showCachedQuestion(schoolSlug, attemptId, index);
@@ -138,6 +168,7 @@ export function useExamQuestion({
 
         if (!active) return;
 
+        // Prefetch must not change the active question or timer.
         useExamStore.getState().cacheQuestion(
           schoolSlug,
           attemptId,
@@ -147,7 +178,6 @@ export function useExamQuestion({
       } catch (err) {
         if (!active) return;
 
-        // Expiry still matters during a background fetch.
         // Other prefetch failures leave the current question usable.
         redirectIfFinished(err);
       }
@@ -190,6 +220,7 @@ export function useExamQuestion({
       }
     };
 
+    // Refresh even when cached, preserving server-side attempt checks.
     void fetchQuestion();
 
     return () => {
@@ -205,16 +236,15 @@ export function useExamQuestion({
     setQuestion,
   ]);
 
-  return {
-    questionReady:
-      result.key === requestKey &&
-      result.status === "ready",
+  const questionError =
+    result.key === requestKey && result.status === "error"
+      ? result.error
+      : "";
 
-    questionError:
-      result.key === requestKey &&
-      result.status === "error"
-        ? result.error
-        : "",
+  return {
+    question,
+    questionReady: Boolean(question) && !questionError,
+    questionError,
 
     retryQuestion: () => {
       setResult({
