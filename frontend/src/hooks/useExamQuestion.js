@@ -48,22 +48,26 @@ export function useExamQuestion({
 
   // Read matching cached content during render, avoiding a loader flash.
   const question = useExamStore((state) => {
-    if (
-      !schoolSlug ||
-      !attemptId ||
-      !Number.isInteger(index) ||
-      index < 0 ||
-      state.schoolSlug !== schoolSlug ||
-      String(state.attemptId) !== String(attemptId)
-    ) {
-      return null;
-    }
+  if (
+    !schoolSlug ||
+    !attemptId ||
+    !Number.isInteger(index) ||
+    index < 0
+  ) {
+    return null;
+  }
 
-    const matchesRequest = (item) =>
-      item?.question_id != null &&
-      String(item.attempt_id) === String(attemptId) &&
-      Number(item.q_index) === index;
+  const matchesRequest = (item) =>
+    item?.question_id != null &&
+    String(item.attempt_id) === String(attemptId) &&
+    Number(item.q_index) === index;
 
+  const sameSession =
+    state.schoolSlug === schoolSlug &&
+    String(state.attemptId) === String(attemptId);
+
+  // Cached data requires a matching initialized session.
+  if (sameSession) {
     const cached = state.questionCache[index];
 
     if (matchesRequest(cached)) return cached;
@@ -71,9 +75,20 @@ export function useExamQuestion({
     if (matchesRequest(state.currentQuestion)) {
       return state.currentQuestion;
     }
+  }
 
-    return null;
-  });
+  // A successful response for this exact route can be displayed
+  // even if session metadata has not been initialized.
+  if (
+    result.key === requestKey &&
+    result.status === "ready" &&
+    matchesRequest(state.currentQuestion)
+  ) {
+    return state.currentQuestion;
+  }
+
+  return null;
+});
 
   const requestKey = JSON.stringify([
     schoolSlug,
