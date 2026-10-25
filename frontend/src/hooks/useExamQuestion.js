@@ -46,6 +46,20 @@ export function useExamQuestion({
   const navigate = useNavigate();
   const setQuestion = useExamStore((state) => state.setQuestion);
 
+  const requestKey = JSON.stringify([
+    schoolSlug,
+    attemptId,
+    index,
+  ]);
+
+  const [result, setResult] = useState({
+    key: null,
+    status: "loading",
+    error: "",
+  });
+
+  const [retryCount, setRetryCount] = useState(0);
+
   // Read matching cached content during render, avoiding a loader flash.
   const question = useExamStore((state) => {
   if (
@@ -90,19 +104,7 @@ export function useExamQuestion({
   return null;
 });
 
-  const requestKey = JSON.stringify([
-    schoolSlug,
-    attemptId,
-    index,
-  ]);
-
-  const [result, setResult] = useState({
-    key: null,
-    status: "loading",
-    error: "",
-  });
-
-  const [retryCount, setRetryCount] = useState(0);
+  
 
   useEffect(() => {
     if (
