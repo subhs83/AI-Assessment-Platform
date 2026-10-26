@@ -87,3 +87,11 @@ html {
 .delay-500 {
   animation-delay: .5s;
 }
+
+.math-scroll {
+  scrollbar-width: none;
+}
+
+.math-scroll::-webkit-scrollbar {
+  display: none;
+}

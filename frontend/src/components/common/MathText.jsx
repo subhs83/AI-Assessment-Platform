@@ -37,17 +37,63 @@ export default function MathText({ text = "" }) {
         // Case 1: Display/Block Math ($$...$$)
         if (part.startsWith("$$") && part.endsWith("$$") && part.length > 4) {
           const mathContent = fixSlashFractions(part.slice(2, -2).replaceAll(placeholder, "\\$")); // CHANGED
-          return <BlockMath key={index} math={mathContent} />;
+         return (
+            <span
+              key={index}
+              className="math-scroll"
+              style={{
+                display: "block",
+                maxWidth: "100%",
+                overflowX: "auto",
+                overflowY: "hidden",
+                whiteSpace: "nowrap",
+                overflowWrap: "normal",
+                wordBreak: "normal",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  width: "max-content",
+                  minWidth: "100%",
+                }}
+              >
+                <BlockMath math={mathContent} />
+              </span>
+            </span>
+          );
         }
 
         // Case 2: Inline Math ($...$)
         if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
           const mathContent = fixSlashFractions(part.slice(1, -1).replaceAll(placeholder, "\\$")); // CHANGED
-          return <InlineMath key={index} math={mathContent} />;
+          return (
+            <span
+              key={index}
+              className="math-scroll"
+              style={{
+                display: "inline-block",
+                maxWidth: "100%",
+                overflowX: "auto",
+                overflowY: "hidden",
+                verticalAlign: "middle",
+                whiteSpace: "nowrap",
+                overflowWrap: "normal",
+                wordBreak: "normal",
+                paddingTop: "0.3em",
+                paddingBottom: "0.3em",
+              }}
+            >
+              <InlineMath math={`\\displaystyle ${mathContent}`} />
+            </span>
+          );
         }
 
         // Case 3: Plain text / Escaped dollar signs / Unmatched text
-        return <span key={index}>{unescapedPart}</span>;
+        return <span 
+        key={index}
+        className="math-scroll"
+        >{unescapedPart}</span>;
       })}
     </>
   );

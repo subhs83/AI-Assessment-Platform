@@ -99,12 +99,43 @@ const RegisterPage = () => {
 };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (startingExam) return;
+
+    const mobile = form.mobile.trim();
+
+    if (!/^[0-9]{10}$/.test(mobile)) {
+      showToast(
+        "Please enter a 10-digit mobile number without the country code.",
+        "error"
+      );
+      return;
+    }
+
+    if (
+      !form.first_name.trim() ||
+      !form.last_name.trim() ||
+      !form.roll_number.trim()
+    ) {
+      showToast(
+        "Please enter your name and roll number.",
+        "error"
+      );
+      return;
+    }
+
     setStartingExam(true);
 
     try {
       const res = await API.post(
         `/api/student/${schoolSlug}/quiz/${quizCode}/start`,
-        form,
+        {
+          ...form,
+          mobile,
+          first_name: form.first_name.trim(),
+          last_name: form.last_name.trim(),
+          roll_number: form.roll_number.trim(),
+        },
         { withCredentials: true }
       );
 
@@ -269,6 +300,7 @@ const RegisterPage = () => {
                       name="school_section_id"
                       value={form.school_section_id}
                       onChange={handleChange}
+                      required={sections.length > 0}
                       disabled={!form.school_class_id || sections.length === 0}
                       className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100 disabled:bg-slate-100"
                     >
@@ -304,15 +336,15 @@ const RegisterPage = () => {
                   {/* Mobile */}
 
                   <input
-                    type="text"
+                    type="tel"
                     inputMode="numeric"
-                    pattern="[0-9]*"
+                    pattern="[0-9]{10}"
+                    minLength={10}
+                    maxLength={10}
+                    title="Enter a 10-digit mobile number without the country code."
                     name="mobile"
                     value={form.mobile}
                     onChange={handleChange}
-                    placeholder="Mobile Number"
-                    autoComplete="tel"
-                    maxLength={10}
                     required
                     className="h-12 w-full rounded-xl border border-slate-400 bg-white px-4 text-slate-800 placeholder:text-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                   />
