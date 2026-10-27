@@ -31,7 +31,7 @@ export default function ExamCard({
   shareLink({
     title: exam.title,
     text: "Join this quiz using the link below:",
-    url: `${window.location.origin}/school/${schoolSlug}/quiz/${exam.quiz_code}`,
+    url: `https://indiaeducore.com/school/${schoolSlug}/quiz/${exam.quiz_code}`,
     showToast,
     successMessage: "Quiz link copied",
   });

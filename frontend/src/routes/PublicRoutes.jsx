@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { Capacitor } from "@capacitor/core";
 
 import { useAuthStore } from "../store/authStore";
 import { getDashboardPath } from "../utils/getDashboardPath";
@@ -31,14 +32,11 @@ export default function PublicRoutes() {
 
 
   const isStandalone =
-    window.matchMedia(
-      "(display-mode: standalone)"
-    ).matches;
+  Capacitor.isNativePlatform() ||
+  window.matchMedia("(display-mode: standalone)").matches;
 
 
-  if (
-    authLoading
-  ) {
+  if (authLoading) {
     return null;
   }
 
