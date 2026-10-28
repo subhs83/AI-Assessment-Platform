@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/plus-jakarta-sans": "^5.2.8",

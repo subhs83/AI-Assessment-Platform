@@ -4,7 +4,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-
+import AndroidBackHandler from "./components/common/AndroidBackHandler";
 import AnalyticsTracker from "./components/common/AnalyticsTracker";
 
 
@@ -104,7 +104,7 @@ export default function App() {
     <ToastProvider>
 
       <BrowserRouter>
-
+       <AndroidBackHandler />
         {authLoading ? (
           <BrandLoading message="Loading your workspace..." />
         ) : (

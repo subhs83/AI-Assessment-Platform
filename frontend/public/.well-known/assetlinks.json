@@ -1,0 +1,15 @@
+
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.indiaeducore.app",
+      "sha256_cert_fingerprints": [
+        "4F:8F:ED:D0:1E:3A:FD:DE:2D:69:16:46:33:14:73:57:3A:31:49:5B:3A:89:B4:BB:84:02:32:99:12:42:FE:13"
+      ]
+    }
+  }
+]

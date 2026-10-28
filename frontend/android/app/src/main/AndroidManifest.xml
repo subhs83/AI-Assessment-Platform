@@ -21,6 +21,20 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- IndiaEduCore Android App Links -->
+            <intent-filter android:autoVerify="true">
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="indiaeducore.com"
+                    android:pathPrefix="/school/" />
+
+            </intent-filter>
 
         </activity>
 
