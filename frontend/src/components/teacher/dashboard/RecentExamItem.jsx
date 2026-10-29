@@ -29,9 +29,8 @@ export default function RecentExamItem({
       {/* Header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
 
-        <div>
-
-          <h3 className="text-lg font-semibold">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold break-words">
             {exam.title}
           </h3>
 
@@ -71,7 +70,7 @@ export default function RecentExamItem({
       </div>
 
       {/* Stats */}
-      <div className="mt-5 grid grid-cols-3 gap-3">
+      <div className="mt-5 grid min-w-0 grid-cols-3 gap-3">
 
         <div className="rounded-xl border bg-slate-50 p-3">
 

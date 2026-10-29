@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import AndroidBackHandler from "./components/common/AndroidBackHandler";
 import AnalyticsTracker from "./components/common/AnalyticsTracker";
+import AndroidAppLinksHandler from "./components/common/AndroidAppLinksHandler";
 
 
 import { ToastProvider } from "./components/ui/Toast";
@@ -105,6 +106,8 @@ export default function App() {
 
       <BrowserRouter>
        <AndroidBackHandler />
+       <AndroidAppLinksHandler />
+       
         {authLoading ? (
           <BrandLoading message="Loading your workspace..." />
         ) : (

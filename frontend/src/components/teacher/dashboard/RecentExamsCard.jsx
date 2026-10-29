@@ -11,7 +11,7 @@ export default function RecentExamsCard({
     <div className="rounded-lg border bg-white shadow-sm">
 
       {/* Header */}
-      <div className="border-b px-5 py-4">
+      <div className="border-b px-4 py-4 sm:px-5">
 
         <h2 className="font-semibold">
           Latest Published Exams
@@ -23,7 +23,7 @@ export default function RecentExamsCard({
 
       </div>
 
-      <div className="p-5">
+      <div className="p-3 sm:p-5">
 
         {recentExams.length === 0 ? (
 
