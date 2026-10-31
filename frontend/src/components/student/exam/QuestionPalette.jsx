@@ -19,7 +19,10 @@ export default function QuestionPalette({
   const answers = useExamStore((state) => state.answers);
 
   const goToQuestion = (index) => {
-    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${index}`);
+    navigate(
+      `/school/${schoolSlug}/attempt/${attemptId}/${index}`,
+      { replace: true }
+    );
   };
 
   const getStatus = (index) => {

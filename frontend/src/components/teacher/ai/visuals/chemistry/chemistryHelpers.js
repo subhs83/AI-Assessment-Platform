@@ -309,11 +309,24 @@ export const normalizeGeometryName = (s) => {
 // Lone pairs can arrive as a relationship (has_lone_pairs / lone_pairs)
 // OR as an element (type "lone_pairs"). Collect every variant.
 export function extractLonePairsAll(elements, relationships) {
-  const fromRels = extractLonePairRels(relationships);
-  const fromEls = elements
+  const relTotals = {}, elTotals = {};
+  extractLonePairRels(relationships).forEach((lp) => {
+    relTotals[lp.atomId] = (relTotals[lp.atomId] || 0) + lp.count;
+  });
+  elements
     .filter((el) => el.type === "lone_pairs" || el.type === "lone_pair")
-    .map((el) => ({ atomId: el.on_atom, count: el.count ?? 1 })); // count = number of PAIRS, defaults to 1 pair per element
-  return [...fromRels, ...fromEls];
+    .forEach((el) => {
+      elTotals[el.on_atom] = (elTotals[el.on_atom] || 0) + (el.count ?? 1);
+    });
+
+  const ids = new Set([...Object.keys(relTotals), ...Object.keys(elTotals)]);
+  return [...ids].map((atomId) => {
+    const r = relTotals[atomId], e = elTotals[atomId];
+    if (r !== undefined && e !== undefined && r !== e) {
+      console.warn("[VSEPR] lone pair counts disagree for", atomId, { relationship: r, elements: e });
+    }
+    return { atomId, count: Math.max(r ?? 0, e ?? 0) };
+  });
 }
 
 // Solid wedge: narrow at the central atom, wide at the outer atom (toward viewer)
@@ -378,5 +391,40 @@ export function renderBondAngleArc(vertex, p1, p2, key) {
     <path key={key}
       d={`M ${start.x} ${start.y} A ${RADIUS} ${RADIUS} 0 ${largeArc} ${sweepFlag} ${end.x} ${end.y}`}
       fill="none" stroke="#170bbc" strokeWidth={2.5} vectorEffect="non-scaling-stroke" />
+  );
+}
+
+// Pauling electronegativity. The renderer decides arrow direction from this;
+// the values themselves are never drawn.
+export const ELECTRONEGATIVITY = {
+  H: 2.20, Li: 0.98, Be: 1.57, B: 2.04, C: 2.55, N: 3.04, O: 3.44, F: 3.98,
+  Na: 0.93, Mg: 1.31, Al: 1.61, Si: 1.90, P: 2.19, S: 2.58, Cl: 3.16,
+  K: 0.82, Ca: 1.00, As: 2.18, Se: 2.55, Br: 2.96, I: 2.66, Xe: 2.60,
+};
+
+// Bond dipole: arrow beside the bond, head toward the more electronegative
+// atom, short perpendicular tick at the tail. Every arrow gets the same length.
+export function renderBondDipole(tailP, headP, arrowLen, key) {
+  const dx = headP.x - tailP.x, dy = headP.y - tailP.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len, uy = dy / len;
+
+  // Offset to the upper side of the bond (right side for vertical bonds)
+  let px = -uy, py = ux;
+  if (py > 1e-6 || (Math.abs(py) <= 1e-6 && px < 0)) { px = -px; py = -py; }
+
+  const OFFSET = 12, TICK = 4;
+  const mx = (tailP.x + headP.x) / 2 + px * OFFSET;
+  const my = (tailP.y + headP.y) / 2 + py * OFFSET;
+  const sx = mx - (ux * arrowLen) / 2, sy = my - (uy * arrowLen) / 2;
+  const ex = mx + (ux * arrowLen) / 2, ey = my + (uy * arrowLen) / 2;
+
+  return (
+    <g key={key}>
+      <line x1={sx} y1={sy} x2={ex} y2={ey} stroke="#2563eb" strokeWidth={2}
+        strokeLinecap="round" markerEnd="url(#dipole-arrow)" vectorEffect="non-scaling-stroke" />
+      <line x1={sx + px * TICK} y1={sy + py * TICK} x2={sx - px * TICK} y2={sy - py * TICK}
+        stroke="#2563eb" strokeWidth={2} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+    </g>
   );
 }

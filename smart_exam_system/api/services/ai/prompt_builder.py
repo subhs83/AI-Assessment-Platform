@@ -141,7 +141,7 @@ CHEMISTRY_RULES = r'''
 - A central atom with three substituents uses side top_left/top_right/bottom_center; the inverted arrangement uses x_position top for the upper atom and side bottom_left/bottom_right below.
 - Four substituents use side top_left/top_right/bottom_left/bottom_right. Do not invent numeric positions or new role names.
 - molecular_geometry uses position_role as shown in its dedicated examples, not the Lewis/molecular_2d position fields.
-- POLARITY FIGURES: For "feature": "polarity", include one "has_bond_dipole" relationship per polar bond the question needs, with "elements": [atom_a, atom_b] and "toward": the id of the MORE electronegative atom. Never include a net dipole, a polarity verdict, delta+/delta- labels, or any numeric dipole moment or electronegativity value in the visual. If the question gives electronegativities, they belong in question_text only. Do not add a "has_bond_dipole" to a bond between two identical atoms. Use "label" for atom symbols and "has_lone_pairs" with "elements": [central_atom_id] and "count" for the central atom's lone pairs.
+- POLARITY FIGURES: Include one "has_bond_dipole" relationship per polar bond the question needs, with "elements": [atom_a, atom_b] and "toward": the id of the MORE electronegative atom. Never include a net dipole, a polarity verdict, delta+/delta- labels, any electronegativity value, or any dipole moment in the visual. If the question gives electronegativities, they belong in question_text only. Do not add a dipole to a bond between identical atoms. Declare the central atom's lone pairs once, as a single "has_lone_pairs" relationship.
 '''.strip()
 
 
@@ -4260,9 +4260,9 @@ These are reusable payload patterns, not extra questions to generate. Select onl
     "electron_geometry": "tetrahedral"
   },
   "elements": [
-    {{ "id": "atom_o", "label": "O", "type": "atom" },
-    {{ "id": "atom_h1", "label": "H", "type": "atom" },
-    {{ "id": "atom_h2", "label": "H", "type": "atom" }
+    { "id": "atom_o", "label": "O", "type": "atom" },
+    { "id": "atom_h1", "label": "H", "type": "atom" },
+    { "id": "atom_h2", "label": "H", "type": "atom" }
   ],
   "relationships": [
     { "bond_type": "single", "elements": ["atom_o", "atom_h1"], "type": "forms_bond" },

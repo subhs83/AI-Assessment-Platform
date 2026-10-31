@@ -2,8 +2,10 @@
 import { getSvgDimensions } from "../geometry/geometryHelpers";
 import {
   renderBond, renderLonePairs, renderAtomLabel, renderChargeLabel, extractLonePairRels, 
-  renderIonBrackets, renderWedgeBond, renderDashBond, renderBondAngleArc,
+  renderIonBrackets, renderWedgeBond, renderDashBond, renderBondAngleArc, renderBondDipole
  } from "./chemistryHelpers";
+
+
 
 export function renderLewisStructure(plane, relationships, figure, isMobile = false) {
   if (!plane) return null;
@@ -119,12 +121,27 @@ export function renderResonanceStructures(plane, relationships, isMobile = false
 export function renderMolecularGeometry(plane, relationships, isMobile = false) {
   if (!plane) return null;
   const { strokeWidth, fontSize } = getSvgDimensions(isMobile);
-  const { positions, bondDrawList, lonePairSlots, labelClearance } = plane;
+  const { positions, bondDrawList, lonePairSlots, dipolePairs, labelClearance } = plane;
 
   const angleRel = relationships?.find((r) => r.type === "marks_bond_angle");
 
+  // All arrows share one length so size never hints at which bond is more polar
+  const bondLens = dipolePairs.map((d) =>
+    Math.hypot(positions[d.headId].x - positions[d.tailId].x, positions[d.headId].y - positions[d.tailId].y)
+  );
+  const arrowLen = bondLens.length ? Math.min(0.45 * Math.min(...bondLens), 34) : 0;
+
   return (
     <g>
+      {dipolePairs.length > 0 && (
+        <defs>
+          <marker id="dipole-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4"
+            markerUnits="userSpaceOnUse" orient="auto">
+            <path d="M0,0 L8,4 L0,8 Z" fill="#2563eb" />
+          </marker>
+        </defs>
+      )}
+
       {bondDrawList.map((b, i) => {
         const p1 = positions[b.centralId], p2 = positions[b.outerId];
         if (b.style === "wedge") return renderWedgeBond(p1, p2, labelClearance, `bond-${i}`);
@@ -132,13 +149,16 @@ export function renderMolecularGeometry(plane, relationships, isMobile = false) 
         return renderBond(b.rel, positions, strokeWidth, `bond-${i}`, labelClearance);
       })}
 
-      {/* Bond angle arc — drawn BEFORE atom labels so the labels sit on top */}
       {angleRel && (() => {
         const [id1, vertexId, id2] = angleRel.elements;
         const vertex = positions[vertexId], p1 = positions[id1], p2 = positions[id2];
         if (!vertex || !p1 || !p2) return null;
         return renderBondAngleArc(vertex, p1, p2, "angle-arc");
       })()}
+
+      {dipolePairs.map((d, i) =>
+        renderBondDipole(positions[d.tailId], positions[d.headId], arrowLen, `dipole-${i}`)
+      )}
 
       {Object.entries(positions).map(([id, p]) => renderAtomLabel(id, p, fontSize))}
 
@@ -152,8 +172,8 @@ export function renderMolecularGeometry(plane, relationships, isMobile = false) 
         );
       })}
 
-      {/* No angle VALUE is ever rendered — the arc marks WHICH angle
-          the question is about, but the number is always the answer. */}
+      {/* Never rendered: net dipole, polarity verdict, delta labels, electronegativity
+          values, shape names, or bond-angle numbers. They are the answers. */}
     </g>
   );
 }

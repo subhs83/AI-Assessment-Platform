@@ -152,7 +152,10 @@ export default function ExamPage() {
       return;
     }
 
-    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${next}`);
+    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${next}`, {
+      replace: true,
+    });
+
   };
 
   const goPrev = () => {
@@ -166,7 +169,9 @@ export default function ExamPage() {
       return;
     }
 
-    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${prev}`);
+    navigate(`/school/${schoolSlug}/attempt/${attemptId}/${prev}`, {
+      replace: true,
+    });
   };
 
   const selectedOption = answers?.[`${attemptId}_${safeIndex}`] ?? null;

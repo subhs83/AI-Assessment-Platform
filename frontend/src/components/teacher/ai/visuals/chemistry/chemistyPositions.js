@@ -1,7 +1,7 @@
 import { getSvgDimensions } from "../geometry/geometryHelpers";
 import {
   VSEPR_SLOTS, VSEPR_OCCUPANCY, normalizeGeometryName, extractLonePairsAll, resolveAtomOffset,
-  ELECTRON_GEOMETRY_OF_FAMILY,
+  ELECTRON_GEOMETRY_OF_FAMILY, ELECTRONEGATIVITY
 } from "./chemistryHelpers";
 
 export function calculateLewisStructurePositions({ elements, relationships, isMobile = false, overrideCenterX, overrideCenterY, scaleOverride,}) {
@@ -58,6 +58,8 @@ export function calculateResonancePositions({ elements, isMobile = false }) {
   return { positions: allPositions, groupIds, groupBounds, SVG_WIDTH, SVG_HEIGHT, labelClearance: groupBounds.labelClearance };
 }
 
+
+
 export function calculateVseprPositions({ elements, relationships, figure, isMobile = false }) {
   const { width, height, fontSize } = getSvgDimensions(isMobile);
   const centerX = width / 2, centerY = height / 2;
@@ -67,10 +69,9 @@ export function calculateVseprPositions({ elements, relationships, figure, isMob
   const atomEls = elements.filter((el) => el.type === "atom");
   const labelOf = (id) => {
     const a = atomEls.find((el) => el.id === id);
-    return a?.label ?? a?.element ?? ""; // generator used "element" here
+    return a?.label ?? a?.element ?? "";
   };
 
-  // Central atom = the atom that appears in the most bonds
   const bondRels = relationships.filter((r) => r.type === "forms_bond");
   const counts = {};
   bondRels.forEach((r) => r.elements.forEach((id) => { counts[id] = (counts[id] || 0) + 1; }));
@@ -88,21 +89,23 @@ export function calculateVseprPositions({ elements, relationships, figure, isMob
     return null;
   }
 
+  // Cross-checks against what the generator stated (never rendered)
   const statedElectron = normalizeGeometryName(figure?.electron_geometry);
   const expectedElectron = ELECTRON_GEOMETRY_OF_FAMILY[occ.family] || occ.family;
   if (statedElectron && statedElectron !== expectedElectron) {
     console.warn("[VSEPR] electron_geometry says", statedElectron, "but counts imply", expectedElectron);
   }
-
-  const stated = relationships.find((r) => r.type === "has_vsepr_geometry")?.geometry;
-  if (stated && normalizeGeometryName(stated) !== occ.name) {
-    console.warn("[VSEPR] generator says", stated, "but counts imply", occ.name);
+  const statedShape = normalizeGeometryName(
+    relationships.find((r) => r.type === "has_vsepr_geometry")?.geometry
+      ?? figure?.vsepr_shape
+      ?? figure?.molecular_geometry
+  );
+  if (statedShape && statedShape !== occ.name) {
+    console.warn("[VSEPR] shape says", statedShape, "but counts imply", occ.name);
   }
 
   const slots = VSEPR_SLOTS[occ.family];
-  const positions = {
-    [centralId]: { x: centerX, y: centerY, label: labelOf(centralId) },
-  };
+  const positions = { [centralId]: { x: centerX, y: centerY, label: labelOf(centralId) } };
 
   const bondDrawList = centralBonds.map((rel, i) => {
     const outerId = rel.elements.find((e) => e !== centralId);
@@ -123,5 +126,41 @@ export function calculateVseprPositions({ elements, relationships, figure, isMob
     return { x: centerX + dirX * dist, y: centerY + dirY * dist, dirX, dirY };
   });
 
-  return { positions, bondDrawList, lonePairSlots, labelClearance };
+  // Bond dipoles: direction comes from electronegativity, not from the generator
+  const seen = new Set();
+  const dipolePairs = [];
+  const addDipole = (a, b, statedToward) => {
+    const pa = positions[a], pb = positions[b];
+    if (!pa || !pb) return;
+    const key = [a, b].sort().join("|");
+    if (seen.has(key)) return;
+    seen.add(key);
+    const enA = ELECTRONEGATIVITY[pa.label], enB = ELECTRONEGATIVITY[pb.label];
+    if (enA === undefined || enB === undefined) {
+      if (statedToward === a || statedToward === b) {
+        dipolePairs.push({ tailId: statedToward === a ? b : a, headId: statedToward });
+      } else {
+        console.warn("[Polarity] no electronegativity value for", pa.label, pb.label);
+      }
+      return;
+    }
+    if (enA === enB) return; // identical atoms: no dipole
+    const headId = enA > enB ? a : b;
+    if (statedToward && statedToward !== headId) {
+      console.warn("[Polarity] generator says toward", statedToward, "but electronegativity says", headId);
+    }
+    dipolePairs.push({ tailId: headId === a ? b : a, headId });
+  };
+  elements
+    .filter((el) => el.type === "bond_dipole_arrow")
+    .forEach((el) => addDipole(el.between?.[0], el.between?.[1]));
+  relationships
+    .filter((r) => r.type === "has_bond_dipole")
+    .forEach((r) => addDipole(r.elements?.[0], r.elements?.[1], r.toward));
+
+  return { positions, bondDrawList, lonePairSlots, dipolePairs, labelClearance };
 }
+
+
+
+
