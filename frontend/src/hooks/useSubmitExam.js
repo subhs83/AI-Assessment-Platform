@@ -17,6 +17,7 @@ export function useSubmitExam(schoolSlug, attemptId) {
         await examApi.submitExam(schoolSlug, attemptId);
 
         navigate(`/school/${schoolSlug}/result/${attemptId}`, {
+          replace: true,
           state: isAuto
             ? {
                 autoSubmitted: true,
@@ -24,7 +25,6 @@ export function useSubmitExam(schoolSlug, attemptId) {
               }
             : {},
         });
-
       } catch (err) {
         const apiError = err.response?.data?.error;
 
@@ -33,6 +33,7 @@ export function useSubmitExam(schoolSlug, attemptId) {
           apiError === "already_submitted"
         ) {
           navigate(`/school/${schoolSlug}/result/${attemptId}`, {
+            replace: true,
             state: {
               autoSubmitted: true,
               reason: "time_expired",

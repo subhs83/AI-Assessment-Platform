@@ -156,7 +156,9 @@ const RegisterPage = () => {
 
         if (attemptId) {
           showToast("Redirecting to result...", "info");
-          navigate(`/school/${schoolSlug}/result/${attemptId}`);
+          navigate(`/school/${schoolSlug}/result/${attemptId}`, {
+            replace: true,
+          });
           return;
         }
       }
@@ -166,7 +168,9 @@ const RegisterPage = () => {
 
       if (attemptId) {
         showToast("Starting exam...", "success");
-        navigate(`/school/${schoolSlug}/attempt/${attemptId}/0`);
+        navigate(`/school/${schoolSlug}/attempt/${attemptId}/0`, {
+          replace: true,
+        });
         return;
       }
 
