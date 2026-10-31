@@ -4,6 +4,7 @@ import { ArrowLeft, Save } from "lucide-react";
 
 import { useTeacherStore } from "../../store/teacherStore";
 import { teacherRoutes } from "../../routes/teacherRoutes";
+import { useSchoolStore } from "../../store/schoolStore";
 
 import PageHeader from "../../components/ui/PageHeader";
 import Button from "../../components/ui/Button";
@@ -53,6 +54,10 @@ export default function ExamFormPage() {
 
   const updateExam = useTeacherStore(
     (s) => s.updateExam
+  );
+
+  const fetchExamOptions = useSchoolStore(
+    (s) => s.fetchExamOptions
   );
 
   const [loading, setLoading] = useState(false);
@@ -198,21 +203,22 @@ export default function ExamFormPage() {
       setLoading(true);
 
       if (isEdit) {
-
-      await updateExam(
+        await updateExam(
           schoolSlug,
           examUid,
           form
-      );
-
-  } else {
-
-      await createExam(
+        );
+      } else {
+        await createExam(
           schoolSlug,
           form
-      );
+        );
+      }
 
-  }
+      // Refresh exam options after successful create/update
+      fetchExamOptions(schoolSlug).catch((err) => {
+        console.error("Failed to refresh exam options:", err);
+      });
 
       showToast(
           isEdit
