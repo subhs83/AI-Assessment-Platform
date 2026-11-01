@@ -1,28 +1,21 @@
 from smart_exam_system.api.services.student_management_service import is_registration_allowed
 from smart_exam_system.extensions import db
-from smart_exam_system.models.student import (
+from smart_exam_system.models import (
     StudentModel,
+    AttemptModel
 )
+ 
 
 from smart_exam_system.api.services.student_service import (
     get_submitted_attempts,
     get_max_attempts,
     get_student_identity,
+    is_attempt_expired,
+    auto_submit_attempt,
 )
 
 
 def build_quiz_session(exam):
-    """
-    Build the complete quiz session context for the current student.
-
-    Responsibilities:
-    - Resolve student identity
-    - Validate registration eligibility
-    - Load submitted attempts
-    - Calculate effective attempt limit
-    - Determine current quiz state
-    """
-
     student = _get_authenticated_student()
 
     registration_valid = _validate_registration(
@@ -30,6 +23,15 @@ def build_quiz_session(exam):
         student,
     )
 
+    # Check active attempt first.
+    # This may finalize an expired attempt.
+    active_attempt = (
+        _get_active_attempt(exam, student)
+        if registration_valid
+        else None
+    )
+
+    # Load submitted attempts after expiry processing.
     attempt_data = _load_attempts(
         exam,
         student,
@@ -43,6 +45,7 @@ def build_quiz_session(exam):
     state = _determine_state(
         student=student,
         registration_valid=registration_valid,
+        active_attempt=active_attempt,
         latest_attempt=attempt_data["latest_attempt"],
     )
 
@@ -51,7 +54,9 @@ def build_quiz_session(exam):
         "student": student,
         "student_id": student.id if student else None,
         "attempts": attempt_data["attempts"],
-        "latest_attempt": attempt_data["latest_attempt"],
+        "latest_attempt": (
+            active_attempt or attempt_data["latest_attempt"]
+        ),
         "used_attempts": attempt_data["used_attempts"],
         "max_attempts": max_attempts,
         "state": state,
@@ -125,18 +130,48 @@ def _calculate_attempt_limit(
     return get_max_attempts(exam)
 
 
-def _determine_state(student, registration_valid, latest_attempt):
-
-    # not allowed → always register
-    if not registration_valid:
+def _determine_state(
+    student,
+    registration_valid,
+    active_attempt,
+    latest_attempt,
+):
+    if not student or not registration_valid:
         return "register"
 
-    # no identity yet
+    if active_attempt:
+        return "quiz"
+
+    if latest_attempt:
+        return "result"
+
+    return "register"
+
+
+def _get_active_attempt(exam, student):
     if not student:
-        return "register"
+        return None
 
-    # no attempt yet
-    if not latest_attempt:
-        return "register"
+    attempt = (
+        AttemptModel.query
+        .filter_by(
+            exam_id=exam.id,
+            student_db_id=student.id,
+            is_submitted=False,
+        )
+        .order_by(AttemptModel.id.desc())
+        .first()
+    )
 
-    return "result"
+    if not attempt:
+        return None
+
+    # Expired attempts must not resume.
+    if is_attempt_expired(attempt):
+        auto_submit_attempt(
+            attempt,
+            submit_reason="time_expired"
+        )
+        return None
+
+    return attempt

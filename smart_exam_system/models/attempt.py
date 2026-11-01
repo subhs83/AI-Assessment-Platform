@@ -32,8 +32,8 @@ class AttemptModel(db.Model):
 
     end_time = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        nullable=False
+        nullable=True,
+        default=None
     )
 
     score = db.Column(db.Float)

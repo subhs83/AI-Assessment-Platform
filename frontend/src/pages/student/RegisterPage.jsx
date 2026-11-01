@@ -167,7 +167,12 @@ const RegisterPage = () => {
         data?.data?.attempt_id || data?.attempt_id;
 
       if (attemptId) {
-        showToast("Starting exam...", "success");
+        showToast(
+          data.status === "resumed"
+            ? "Resuming your previous exam..."
+            : "Starting exam...",
+          "success"
+        );
         navigate(`/school/${schoolSlug}/attempt/${attemptId}/0`, {
           replace: true,
         });
@@ -357,9 +362,10 @@ const RegisterPage = () => {
 
                   <button
                     type="submit"
-                    className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-indigo-600 font-semibold text-white transition-all duration-200 hover:bg-indigo-700 active:scale-[0.98]"
+                    disabled={startingExam}
+                    className="mt-2 flex h-14 w-full items-center justify-center rounded-xl bg-indigo-600 font-semibold text-white transition-all duration-200 hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Start Quiz →
+                    {startingExam ? "Please wait..." : "Start Quiz →"}
                   </button>
 
               </form>

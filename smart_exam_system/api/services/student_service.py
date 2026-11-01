@@ -295,6 +295,34 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
         }, 403
 
     # --------------------------------------------------
+    # Check existing active attempt
+    # --------------------------------------------------
+    active_attempt = _find_active_attempt(
+        exam.id,
+        student.id,
+    )
+
+    if active_attempt:
+
+        if is_attempt_expired(active_attempt):
+            finalize_attempt(
+                active_attempt,
+                submit_reason="time_expired",
+            )
+
+            return {
+                "status": "redirect_result",
+                "attempt_id": active_attempt.id,
+                "student_db_id": student.id,
+            }
+
+        return {
+            "status": "resumed",
+            "attempt_id": active_attempt.id,
+            "student_db_id": student.id,
+        }
+
+    # --------------------------------------------------
     # 5. Check existing completed attempt
     # --------------------------------------------------
     existing_attempt = _find_existing_attempt(
@@ -307,7 +335,7 @@ def start_student_attempt(exam_id, school_id, form_data, ip_address=None):
             "status": "redirect_result",
             "attempt_id": existing_attempt.id,
             "student_db_id": existing_attempt.student_db_id,
-        }, 200
+        }
 
     # --------------------------------------------------
     # 6. Create attempt
@@ -899,8 +927,8 @@ def is_attempt_expired(attempt):
     return datetime.utcnow() >= deadline
 
 
-def auto_submit_attempt(attempt, reason):
-    return finalize_attempt(attempt, submit_reason=reason)
+def auto_submit_attempt(attempt, submit_reason):
+    return finalize_attempt(attempt, submit_reason=submit_reason)
 
 
 def finalize_attempt(attempt, submit_reason="manual"):
@@ -1137,3 +1165,14 @@ def get_attempt_detailed_report(attempt_id):
 
   
 
+def _find_active_attempt(exam_id, student_db_id):
+    return (
+        AttemptModel.query
+        .filter_by(
+            exam_id=exam_id,
+            student_db_id=student_db_id,
+            is_submitted=False,
+        )
+        .order_by(AttemptModel.id.desc())
+        .first()
+    )

@@ -82,10 +82,22 @@ def get_attempt_state_api(school_slug, quiz_code):
         if session["latest_attempt"]:
             data["attempt_id"] = session["latest_attempt"].id
 
-        message = (
-            "Show result"
-            if session["state"] == "result"
-            else "Ready to register"
+        if session["state"] == "quiz":
+            attempt = session["latest_attempt"]
+
+            question_data = get_attempt_question_order(attempt)
+
+            data["total_questions"] = question_data["total_questions"]
+
+        messages = {
+            "quiz": "Resume existing quiz",
+            "result": "Show result",
+            "register": "Ready to register",
+        }
+
+        message = messages.get(
+            session["state"],
+            "Ready to register"
         )
 
         return jsonify({
@@ -202,7 +214,7 @@ def start_attempt(school_slug, quiz_code):
         # --------------------------------------------------
         response = jsonify({
             "success": True,
-            "status": "started",
+            "status": result.get("status", "started"),
             "data": {
                 "attempt_id": result.get("attempt_id"),
                 "student_db_id": result.get("student_db_id"),
@@ -214,7 +226,9 @@ def start_attempt(school_slug, quiz_code):
             response,
         )
 
-        return response, 201
+        return response, (
+            200 if result.get("status") == "resumed" else 201
+        )
 
     except Exception:
         logger.exception("Failed to process request")

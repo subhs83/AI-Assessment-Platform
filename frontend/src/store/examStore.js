@@ -118,26 +118,35 @@ initSession: (payload) => {
     });
   },
   setQuestion: (index, data) => {
-    set((state) => ({
-      currentQuestion: data,
+    set((state) => {
+      const answerKey = `${data.attempt_id}_${index}`;
 
-      totalQuestions:
-        data.total_questions ??
-        state.totalQuestions,
+      return {
+        currentQuestion: data,
 
-      remainingSeconds:
-        data.remaining_seconds ?? 0,
+        totalQuestions:
+          data.total_questions ?? state.totalQuestions,
 
-      violationCount:
-        data.violation_count ?? 0,
+        remainingSeconds:
+          data.remaining_seconds ?? 0,
 
-      questionCache: {
-        ...state.questionCache,
-        [index]: data,
-      },
-      // 🔥 IMPORTANT SAFETY RESET (fix ghost selection bug)
-      currentIndex: index,
-    }));
+        violationCount:
+          data.violation_count ?? 0,
+
+        questionCache: {
+          ...state.questionCache,
+          [index]: data,
+        },
+
+        currentIndex: index,
+
+        // Restore previously saved answer from backend
+        answers: {
+          ...state.answers,
+          [answerKey]: data.selected_option ?? null,
+        },
+      };
+    });
   },
 
   // ======================

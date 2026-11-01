@@ -27,14 +27,20 @@ export default function ExamCard({
   const routes = teacherRoutes(schoolSlug);
   const { showToast } = useToast();
 
-  const handleShareQuiz = (exam) =>
-  shareLink({
-    title: exam.title,
-    text: "Join this quiz using the link below:",
-    url: `https://indiaeducore.com/school/${schoolSlug}/quiz/${exam.quiz_code}`,
-    showToast,
-    successMessage: "Quiz link copied",
-  });
+  const handleShareQuiz = (exam) => {
+    const baseUrl =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3000"
+        : "https://indiaeducore.com";
+
+    shareLink({
+      title: exam.title,
+      text: "Join this quiz using the link below:",
+      url: `${baseUrl}/school/${schoolSlug}/quiz/${exam.quiz_code}`,
+      showToast,
+      successMessage: "Quiz link copied",
+    });
+  };
 
 
   const statusClass = exam.is_expired
