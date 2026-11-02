@@ -1,0 +1,35 @@
+
+name: Auto Submit Expired Quizzes
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: indiaeducore-expired-quiz-submission
+  cancel-in-progress: false
+
+jobs:
+  auto-submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Submit expired quizzes
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
+          FLASK_ENV: production
+        run: python process_expired_attempts.py --batch-submit
