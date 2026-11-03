@@ -23,16 +23,7 @@ def get_deadline(attempt):
         minutes=attempt.exam.duration_minutes
     )
 
-def print_time_debug():
-    now_utc = datetime.now(timezone.utc)
-    now_ist = now_utc.astimezone(
-        timezone(timedelta(hours=5, minutes=30))
-    )
 
-    print("\n--- TIME DEBUG ---")
-    print(f"Current UTC Time : {now_utc}")
-    print(f"Current IST Time : {now_ist}")
-    print("------------------\n")
 
 def main():
     parser = argparse.ArgumentParser()
@@ -67,7 +58,6 @@ def main():
         )
 
     with app.app_context():
-        print_time_debug()
         expired_count = 0
         submitted_count = 0
         failed_count = 0
@@ -135,10 +125,6 @@ def main():
                     continue
 
                 deadline = get_deadline(attempt)
-                print(f"Attempt ID       : {attempt.id}")
-                print(f"Quiz Start (UTC) : {attempt.start_time}")
-                print(f"Quiz Deadline    : {deadline}")
-                print(f"Current UTC      : {utc_now_naive()}")
 
                 if utc_now_naive() < deadline:
                     print(
