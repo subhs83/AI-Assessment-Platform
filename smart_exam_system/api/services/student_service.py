@@ -933,28 +933,39 @@ def auto_submit_attempt(attempt, submit_reason):
 
 def finalize_attempt(attempt, submit_reason="manual"):
 
-    if attempt.is_submitted:
-        return attempt
+    # Lock this attempt until the transaction commits.
+    locked_attempt = (
+        db.session.query(AttemptModel)
+        .filter(AttemptModel.id == attempt.id)
+        .populate_existing()
+        .with_for_update(of=AttemptModel)
+        .one()
+    )
 
-    score, total_marks = calculate_attempt_score(attempt)
+    # Recheck after acquiring the lock.
+    if locked_attempt.is_submitted:
+        db.session.rollback()
+        return locked_attempt
 
-    attempt.score = score
-    attempt.total_marks = total_marks
+    score, total_marks = calculate_attempt_score(locked_attempt)
 
-    attempt.percentage = (
+    locked_attempt.score = score
+    locked_attempt.total_marks = total_marks
+
+    locked_attempt.percentage = (
         round((score / total_marks) * 100, 2)
         if total_marks > 0 else 0
     )
 
-    attempt.is_submitted = True
-    attempt.end_time = datetime.utcnow()
+    locked_attempt.is_submitted = True
+    locked_attempt.end_time = datetime.utcnow()
 
     if submit_reason != "manual":
-        attempt.auto_submitted_reason = submit_reason
+        locked_attempt.auto_submitted_reason = submit_reason
 
     db.session.commit()
 
-    return attempt
+    return locked_attempt
 
 
 def calculate_attempt_score(attempt):
@@ -1176,3 +1187,40 @@ def _find_active_attempt(exam_id, student_db_id):
         .order_by(AttemptModel.id.desc())
         .first()
     )
+
+
+def finalize_expired_attempts(limit=50):
+    now = datetime.utcnow()
+
+    attempts = (
+        db.session.query(AttemptModel)
+        .join(ExamModel, AttemptModel.exam_id == ExamModel.id)
+        .filter(
+            AttemptModel.is_submitted.is_(False),
+            AttemptModel.start_time
+            + func.make_interval(
+                0, 0, 0, 0, 0,
+                ExamModel.duration_minutes,
+                0
+            ) <= now
+        )
+        .order_by(AttemptModel.start_time.asc())
+        .limit(limit)
+        .all()
+    )
+
+    finalized = 0
+
+    for attempt in attempts:
+        try:
+            if is_attempt_expired(attempt):
+                auto_submit_attempt(attempt, "time_expired")
+                finalized += 1
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                "Failed to finalize attempt %s",
+                attempt.id
+            )
+
+    return finalized

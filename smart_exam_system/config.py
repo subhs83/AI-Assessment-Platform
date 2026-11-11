@@ -81,13 +81,18 @@ class Config:
     # =========================
     # DATABASE CONFIG
     # =========================
-    database_url = os.environ.get(
-        "DATABASE_URL",
-        "postgresql://postgres:1234@localhost:5432/smart_exam_system"
-    )
+
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL environment variable is required."
+        )
 
     if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+        database_url = database_url.replace(
+            "postgres://", "postgresql://", 1
+        )
 
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False

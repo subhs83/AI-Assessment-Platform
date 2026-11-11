@@ -245,7 +245,20 @@ def start_attempt(school_slug, quiz_code):
 def get_question(school_slug,  attempt_id, q_index):
     try:
         # 1. Get attempt
-        attempt = resolve_attempt(attempt_id)
+        student_db_id = get_student_identity()
+
+        if not student_db_id:
+            return jsonify({
+                "success": False,
+                "message": "Student not authenticated",
+                "data": None,
+                "error": "student_not_authenticated"
+            }), 401
+
+        attempt = resolve_attempt(
+            attempt_id=attempt_id,
+            student_db_id=student_db_id,
+        )
 
         if not attempt:
             return jsonify({
@@ -406,7 +419,21 @@ def save_answer(school_slug, attempt_id):
         # -------------------------
         # 1. Validate attempt
         # -------------------------
-        attempt = resolve_attempt(attempt_id)
+        student_db_id = get_student_identity()
+
+        if not student_db_id:
+            return jsonify({
+                "success": False,
+                "message": "Student not authenticated",
+                "data": None,
+                "error": "student_not_authenticated"
+            }), 401
+
+        attempt = resolve_attempt(
+            attempt_id=attempt_id,
+            student_db_id=student_db_id,
+        )
+
         if not attempt:
             return jsonify({
                 "success": False,
@@ -415,30 +442,48 @@ def save_answer(school_slug, attempt_id):
                 "error": "invalid_attempt"
             }), 404
         
+        if attempt.exam.school.slug != school_slug:
+            return jsonify({
+                "success": False,
+                "message": "Invalid quiz or school",
+                "data": None,
+                "error": "invalid_attempt"
+            }), 404
+
+        # Lock attempt row
+        attempt = (
+            db.session.query(AttemptModel)
+            .filter(AttemptModel.id == attempt.id)
+            .populate_existing()
+            .with_for_update(of=AttemptModel)
+            .one()
+        )
+
+        # Already submitted
         if attempt.is_submitted:
-            return {
-                "submitted": True
-            }, 403
+            db.session.rollback()
 
+            return jsonify({
+                "success": False,
+                "message": "Exam already submitted",
+                "data": None,
+                "error": "already_submitted"
+            }), 403
+
+        # Time expired
         if is_attempt_expired(attempt):
-
             auto_submit_attempt(
                 attempt,
                 "time_expired"
             )
 
-            return {
-                "expired": True
-            }, 403
-        # Block if submitted
-        if attempt.is_submitted:
             return jsonify({
                 "success": False,
-                "message": "Exam already submitted",
+                "message": "Exam time expired",
                 "data": None,
-                "error": "locked"
+                "error": "time_expired"
             }), 403
-
+        
         # -------------------------
         # 2. Validate question
         # -------------------------
@@ -450,7 +495,19 @@ def save_answer(school_slug, attempt_id):
                 "data": None,
                 "error": "invalid_question"
             }), 404
+        
+        question_data = get_attempt_question_order(attempt)
+        question_order = question_data["question_order"]
 
+        if question.id not in question_order:
+            db.session.rollback()
+
+            return jsonify({
+                "success": False,
+                "message": "Question does not belong to this attempt",
+                "data": None,
+                "error": "invalid_question"
+            }), 403
         # -------------------------
         # 3. Check existing answer
         # -------------------------
@@ -510,6 +567,7 @@ def save_answer(school_slug, attempt_id):
         })
 
     except Exception:
+        db.session.rollback()
         logger.exception("Failed to process request")
         return jsonify({
             "success": False,
@@ -615,7 +673,7 @@ def submit_attempt(school_slug, attempt_id):
         }), 200
 
     except Exception:
-
+        db.session.rollback()
         logger.exception("Failed to submit attempt")
 
         return jsonify({

@@ -347,6 +347,7 @@ const RegisterPage = () => {
                   <input
                     type="tel"
                     inputMode="numeric"
+                    placeholder="Mobile Number"
                     pattern="[0-9]{10}"
                     minLength={10}
                     maxLength={10}

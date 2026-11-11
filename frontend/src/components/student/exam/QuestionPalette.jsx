@@ -25,14 +25,21 @@ export default function QuestionPalette({
     );
   };
 
-  const getStatus = (index) => {
-    const key = `${attemptId}_${index}`;
-    return answers[key] ? "answered" : "not_answered";
+  const getStatus = (q) => {
+    const key = `${attemptId}_${q.index}`;
+
+    if (Object.prototype.hasOwnProperty.call(answers, key)) {
+      return answers[key] != null && answers[key] !== ""
+        ? "answered"
+        : "not_answered";
+    }
+
+    return q.status;
   };
 
   const answeredCount = palette.filter(
-    (q) => answers[`${attemptId}_${q.index}`]
-  ).length;
+  (q) => getStatus(q) === "answered"
+).length;
 
   const remainingCount = palette.length - answeredCount;
 
@@ -215,7 +222,7 @@ export default function QuestionPalette({
 
         {palette.map((q) => {
 
-          const status = getStatus(q.index);
+          const status = getStatus(q);
           const isActive = q.index === currentIndex;
 
           return (
