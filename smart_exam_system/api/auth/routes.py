@@ -28,7 +28,7 @@ def login_api():
     
     data = request.get_json()
     device_type = data.get("device_type", "browser")
-    
+
     current_app.logger.info("LOGIN DEVICE TYPE: %s", device_type)
 
     email = data.get("email")
@@ -73,6 +73,7 @@ def login_api():
         }), 403
 
     remember = device_type in ("pwa", "android")
+    current_app.logger.info("LOGIN REMEMBER VALUE: %s", remember)
 
     login_user(
         user,
