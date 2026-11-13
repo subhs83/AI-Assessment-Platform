@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify,request
+from flask import Flask, jsonify
 from .config import Config
 from .extensions import login_manager, db, migrate
 from flask_session import Session
@@ -52,21 +52,7 @@ def create_app():
     supports_credentials=True,
     origins=Config.CORS_ORIGINS,
 )
-
-    @app.after_request
-    def debug_login_response_cookies(response):
-        if request.path.endswith("/api/auth/login"):
-            cookie_names = [
-                cookie.split(";", 1)[0].split("=", 1)[0]
-                for cookie in response.headers.getlist("Set-Cookie")
-            ]
-
-            app.logger.info(
-                "FINAL LOGIN COOKIE NAMES: %s",
-                cookie_names
-            )
-
-        return response
+    
     # Extensions
     login_manager.init_app(app)
     # Return JSON instead of redirecting unauthenticated API requests

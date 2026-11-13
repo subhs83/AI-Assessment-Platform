@@ -1,5 +1,5 @@
 # smart_exam_system/api/auth/routes.py
-from flask import request, jsonify,session, current_app
+from flask import request, jsonify,session 
 from flask_login import (
     login_user,
     logout_user,
@@ -29,7 +29,6 @@ def login_api():
     data = request.get_json()
     device_type = data.get("device_type", "browser")
 
-    current_app.logger.info("LOGIN DEVICE TYPE: %s", device_type)
 
     email = data.get("email")
     password = data.get("password")
@@ -73,16 +72,12 @@ def login_api():
         }), 403
 
     remember = device_type in ("pwa", "android")
-    current_app.logger.info("LOGIN REMEMBER VALUE: %s", remember)
 
     login_user(
         user,
         remember=remember
     )
-    current_app.logger.info(
-    "REMEMBER COOKIE IN SESSION: %s",
-    session.get("_remember")
-)
+ 
     log_login_attempt( email, user, True, request )
 
     redirect_path = (
@@ -96,11 +91,6 @@ def login_api():
         "user": user.to_dict(),
         "redirect_path": redirect_path
     })
-
-    current_app.logger.info(
-        "LOGIN RESPONSE SET-COOKIE: %s",
-        response.headers.getlist("Set-Cookie")
-    )
 
     return response
 
