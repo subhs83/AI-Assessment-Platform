@@ -24,7 +24,11 @@ class Config:
 
     SESSION_PERMANENT = True
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    # Flask-Login Remember Cookie
     REMEMBER_COOKIE_DURATION = timedelta(days=30)
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = IS_PRODUCTION
+    REMEMBER_COOKIE_SAMESITE = "None" if IS_PRODUCTION else "Lax"
 
     # CORS
     CORS_ORIGINS = os.getenv(
