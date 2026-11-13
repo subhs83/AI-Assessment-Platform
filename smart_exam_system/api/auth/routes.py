@@ -1,6 +1,5 @@
 # smart_exam_system/api/auth/routes.py
-
-from flask import request, jsonify,session
+from flask import request, jsonify,session, current_app
 from flask_login import (
     login_user,
     logout_user,
@@ -17,7 +16,7 @@ from smart_exam_system.api.services.auth_service import (
     change_user_password,
 
 )
-from smart_exam_system.api.utils.security import verify_password,validate_password_strength
+from smart_exam_system.api.utils.security import validate_password_strength
 
 @api_auth_bp.route("/login", methods=["POST"])
 def login_api():
@@ -29,6 +28,8 @@ def login_api():
     
     data = request.get_json()
     device_type = data.get("device_type", "browser")
+    
+    current_app.logger.info("LOGIN DEVICE TYPE: %s", device_type)
 
     email = data.get("email")
     password = data.get("password")
