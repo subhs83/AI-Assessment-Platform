@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from .config import Config
 from .extensions import login_manager, db, migrate
 from flask_session import Session
@@ -55,6 +55,14 @@ def create_app():
 
     # Extensions
     login_manager.init_app(app)
+    # Return JSON instead of redirecting unauthenticated API requests
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return jsonify({
+            "success": False,
+            "message": "Authentication required."
+        }), 401
+    
     db.init_app(app)
     migrate.init_app(app, db)   # 🔥 ADD THIS LINE
     

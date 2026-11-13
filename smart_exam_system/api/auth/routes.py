@@ -23,6 +23,9 @@ from smart_exam_system.api.utils.security import verify_password,validate_passwo
 def login_api():
     logout_user()
     session.clear()
+
+    # Explicitly create a permanent Flask session
+    session.permanent = True
     
     data = request.get_json()
     device_type = data.get("device_type", "browser")
