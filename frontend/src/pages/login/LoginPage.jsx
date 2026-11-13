@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Mail,
@@ -26,11 +27,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] =
     useState(false);
 
+  
   const handleLogin = async (e) => {
-
     e.preventDefault();
 
     try {
+      const isNativeApp = Capacitor.isNativePlatform();
 
       const isPWA =
         window.matchMedia("(display-mode: standalone)").matches;
@@ -38,21 +40,22 @@ export default function LoginPage() {
       const response = await login({
         email,
         password,
-        device_type: isPWA ? "pwa" : "browser",
+        device_type: isNativeApp
+          ? "android"
+          : isPWA
+          ? "pwa"
+          : "browser",
       });
 
-      navigate(
-        response.redirect_path,
-        {
-          replace: true
-        }
-      );
+      navigate(response.redirect_path, {
+        replace: true,
+      });
 
     } catch (error) {
       // handled by authStore
     }
-
   };
+
 
   return (
 

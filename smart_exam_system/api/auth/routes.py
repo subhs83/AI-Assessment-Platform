@@ -71,7 +71,7 @@ def login_api():
             "message": error
         }), 403
 
-    remember = device_type == "pwa"
+    remember = device_type in ("pwa", "android")
 
     login_user(
         user,
