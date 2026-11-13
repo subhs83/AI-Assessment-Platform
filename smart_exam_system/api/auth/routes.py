@@ -91,11 +91,18 @@ def login_api():
         else get_dashboard_path(user)
     )
 
-    return jsonify({
+    response = jsonify({
         "success": True,
         "user": user.to_dict(),
         "redirect_path": redirect_path
     })
+
+    current_app.logger.info(
+        "LOGIN RESPONSE SET-COOKIE: %s",
+        response.headers.getlist("Set-Cookie")
+    )
+
+    return response
 
 
 
