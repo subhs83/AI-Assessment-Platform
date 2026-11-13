@@ -79,6 +79,10 @@ def login_api():
         user,
         remember=remember
     )
+    current_app.logger.info(
+    "REMEMBER COOKIE IN SESSION: %s",
+    session.get("_remember")
+)
     log_login_attempt( email, user, True, request )
 
     redirect_path = (
