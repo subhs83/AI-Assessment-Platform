@@ -26,7 +26,7 @@ export default function MobileStatsGrid({
                 </div>
 
                 <div className="mt-1 text-xs font-medium text-slate-700">
-                  {item.title}
+                  {item.label || item.title}
                 </div>
 
                 {item.subtitle && (
