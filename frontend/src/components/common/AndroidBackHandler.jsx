@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
@@ -6,6 +7,14 @@ import { App as CapacitorApp } from "@capacitor/app";
 export default function AndroidBackHandler() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const navigateRef = useRef(navigate);
+  const pathnameRef = useRef(location.pathname);
+
+  useEffect(() => {
+    navigateRef.current = navigate;
+    pathnameRef.current = location.pathname;
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -17,38 +26,35 @@ export default function AndroidBackHandler() {
       const handle = await CapacitorApp.addListener(
         "backButton",
         ({ canGoBack }) => {
-
-          // Prevent Android Back from leaving an active exam
           const isExamRoute =
             /^\/school\/[^/]+\/attempt\/[^/]+\/\d+\/?$/.test(
-              location.pathname
+              pathnameRef.current
             );
 
-          if (isExamRoute) {
-            return;
-          }
+          if (isExamRoute) return;
 
-          // Preserve normal navigation elsewhere
           if (canGoBack) {
-            navigate(-1);
+            navigateRef.current(-1);
           }
         }
       );
 
       if (cancelled) {
-        handle.remove();
+        await handle.remove();
       } else {
         listener = handle;
       }
     };
 
-    setup();
+    setup().catch((error) => {
+      console.error("Android back handler setup failed:", error);
+    });
 
     return () => {
       cancelled = true;
       listener?.remove();
     };
-  }, [navigate, location.pathname]);
+  }, []);
 
   return null;
 }

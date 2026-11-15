@@ -18,8 +18,7 @@ export default function QuizInitPage() {
 
     const registerUrl =
       `/school/${schoolSlug}/quiz/${quizCode}/register`;
-
-    const fetchState = async () => {
+    const fetchState = async () => { 
       setError(null);
 
       try {
