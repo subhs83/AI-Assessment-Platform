@@ -1,8 +1,9 @@
+
 import { useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useExamStore } from "../store/examStore";
 
 export function useFullscreenGuard(reportViolation) {
-
   const showStartOverlay = useExamStore(
     (state) => state.showStartOverlay
   );
@@ -11,36 +12,32 @@ export function useFullscreenGuard(reportViolation) {
     (state) => state.setFullscreenRequired
   );
 
-  // Initial check
+  // Native Android does not require browser fullscreen.
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      setFullscreenRequired(false);
+      return;
+    }
 
-    // Ignore until the student starts the exam
     if (showStartOverlay) return;
 
     if (!document.fullscreenElement) {
       setFullscreenRequired(true);
     }
-
   }, [showStartOverlay, setFullscreenRequired]);
 
-  // Listen for fullscreen changes
+  // Listen for browser fullscreen changes only.
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
 
     const handleFullscreenChange = async () => {
-
-      // Ignore startup
       if (showStartOverlay) return;
 
       if (!document.fullscreenElement) {
-
         setFullscreenRequired(true);
-
         await reportViolation("fullscreen_exit");
-
       } else {
-
         setFullscreenRequired(false);
-
       }
     };
 
@@ -55,7 +52,6 @@ export function useFullscreenGuard(reportViolation) {
         handleFullscreenChange
       );
     };
-
   }, [
     showStartOverlay,
     reportViolation,

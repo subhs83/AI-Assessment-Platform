@@ -15,8 +15,11 @@ export function useViolationTracker(
       (state) =>
         state.setViolationCount
     );
-
-  const reportViolation =
+  const setShowViolationOverlay =
+    useExamStore(
+      (state) => state.setShowViolationOverlay
+    );
+    const reportViolation =
     useCallback(
       async (reason) => {
         try {
@@ -27,7 +30,7 @@ export function useViolationTracker(
               reason
             );
 
-          const data =
+          const data = 
             res.data.data;
 
           if (!data)
@@ -36,6 +39,7 @@ export function useViolationTracker(
           setViolationCount(
             data.violation_count || 0
           );
+          setShowViolationOverlay(true);
 
           if (
             data.auto_submitted
@@ -70,6 +74,7 @@ export function useViolationTracker(
         attemptId,
         navigate,
         setViolationCount,
+        setShowViolationOverlay,
       ]
     );
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 
 import {
   ShieldAlert,
@@ -15,6 +16,7 @@ export default function FullscreenOverlay({
 
   const [countdown, setCountdown] = useState(5);
    const isStart = mode === "start";
+   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
     if (!isStart) return;
@@ -53,13 +55,17 @@ export default function FullscreenOverlay({
           </div>
 
           <h2 className="text-2xl font-bold">
-            {isStart ? "Ready to Start" : "Fullscreen Required"}
+            {isStart ? "Ready to Start" : isNative ? "Exam Warning" : "Fullscreen Required"}
           </h2>
 
           <p className="mt-2 text-sm text-indigo-100">
             {isStart
-              ? "For a secure exam experience, fullscreen mode will be enabled before you begin."
-              : "The exam is temporarily paused until you return to fullscreen mode."}
+              ? isNative
+                ? "Your exam is ready. Follow the security instructions before beginning."
+                : "For a secure exam experience, fullscreen mode will be enabled before you begin."
+              : isNative
+                ? "A violation has been detected. Please review the warning before continuing your exam."
+                : "The exam is temporarily paused until you return to fullscreen mode."}
           </p>
 
         </div>
@@ -77,15 +83,10 @@ export default function FullscreenOverlay({
                 </h3>
 
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-
-                  <li>✓ Fullscreen mode is required.</li>
-
+                  {!isNative && <li>✓ Fullscreen mode is required.</li>}
                   <li>✓ Do not switch tabs or apps.</li>
-
                   <li>✓ Ensure you have a stable internet connection.</li>
-
                   <li>✓ The exam timer starts immediately after entering.</li>
-
                 </ul>
 
               </div>
@@ -167,7 +168,7 @@ export default function FullscreenOverlay({
 
                   <p className="mt-1 text-sm leading-6 text-slate-600">
                     Your exam will be submitted automatically after
-                    <strong> 3 fullscreen violations.</strong>
+                    <strong> 3 exam violations.</strong>
 
                     <br />
 

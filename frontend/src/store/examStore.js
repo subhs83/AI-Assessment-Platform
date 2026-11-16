@@ -39,6 +39,7 @@ export const useExamStore = create((set, get) => ({
   saving: false,
   isOffline: false,
   fullscreenRequired: false,
+  showViolationOverlay: false,
   showStartOverlay: true,
   saveStatus: "",
   examStarted: false,
@@ -64,6 +65,7 @@ initSession: (payload) => {
     isSubmittingExam: false,
     submitModalOpen: false,
     showSubmitModal: false,
+    showViolationOverlay: false,
     showStartOverlay: true,
     examStarted: false,
 
@@ -204,11 +206,12 @@ initSession: (payload) => {
     set({ isOffline });
   },
 
-  setFullscreenRequired: (
-    fullscreenRequired
-  ) => {
+  setFullscreenRequired: (fullscreenRequired) => {
     set({ fullscreenRequired });
   },
+
+  setShowViolationOverlay: (value) =>
+  set({ showViolationOverlay: value }),
 
   setSaveStatus: (saveStatus) => {
     set({ saveStatus });
@@ -247,6 +250,7 @@ setShowStartOverlay: (value) =>
       saving: false,
       isOffline: false,
       fullscreenRequired: false,
+      showViolationOverlay: false,
       saveStatus: "",
       isSubmittingExam: false,
       showSubmitModal: false,

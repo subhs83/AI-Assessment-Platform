@@ -57,7 +57,9 @@ export default function ExamPage() {
   const violationCount = useExamStore((state) => state.violationCount);
   const isOffline = useExamStore((state) => state.isOffline);
   const fullscreenRequired = useExamStore((state) => state.fullscreenRequired);
-  
+  const showViolationOverlay = useExamStore((state) => state.showViolationOverlay);
+  const setShowViolationOverlay = useExamStore((state) => state.setShowViolationOverlay);
+
   const saveStatus = useExamStore((state) => state.saveStatus);
   const saving = useExamStore((state) => state.saving);
 
@@ -195,13 +197,14 @@ export default function ExamPage() {
           />
         )}
 
-        {!showStartOverlay && fullscreenRequired && (
-          <FullscreenOverlay
-            mode="violation"
-            violationCount={violationCount}
-            onResume={resumeFullscreen}
-          />
-        )}
+        {!showStartOverlay &&
+          (fullscreenRequired || showViolationOverlay) && (
+            <FullscreenOverlay
+              mode="violation"
+              violationCount={violationCount}
+              onResume={resumeFullscreen}
+            />
+          )}
 
         <SubmitExamModal
           schoolSlug={schoolSlug}

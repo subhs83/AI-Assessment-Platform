@@ -1,19 +1,28 @@
-import { useEffect } from "react";
 
-export function useTabSwitchGuard(
-  reportViolation
-) {
+import { useEffect } from "react";
+import { useExamStore } from "../store/examStore";
+
+export function useTabSwitchGuard(reportViolation) {
+  const showStartOverlay = useExamStore(
+    (state) => state.showStartOverlay
+  );
+
   useEffect(() => {
-    const handleVisibilityChange =
-      () => {
-        if (
-          document.hidden
-        ) {
-          reportViolation(
-            "tab_switch"
-          );
-        }
-      };
+    let violationReported = false;
+
+    const handleVisibilityChange = () => {
+      if (showStartOverlay) return;
+
+      if (document.hidden) {
+        if (violationReported) return;
+
+        violationReported = true;
+        reportViolation("tab_switch");
+      } else {
+        // Allow a new violation after the student returns.
+        violationReported = false;
+      }
+    };
 
     document.addEventListener(
       "visibilitychange",
@@ -26,5 +35,5 @@ export function useTabSwitchGuard(
         handleVisibilityChange
       );
     };
-  }, [reportViolation]);
+  }, [reportViolation, showStartOverlay]);
 }
