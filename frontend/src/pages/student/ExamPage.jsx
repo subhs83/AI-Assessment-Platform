@@ -58,7 +58,6 @@ export default function ExamPage() {
   const isOffline = useExamStore((state) => state.isOffline);
   const fullscreenRequired = useExamStore((state) => state.fullscreenRequired);
   const showViolationOverlay = useExamStore((state) => state.showViolationOverlay);
-  const setShowViolationOverlay = useExamStore((state) => state.setShowViolationOverlay);
 
   const saveStatus = useExamStore((state) => state.saveStatus);
   const saving = useExamStore((state) => state.saving);
