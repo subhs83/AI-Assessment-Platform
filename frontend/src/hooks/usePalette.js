@@ -22,7 +22,10 @@ export function usePalette(
         const res = await API.get(
           `/api/student/${schoolSlug}/attempt/${attemptId}/palette`
         );
-
+        console.log(
+          "RESTORED PALETTE FROM API:",
+          res.data.data.palette
+        );
         setPalette(
           res.data.data.palette || []
         );
