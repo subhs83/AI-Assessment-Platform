@@ -27,11 +27,18 @@ export default function PaletteDrawer({
 
   const getStatus = (index) => {
     const key = `${attemptId}_${index}`;
-    return answers[key] ? "answered" : "not_answered";
+
+    if (Object.prototype.hasOwnProperty.call(answers, key)) {
+      return answers[key] != null && answers[key] !== ""
+        ? "answered"
+        : "not_answered";
+    }
+
+    return palette.find((q) => q.index === index)?.status ?? "not_answered";
   };
 
   const answeredCount = palette.filter(
-    (q) => answers[`${attemptId}_${q.index}`]
+    (q) => getStatus(q.index) === "answered"
   ).length;
 
   const remainingCount =
