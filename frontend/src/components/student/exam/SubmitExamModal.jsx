@@ -14,15 +14,19 @@ export default function SubmitExamModal({
   const setShow = useExamStore((s) => s.setShowSubmitModal);
   const totalQuestions = useExamStore((s) => s.totalQuestions);
   const answers = useExamStore((s) => s.answers);
-
+  const palette = useExamStore((s) => s.palette);
   const unansweredQuestions = [];
 
   for (let i = 0; i < totalQuestions; i++) {
-      const answer = answers?.[`${attemptId}_${i}`];
+    const key = `${attemptId}_${i}`;
 
-      if (answer == null) {
-          unansweredQuestions.push(i + 1);
-      }
+    const isAnswered = Object.prototype.hasOwnProperty.call(answers, key)
+      ? answers[key] != null && answers[key] !== ""
+      : palette.find((q) => q.index === i)?.status === "answered";
+
+    if (!isAnswered) {
+      unansweredQuestions.push(i + 1);
+    }
   }
   
 
