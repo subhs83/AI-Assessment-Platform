@@ -39,5 +39,5 @@ jobs:
         run: |
           curl --fail --silent --show-error \
             --request POST \
-            --url https://indiaeducore.com/api/internal/sync-cron-job \
+            --url https://api.indiaeducore.com/api/internal/sync-cron-job \
             --header "Authorization: Bearer ${CRONJOB_SYNC_TOKEN}"
