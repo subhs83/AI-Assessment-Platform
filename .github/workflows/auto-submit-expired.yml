@@ -31,3 +31,13 @@ jobs:
           SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
           FLASK_ENV: production
         run: python process_expired_attempts.py --batch-submit
+
+      - name: Sync cron-job.org status
+        if: always()
+        env:
+          CRONJOB_SYNC_TOKEN: ${{ secrets.CRONJOB_SYNC_TOKEN }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --url https://indiaeducore.com/api/internal/sync-cron-job \
+            --header "Authorization: Bearer ${CRONJOB_SYNC_TOKEN}"

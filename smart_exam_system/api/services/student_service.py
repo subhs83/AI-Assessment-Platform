@@ -13,6 +13,10 @@ from smart_exam_system.models import (
     SchoolSectionModel
 )
 
+from smart_exam_system.api.services.cronjob_service import (
+    sync_cron_job_status,
+)
+
 from smart_exam_system.api.utils.randomization_service import generate_balanced_option_orders
 from smart_exam_system.api.services.display_option_mapper import (
     build_display_options,
@@ -516,6 +520,8 @@ def _create_attempt(
     db.session.add(attempt)
     db.session.commit()
 
+    sync_cron_job_status()
+
     return {
         "success": True,
         "message": "Exam started successfully",
@@ -808,6 +814,7 @@ def start_next_attempt(previous_attempt_id):
 
     db.session.add(new_attempt)
     db.session.commit()
+    sync_cron_job_status()
 
     return {
         "success": True,
@@ -963,9 +970,10 @@ def finalize_attempt(attempt, submit_reason="manual"):
     if submit_reason != "manual":
         locked_attempt.auto_submitted_reason = submit_reason
 
-    db.session.commit()
+        db.session.commit()
+        sync_cron_job_status()
 
-    return locked_attempt
+        return locked_attempt
 
 
 def calculate_attempt_score(attempt):

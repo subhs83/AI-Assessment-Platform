@@ -15,6 +15,7 @@ from smart_exam_system.models.subscription_plan import SubscriptionPlanModel
 from smart_exam_system.models.school_subscription import SchoolSubscriptionModel
 from smart_exam_system.models.ai_feature_cost import AIFeatureModel
 from smart_exam_system.models.school_usage import SchoolUsageModel
+from smart_exam_system.models.system_setting import SystemSettingModel
 
 from smart_exam_system.models.ai_generation_requests import AIGenerationRequest
 
@@ -39,5 +40,6 @@ __all__ = [
     "SubscriptionPlanModel",
     "SchoolSubscriptionModel",
     "AIFeatureModel",
-    "SchoolUsageModel"
+    "SchoolUsageModel",
+    "SystemSettingModel"
 ]
