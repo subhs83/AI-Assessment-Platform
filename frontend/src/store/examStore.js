@@ -30,6 +30,7 @@ export const useExamStore = create((set, get) => ({
   // TIMER + VIOLATIONS
   // ======================
   remainingSeconds: 0,
+  examDeadline: null,
   violationCount: 0,
 
   // ======================
@@ -61,6 +62,7 @@ initSession: (payload) => {
     answers: {},          // reset answers
     palette: [],          // reset palette
     remainingSeconds: 0,
+    examDeadline: null,
     violationCount: 0,
     isSubmittingExam: false,
     submitModalOpen: false,
@@ -129,11 +131,11 @@ initSession: (payload) => {
         totalQuestions:
           data.total_questions ?? state.totalQuestions,
 
-        remainingSeconds:
-          data.remaining_seconds ?? 0,
+        remainingSeconds: data.remaining_seconds ?? 0,
 
-        violationCount:
-          data.violation_count ?? 0,
+        examDeadline:  Date.now() + (data.remaining_seconds ?? 0) * 1000,
+
+        violationCount: data.violation_count ?? 0,
 
         questionCache: {
           ...state.questionCache,
@@ -168,19 +170,25 @@ initSession: (payload) => {
   // TIMER
   // ======================
   tick: () => {
-    set((state) => ({
-      remainingSeconds: Math.max(
-        0,
-        state.remainingSeconds - 1
-      ),
-    }));
-  },
+    set((state) => {
+      if (!state.examDeadline) return state;
 
-  setRemainingSeconds: (seconds) => {
-    set({
-      remainingSeconds: seconds,
+      return {
+        remainingSeconds: Math.max(
+          0,
+          Math.ceil(
+            (state.examDeadline - Date.now()) / 1000
+          )
+        ),
+      };
     });
   },
+    setRemainingSeconds: (seconds) => {
+      set({
+        remainingSeconds: seconds,
+        examDeadline: Date.now() + seconds * 1000,
+      });
+    },
 
   // ======================
   // VIOLATIONS
@@ -245,6 +253,7 @@ setShowStartOverlay: (value) =>
       palette: [],
       remainingSeconds: 0,
       violationCount: 0,
+      examDeadline: null,
 
       loading: false,
       saving: false,
