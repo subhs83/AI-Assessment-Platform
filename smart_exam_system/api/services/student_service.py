@@ -938,6 +938,7 @@ def auto_submit_attempt(attempt, submit_reason):
     return finalize_attempt(attempt, submit_reason=submit_reason)
 
 
+
 def finalize_attempt(attempt, submit_reason="manual"):
 
     # Lock this attempt until the transaction commits.
@@ -970,10 +971,12 @@ def finalize_attempt(attempt, submit_reason="manual"):
     if submit_reason != "manual":
         locked_attempt.auto_submitted_reason = submit_reason
 
-        db.session.commit()
-        sync_cron_job_status()
+    # Commit both manual and automatic submissions.
+    db.session.commit()
+    sync_cron_job_status()
 
-        return locked_attempt
+    return locked_attempt
+
 
 
 def calculate_attempt_score(attempt):
